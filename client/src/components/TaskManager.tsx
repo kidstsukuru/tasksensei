@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 
-// UUID generator for consistent string IDs
-const generateUUID = (): string => {
-  return 'uuid-' + Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
-};
 
 // Mock userId for now - in real app this would come from authentication
 const MOCK_USER_ID = 'user-1';
@@ -38,20 +36,114 @@ import {
 const TaskManager: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState('home-screen');
   const [todoVisible, setTodoVisible] = useLocalStorage('todoVisible', false);
-  const [todos, setTodos] = useLocalStorage<Todo[]>('todos', []);
-  const [schedules, setSchedules] = useLocalStorage<Schedule[]>('schedules', []);
-  const [sleepRecords, setSleepRecords] = useLocalStorage<SleepRecord[]>('sleepRecords', []);
-  const [weightRecords, setWeightRecords] = useLocalStorage<WeightRecord[]>('weightRecords', []);
-  const [mealRecords, setMealRecords] = useLocalStorage<MealRecord[]>('mealRecords', []);
-  const [diaryEntries, setDiaryEntries] = useLocalStorage<DiaryEntry[]>('diaryEntries', []);
   const [pendingBedtime, setPendingBedtime] = useLocalStorage<Date | null>('pendingBedtime', null);
   const [pendingWakeupTime, setPendingWakeupTime] = useLocalStorage<Date | null>('pendingWakeupTime', null);
+
+  // React Query hooks for data fetching
+  const { data: todos = [], isLoading: todosLoading } = useQuery<Todo[]>({
+    queryKey: ['/api/todos', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/todos?userId=${MOCK_USER_ID}`).then(res => res.json())
+      .then((todos: any[]) => todos.map(todo => ({
+        ...todo,
+        createdAt: new Date(todo.createdAt)
+      })))
+  });
+
+  const { data: schedules = [], isLoading: schedulesLoading } = useQuery<Schedule[]>({
+    queryKey: ['/api/schedules', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/schedules?userId=${MOCK_USER_ID}`).then(res => res.json())
+      .then((schedules: any[]) => schedules.map(schedule => ({
+        ...schedule,
+        time: schedule.time ? new Date(schedule.time) : null
+      })))
+  });
+
+  const { data: sleepRecords = [], isLoading: sleepRecordsLoading } = useQuery<SleepRecord[]>({
+    queryKey: ['/api/sleep-records', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/sleep-records?userId=${MOCK_USER_ID}`).then(res => res.json())
+      .then((records: any[]) => records.map(record => ({
+        ...record,
+        bedtime: new Date(record.bedtime),
+        wakeup: new Date(record.wakeup)
+      })))
+  });
+
+  const { data: weightRecords = [], isLoading: weightRecordsLoading } = useQuery<WeightRecord[]>({
+    queryKey: ['/api/weight-records', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/weight-records?userId=${MOCK_USER_ID}`).then(res => res.json())
+  });
+
+  const { data: mealRecords = [], isLoading: mealRecordsLoading } = useQuery<MealRecord[]>({
+    queryKey: ['/api/meal-records', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/meal-records?userId=${MOCK_USER_ID}`).then(res => res.json())
+  });
+
+  const { data: diaryEntries = [], isLoading: diaryEntriesLoading } = useQuery<DiaryEntry[]>({
+    queryKey: ['/api/diary-entries', MOCK_USER_ID],
+    queryFn: () => fetch(`/api/diary-entries?userId=${MOCK_USER_ID}`).then(res => res.json())
+  });
   
   const [pomodoro, setPomodoro] = useState<PomodoroState>({
     minutes: 25,
     seconds: 0,
     isRunning: false,
     mode: 'pomodoro'
+  });
+
+  // Mutation hooks for CRUD operations
+  const createTodoMutation = useMutation({
+    mutationFn: (todoData: { userId: string; text: string; completed?: boolean }) =>
+      apiRequest('POST', '/api/todos', todoData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/todos', MOCK_USER_ID] });
+    }
+  });
+
+  const updateTodoMutation = useMutation({
+    mutationFn: ({ id, ...data }: { id: string; completed?: boolean }) =>
+      apiRequest('PUT', `/api/todos/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/todos', MOCK_USER_ID] });
+    }
+  });
+
+  const deleteTodoMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/todos/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/todos', MOCK_USER_ID] });
+    }
+  });
+
+  const createScheduleMutation = useMutation({
+    mutationFn: (scheduleData: { userId: string; text: string; date: string; time?: Date; completed?: boolean }) =>
+      apiRequest('POST', '/api/schedules', scheduleData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/schedules', MOCK_USER_ID] });
+    }
+  });
+
+  const createSleepRecordMutation = useMutation({
+    mutationFn: (sleepData: { userId: string; date: string; bedtime: Date; wakeup: Date; duration: number }) =>
+      apiRequest('POST', '/api/sleep-records', sleepData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/sleep-records', MOCK_USER_ID] });
+    }
+  });
+
+  const createWeightRecordMutation = useMutation({
+    mutationFn: (weightData: { userId: string; date: string; weight: string; bodyFat?: string }) =>
+      apiRequest('POST', '/api/weight-records', weightData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/weight-records', MOCK_USER_ID] });
+    }
+  });
+
+  const createDiaryEntryMutation = useMutation({
+    mutationFn: (diaryData: { userId: string; date: string; content: string; mood?: string; photos?: string[] }) =>
+      apiRequest('POST', '/api/diary-entries', diaryData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/diary-entries', MOCK_USER_ID] });
+    }
   });
 
   const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
@@ -107,14 +199,11 @@ const TaskManager: React.FC = () => {
   const addTodo = () => {
     const text = prompt('TODOを入力してください:');
     if (text?.trim()) {
-      const newTodo: Todo = {
-        id: generateUUID(),
+      createTodoMutation.mutate({
         userId: MOCK_USER_ID,
         text: text.trim(),
-        completed: false,
-        createdAt: new Date()
-      };
-      setTodos((prev: Todo[]) => [...prev, newTodo]);
+        completed: false
+      });
       if (!todoVisible) {
         setTodoVisible(true);
       }
@@ -122,13 +211,17 @@ const TaskManager: React.FC = () => {
   };
 
   const toggleTodo = (id: string) => {
-    setTodos((prev: Todo[]) => prev.map((todo: Todo) => 
-      todo.id === id ? { ...todo, completed: !todo.completed } : todo
-    ));
+    const todo = todos.find(t => t.id === id);
+    if (todo) {
+      updateTodoMutation.mutate({
+        id,
+        completed: !todo.completed
+      });
+    }
   };
 
   const deleteTodo = (id: string) => {
-    setTodos((prev: Todo[]) => prev.filter((todo: Todo) => todo.id !== id));
+    deleteTodoMutation.mutate(id);
   };
 
   const togglePomodoro = () => {
@@ -166,16 +259,13 @@ const TaskManager: React.FC = () => {
     const duration = now.getTime() - pendingBedtime.getTime();
     const todayDate = new Date().toISOString().split('T')[0];
     
-    const newSleepRecord: SleepRecord = {
-      id: generateUUID(),
+    createSleepRecordMutation.mutate({
       userId: MOCK_USER_ID,
       date: todayDate,
       bedtime: pendingBedtime,
       wakeup: now,
       duration
-    };
-    
-    setSleepRecords((prev: SleepRecord[]) => [...prev, newSleepRecord]);
+    });
     setPendingBedtime(null);
     setPendingWakeupTime(null);
   };
@@ -186,15 +276,13 @@ const TaskManager: React.FC = () => {
 
   const saveSchedule = () => {
     if (scheduleInput.trim()) {
-      const newSchedule: Schedule = {
-        id: generateUUID(),
+      createScheduleMutation.mutate({
         userId: MOCK_USER_ID,
         text: scheduleInput.trim(),
         date: new Date().toISOString().split('T')[0],
         time: new Date(),
         completed: false
-      };
-      setSchedules((prev: Schedule[]) => [...prev, newSchedule]);
+      });
       setScheduleInput('');
       setScheduleModalVisible(false);
     }
@@ -204,14 +292,12 @@ const TaskManager: React.FC = () => {
     if (weightInput.trim()) {
       const weight = parseFloat(weightInput);
       if (!isNaN(weight)) {
-        const newRecord: WeightRecord = {
-          id: generateUUID(),
+        createWeightRecordMutation.mutate({
           userId: MOCK_USER_ID,
           date: new Date().toISOString().split('T')[0],
-          weight: weight.toString(), // Convert to string for decimal field
-          bodyFat: bodyFatInput ? parseFloat(bodyFatInput).toString() : null // Convert to string/null
-        };
-        setWeightRecords((prev: WeightRecord[]) => [...prev, newRecord]);
+          weight: weight.toString(),
+          bodyFat: bodyFatInput ? parseFloat(bodyFatInput).toString() : undefined
+        });
         setWeightInput('');
         setBodyFatInput('');
       }
@@ -220,15 +306,13 @@ const TaskManager: React.FC = () => {
 
   const saveDiary = () => {
     if (diaryText.trim()) {
-      const newEntry: DiaryEntry = {
-        id: generateUUID(),
+      createDiaryEntryMutation.mutate({
         userId: MOCK_USER_ID,
         date: new Date().toISOString().split('T')[0],
         content: diaryText.trim(),
-        mood: null,
-        photos: null
-      };
-      setDiaryEntries((prev: DiaryEntry[]) => [...prev, newEntry]);
+        mood: undefined,
+        photos: undefined
+      });
       setDiaryText('');
     }
   };
@@ -258,7 +342,9 @@ const TaskManager: React.FC = () => {
     <div className="page p-4 space-y-6">
       {/* Scheduled Today Section */}
       <section className="space-y-2 mb-6">
-        {getTodaysSchedules().length > 0 && (
+        {schedulesLoading ? (
+          <div className="text-center py-4 text-gray-500">Loading schedules...</div>
+        ) : getTodaysSchedules().length > 0 && (
           <>
             <h2 className="text-xl font-bold">今日の予定</h2>
             {getTodaysSchedules().map(schedule => (
@@ -301,6 +387,9 @@ const TaskManager: React.FC = () => {
           </div>
         </div>
         <div className={`${todoVisible ? '' : 'hidden'}`}>
+          {todosLoading ? (
+            <div className="text-center py-4 text-gray-500">Loading todos...</div>
+          ) : (
           <div className="space-y-2">
             {todos.map(todo => (
               <div key={todo.id} className="task-item" data-testid={`todo-item-${todo.id}`}>
@@ -324,6 +413,7 @@ const TaskManager: React.FC = () => {
               </div>
             ))}
           </div>
+          )}
         </div>
       </section>
 
@@ -338,7 +428,7 @@ const TaskManager: React.FC = () => {
           >
             <h3 className="font-bold">睡眠</h3>
             <p className="text-sm text-gray-500">
-              {getTodaysSleep() ? formatDuration(getTodaysSleep()!.duration) : '未記録'}
+              {sleepRecordsLoading ? 'Loading...' : getTodaysSleep() ? formatDuration(getTodaysSleep()!.duration) : '未記録'}
             </p>
           </div>
           <div 
@@ -356,7 +446,7 @@ const TaskManager: React.FC = () => {
           >
             <h3 className="font-bold">身体</h3>
             <p className="text-sm text-gray-500">
-              {weightRecords.length > 0 ? `${parseFloat(weightRecords[weightRecords.length - 1].weight)} kg` : '65.2 kg'}
+              {weightRecordsLoading ? 'Loading...' : weightRecords.length > 0 ? `${parseFloat(weightRecords[weightRecords.length - 1].weight)} kg` : '65.2 kg'}
             </p>
           </div>
           <div 

@@ -69,14 +69,21 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export const insertTodoSchema = createInsertSchema(todos).omit({
   id: true,
+}).extend({
+  createdAt: z.coerce.date().optional(),
 });
 
 export const insertScheduleSchema = createInsertSchema(schedules).omit({
   id: true,
+}).extend({
+  time: z.coerce.date().optional(),
 });
 
 export const insertSleepRecordSchema = createInsertSchema(sleepRecords).omit({
   id: true,
+}).extend({
+  bedtime: z.coerce.date(),
+  wakeup: z.coerce.date(),
 });
 
 export const insertWeightRecordSchema = createInsertSchema(weightRecords).omit({
