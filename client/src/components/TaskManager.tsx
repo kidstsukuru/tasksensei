@@ -2,10 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-
-
-// Mock userId for now - in real app this would come from authentication
-const MOCK_USER_ID = 'user-1';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Todo, 
   Schedule, 
@@ -30,10 +27,13 @@ import {
   RotateCcw, 
   X,
   Camera,
-  Smile
+  Smile,
+  LogOut,
+  User
 } from 'lucide-react';
 
 const TaskManager: React.FC = () => {
+  const { user, logout } = useAuth();
   const [currentScreen, setCurrentScreen] = useState('home-screen');
   const [todoVisible, setTodoVisible] = useLocalStorage('todoVisible', false);
   const [pendingBedtime, setPendingBedtime] = useLocalStorage<Date | null>('pendingBedtime', null);
@@ -41,8 +41,8 @@ const TaskManager: React.FC = () => {
 
   // React Query hooks for data fetching
   const { data: todos = [], isLoading: todosLoading } = useQuery<Todo[]>({
-    queryKey: ['/api/todos', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/todos?userId=${MOCK_USER_ID}`).then(res => res.json())
+    queryKey: ['/api/todos'],
+    queryFn: () => fetch('/api/todos', { credentials: 'include' }).then(res => res.json())
       .then((todos: any[]) => todos.map(todo => ({
         ...todo,
         createdAt: new Date(todo.createdAt)
@@ -50,8 +50,8 @@ const TaskManager: React.FC = () => {
   });
 
   const { data: schedules = [], isLoading: schedulesLoading } = useQuery<Schedule[]>({
-    queryKey: ['/api/schedules', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/schedules?userId=${MOCK_USER_ID}`).then(res => res.json())
+    queryKey: ['/api/schedules'],
+    queryFn: () => fetch('/api/schedules', { credentials: 'include' }).then(res => res.json())
       .then((schedules: any[]) => schedules.map(schedule => ({
         ...schedule,
         time: schedule.time ? new Date(schedule.time) : null
@@ -59,8 +59,8 @@ const TaskManager: React.FC = () => {
   });
 
   const { data: sleepRecords = [], isLoading: sleepRecordsLoading } = useQuery<SleepRecord[]>({
-    queryKey: ['/api/sleep-records', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/sleep-records?userId=${MOCK_USER_ID}`).then(res => res.json())
+    queryKey: ['/api/sleep-records'],
+    queryFn: () => fetch('/api/sleep-records', { credentials: 'include' }).then(res => res.json())
       .then((records: any[]) => records.map(record => ({
         ...record,
         bedtime: new Date(record.bedtime),
@@ -69,18 +69,18 @@ const TaskManager: React.FC = () => {
   });
 
   const { data: weightRecords = [], isLoading: weightRecordsLoading } = useQuery<WeightRecord[]>({
-    queryKey: ['/api/weight-records', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/weight-records?userId=${MOCK_USER_ID}`).then(res => res.json())
+    queryKey: ['/api/weight-records'],
+    queryFn: () => fetch('/api/weight-records', { credentials: 'include' }).then(res => res.json())
   });
 
   const { data: mealRecords = [], isLoading: mealRecordsLoading } = useQuery<MealRecord[]>({
-    queryKey: ['/api/meal-records', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/meal-records?userId=${MOCK_USER_ID}`).then(res => res.json())
+    queryKey: ['/api/meal-records'],
+    queryFn: () => fetch('/api/meal-records', { credentials: 'include' }).then(res => res.json())
   });
 
   const { data: diaryEntries = [], isLoading: diaryEntriesLoading } = useQuery<DiaryEntry[]>({
-    queryKey: ['/api/diary-entries', MOCK_USER_ID],
-    queryFn: () => fetch(`/api/diary-entries?userId=${MOCK_USER_ID}`).then(res => res.json())
+    queryKey: ['/api/diary-entries'],
+    queryFn: () => fetch('/api/diary-entries', { credentials: 'include' }).then(res => res.json())
   });
   
   const [pomodoro, setPomodoro] = useState<PomodoroState>({
@@ -92,10 +92,10 @@ const TaskManager: React.FC = () => {
 
   // Mutation hooks for CRUD operations
   const createTodoMutation = useMutation({
-    mutationFn: (todoData: { userId: string; text: string; completed?: boolean }) =>
+    mutationFn: (todoData: { text: string; completed?: boolean }) =>
       apiRequest('POST', '/api/todos', todoData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/todos', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/todos'] });
     }
   });
 
@@ -103,46 +103,46 @@ const TaskManager: React.FC = () => {
     mutationFn: ({ id, ...data }: { id: string; completed?: boolean }) =>
       apiRequest('PUT', `/api/todos/${id}`, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/todos', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/todos'] });
     }
   });
 
   const deleteTodoMutation = useMutation({
     mutationFn: (id: string) => apiRequest('DELETE', `/api/todos/${id}`),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/todos', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/todos'] });
     }
   });
 
   const createScheduleMutation = useMutation({
-    mutationFn: (scheduleData: { userId: string; text: string; date: string; time?: Date; completed?: boolean }) =>
+    mutationFn: (scheduleData: { text: string; date: string; time?: Date; completed?: boolean }) =>
       apiRequest('POST', '/api/schedules', scheduleData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/schedules', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/schedules'] });
     }
   });
 
   const createSleepRecordMutation = useMutation({
-    mutationFn: (sleepData: { userId: string; date: string; bedtime: Date; wakeup: Date; duration: number }) =>
+    mutationFn: (sleepData: { date: string; bedtime: Date; wakeup: Date; duration: number }) =>
       apiRequest('POST', '/api/sleep-records', sleepData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sleep-records', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/sleep-records'] });
     }
   });
 
   const createWeightRecordMutation = useMutation({
-    mutationFn: (weightData: { userId: string; date: string; weight: string; bodyFat?: string }) =>
+    mutationFn: (weightData: { date: string; weight: string; bodyFat?: string }) =>
       apiRequest('POST', '/api/weight-records', weightData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/weight-records', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/weight-records'] });
     }
   });
 
   const createDiaryEntryMutation = useMutation({
-    mutationFn: (diaryData: { userId: string; date: string; content: string; mood?: string; photos?: string[] }) =>
+    mutationFn: (diaryData: { date: string; content: string; mood?: string; photos?: string[] }) =>
       apiRequest('POST', '/api/diary-entries', diaryData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/diary-entries', MOCK_USER_ID] });
+      queryClient.invalidateQueries({ queryKey: ['/api/diary-entries'] });
     }
   });
 
@@ -200,7 +200,6 @@ const TaskManager: React.FC = () => {
     const text = prompt('TODOを入力してください:');
     if (text?.trim()) {
       createTodoMutation.mutate({
-        userId: MOCK_USER_ID,
         text: text.trim(),
         completed: false
       });
@@ -260,7 +259,6 @@ const TaskManager: React.FC = () => {
     const todayDate = new Date().toISOString().split('T')[0];
     
     createSleepRecordMutation.mutate({
-      userId: MOCK_USER_ID,
       date: todayDate,
       bedtime: pendingBedtime,
       wakeup: now,
@@ -277,7 +275,6 @@ const TaskManager: React.FC = () => {
   const saveSchedule = () => {
     if (scheduleInput.trim()) {
       createScheduleMutation.mutate({
-        userId: MOCK_USER_ID,
         text: scheduleInput.trim(),
         date: new Date().toISOString().split('T')[0],
         time: new Date(),
@@ -293,7 +290,6 @@ const TaskManager: React.FC = () => {
       const weight = parseFloat(weightInput);
       if (!isNaN(weight)) {
         createWeightRecordMutation.mutate({
-          userId: MOCK_USER_ID,
           date: new Date().toISOString().split('T')[0],
           weight: weight.toString(),
           bodyFat: bodyFatInput ? parseFloat(bodyFatInput).toString() : undefined
@@ -307,7 +303,6 @@ const TaskManager: React.FC = () => {
   const saveDiary = () => {
     if (diaryText.trim()) {
       createDiaryEntryMutation.mutate({
-        userId: MOCK_USER_ID,
         date: new Date().toISOString().split('T')[0],
         content: diaryText.trim(),
         mood: undefined,
@@ -879,7 +874,13 @@ const TaskManager: React.FC = () => {
           <div className="text-sm font-medium text-gray-600" data-testid="text-header-date">
             {getCurrentDate()}
           </div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2 mr-2">
+              <User size={16} className="text-gray-500" />
+              <span className="text-sm text-gray-600" data-testid="text-username">
+                {user?.username}
+              </span>
+            </div>
             <button className="text-gray-500 hover:text-theme-500 transition-colors" data-testid="button-notification">
               <Bell size={24} />
             </button>
@@ -889,6 +890,14 @@ const TaskManager: React.FC = () => {
               data-testid="button-clock"
             >
               <Clock size={24} />
+            </button>
+            <button 
+              className="text-gray-500 hover:text-red-500 transition-colors"
+              onClick={logout}
+              data-testid="button-logout"
+              title="ログアウト"
+            >
+              <LogOut size={20} />
             </button>
           </div>
         </header>
