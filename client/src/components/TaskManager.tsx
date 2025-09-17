@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
+
+// UUID generator for consistent string IDs
+const generateUUID = (): string => {
+  return 'uuid-' + Date.now().toString() + '-' + Math.random().toString(36).substr(2, 9);
+};
+
+// Mock userId for now - in real app this would come from authentication
+const MOCK_USER_ID = 'user-1';
 import { 
   Todo, 
   Schedule, 
@@ -100,7 +108,8 @@ const TaskManager: React.FC = () => {
     const text = prompt('TODOを入力してください:');
     if (text?.trim()) {
       const newTodo: Todo = {
-        id: Date.now(),
+        id: generateUUID(),
+        userId: MOCK_USER_ID,
         text: text.trim(),
         completed: false,
         createdAt: new Date()
@@ -112,13 +121,13 @@ const TaskManager: React.FC = () => {
     }
   };
 
-  const toggleTodo = (id: number) => {
+  const toggleTodo = (id: string) => {
     setTodos((prev: Todo[]) => prev.map((todo: Todo) => 
       todo.id === id ? { ...todo, completed: !todo.completed } : todo
     ));
   };
 
-  const deleteTodo = (id: number) => {
+  const deleteTodo = (id: string) => {
     setTodos((prev: Todo[]) => prev.filter((todo: Todo) => todo.id !== id));
   };
 
@@ -158,7 +167,8 @@ const TaskManager: React.FC = () => {
     const todayDate = new Date().toISOString().split('T')[0];
     
     const newSleepRecord: SleepRecord = {
-      id: Date.now(),
+      id: generateUUID(),
+      userId: MOCK_USER_ID,
       date: todayDate,
       bedtime: pendingBedtime,
       wakeup: now,
@@ -177,7 +187,8 @@ const TaskManager: React.FC = () => {
   const saveSchedule = () => {
     if (scheduleInput.trim()) {
       const newSchedule: Schedule = {
-        id: Date.now(),
+        id: generateUUID(),
+        userId: MOCK_USER_ID,
         text: scheduleInput.trim(),
         date: new Date().toISOString().split('T')[0],
         time: new Date(),
@@ -194,10 +205,11 @@ const TaskManager: React.FC = () => {
       const weight = parseFloat(weightInput);
       if (!isNaN(weight)) {
         const newRecord: WeightRecord = {
-          id: Date.now(),
+          id: generateUUID(),
+          userId: MOCK_USER_ID,
           date: new Date().toISOString().split('T')[0],
-          weight,
-          bodyFat: bodyFatInput ? parseFloat(bodyFatInput) : undefined
+          weight: weight.toString(), // Convert to string for decimal field
+          bodyFat: bodyFatInput ? parseFloat(bodyFatInput).toString() : null // Convert to string/null
         };
         setWeightRecords((prev: WeightRecord[]) => [...prev, newRecord]);
         setWeightInput('');
@@ -209,9 +221,12 @@ const TaskManager: React.FC = () => {
   const saveDiary = () => {
     if (diaryText.trim()) {
       const newEntry: DiaryEntry = {
-        id: Date.now(),
+        id: generateUUID(),
+        userId: MOCK_USER_ID,
         date: new Date().toISOString().split('T')[0],
-        content: diaryText.trim()
+        content: diaryText.trim(),
+        mood: null,
+        photos: null
       };
       setDiaryEntries((prev: DiaryEntry[]) => [...prev, newEntry]);
       setDiaryText('');
@@ -341,7 +356,7 @@ const TaskManager: React.FC = () => {
           >
             <h3 className="font-bold">身体</h3>
             <p className="text-sm text-gray-500">
-              {weightRecords.length > 0 ? `${weightRecords[weightRecords.length - 1].weight} kg` : '65.2 kg'}
+              {weightRecords.length > 0 ? `${parseFloat(weightRecords[weightRecords.length - 1].weight)} kg` : '65.2 kg'}
             </p>
           </div>
           <div 
@@ -532,7 +547,7 @@ const TaskManager: React.FC = () => {
           <div className="grid grid-cols-2 gap-4 mb-6">
             <div className="bg-gray-50 rounded-lg p-4 text-center">
               <div className="text-2xl font-bold text-theme-600" data-testid="text-current-weight">
-                {weightRecords.length > 0 ? weightRecords[weightRecords.length - 1].weight : '65.2'}
+                {weightRecords.length > 0 ? parseFloat(weightRecords[weightRecords.length - 1].weight) : '65.2'}
               </div>
               <div className="text-sm text-gray-500">体重 (kg)</div>
             </div>

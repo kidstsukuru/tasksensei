@@ -1,48 +1,34 @@
-export interface Todo {
-  id: number;
-  text: string;
-  completed: boolean;
-  createdAt: Date;
-}
+// Import types from shared schema to ensure consistency between frontend and backend
+import type {
+  Todo,
+  Schedule,
+  SleepRecord,
+  WeightRecord,
+  MealRecord,
+  DiaryEntry,
+  InsertTodo,
+  InsertSchedule,
+  InsertSleepRecord,
+  InsertWeightRecord,
+  InsertMealRecord,
+  InsertDiaryEntry
+} from '@shared/schema';
 
-export interface Schedule {
-  id: number;
-  text: string;
-  date: string;
-  time?: Date;
-  completed: boolean;
-}
-
-export interface SleepRecord {
-  id: number;
-  date: string;
-  bedtime: Date;
-  wakeup: Date;
-  duration: number;
-}
-
-export interface WeightRecord {
-  id: number;
-  date: string;
-  weight: number;
-  bodyFat?: number;
-}
-
-export interface MealRecord {
-  id: number;
-  date: string;
-  meal: 'breakfast' | 'lunch' | 'dinner';
-  food: string;
-  calories: number;
-}
-
-export interface DiaryEntry {
-  id: number;
-  date: string;
-  content: string;
-  mood?: string;
-  photos?: string[];
-}
+// Re-export for other components
+export type {
+  Todo,
+  Schedule,
+  SleepRecord,
+  WeightRecord,
+  MealRecord,
+  DiaryEntry,
+  InsertTodo,
+  InsertSchedule,
+  InsertSleepRecord,
+  InsertWeightRecord,
+  InsertMealRecord,
+  InsertDiaryEntry
+};
 
 export interface PomodoroState {
   minutes: number;
