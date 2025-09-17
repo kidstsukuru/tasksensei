@@ -5,9 +5,13 @@ import {
   type SleepRecord, type InsertSleepRecord,
   type WeightRecord, type InsertWeightRecord,
   type MealRecord, type InsertMealRecord,
-  type DiaryEntry, type InsertDiaryEntry
+  type DiaryEntry, type InsertDiaryEntry,
+  users, todos, schedules, sleepRecords, weightRecords, mealRecords, diaryEntries
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { drizzle } from "drizzle-orm/neon-http";
+import { neon } from "@neondatabase/serverless";
+import { eq } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -22,43 +26,226 @@ export interface IStorage {
   getTodosByUserId(userId: string): Promise<Todo[]>;
   getTodo(id: string): Promise<Todo | undefined>;
   createTodo(todo: InsertTodo): Promise<Todo>;
-  updateTodo(id: string, todo: Partial<InsertTodo>): Promise<Todo | undefined>;
+  updateTodo(id: string, todo: Partial<Omit<InsertTodo, 'id' | 'userId'>>): Promise<Todo | undefined>;
   deleteTodo(id: string): Promise<boolean>;
   
   // Schedule methods
   getSchedulesByUserId(userId: string): Promise<Schedule[]>;
   getSchedule(id: string): Promise<Schedule | undefined>;
   createSchedule(schedule: InsertSchedule): Promise<Schedule>;
-  updateSchedule(id: string, schedule: Partial<InsertSchedule>): Promise<Schedule | undefined>;
+  updateSchedule(id: string, schedule: Partial<Omit<InsertSchedule, 'id' | 'userId'>>): Promise<Schedule | undefined>;
   deleteSchedule(id: string): Promise<boolean>;
   
   // Sleep record methods
   getSleepRecordsByUserId(userId: string): Promise<SleepRecord[]>;
   getSleepRecord(id: string): Promise<SleepRecord | undefined>;
   createSleepRecord(sleepRecord: InsertSleepRecord): Promise<SleepRecord>;
-  updateSleepRecord(id: string, sleepRecord: Partial<InsertSleepRecord>): Promise<SleepRecord | undefined>;
+  updateSleepRecord(id: string, sleepRecord: Partial<Omit<InsertSleepRecord, 'id' | 'userId'>>): Promise<SleepRecord | undefined>;
   deleteSleepRecord(id: string): Promise<boolean>;
   
   // Weight record methods
   getWeightRecordsByUserId(userId: string): Promise<WeightRecord[]>;
   getWeightRecord(id: string): Promise<WeightRecord | undefined>;
   createWeightRecord(weightRecord: InsertWeightRecord): Promise<WeightRecord>;
-  updateWeightRecord(id: string, weightRecord: Partial<InsertWeightRecord>): Promise<WeightRecord | undefined>;
+  updateWeightRecord(id: string, weightRecord: Partial<Omit<InsertWeightRecord, 'id' | 'userId'>>): Promise<WeightRecord | undefined>;
   deleteWeightRecord(id: string): Promise<boolean>;
   
   // Meal record methods
   getMealRecordsByUserId(userId: string): Promise<MealRecord[]>;
   getMealRecord(id: string): Promise<MealRecord | undefined>;
   createMealRecord(mealRecord: InsertMealRecord): Promise<MealRecord>;
-  updateMealRecord(id: string, mealRecord: Partial<InsertMealRecord>): Promise<MealRecord | undefined>;
+  updateMealRecord(id: string, mealRecord: Partial<Omit<InsertMealRecord, 'id' | 'userId'>>): Promise<MealRecord | undefined>;
   deleteMealRecord(id: string): Promise<boolean>;
   
   // Diary entry methods
   getDiaryEntriesByUserId(userId: string): Promise<DiaryEntry[]>;
   getDiaryEntry(id: string): Promise<DiaryEntry | undefined>;
   createDiaryEntry(diaryEntry: InsertDiaryEntry): Promise<DiaryEntry>;
-  updateDiaryEntry(id: string, diaryEntry: Partial<InsertDiaryEntry>): Promise<DiaryEntry | undefined>;
+  updateDiaryEntry(id: string, diaryEntry: Partial<Omit<InsertDiaryEntry, 'id' | 'userId'>>): Promise<DiaryEntry | undefined>;
   deleteDiaryEntry(id: string): Promise<boolean>;
+}
+
+// Database storage using DrizzleORM and PostgreSQL
+export class DbStorage implements IStorage {
+  private db: ReturnType<typeof drizzle>;
+
+  constructor() {
+    if (!process.env.DATABASE_URL) {
+      throw new Error("DATABASE_URL environment variable is required");
+    }
+    
+    const sql = neon(process.env.DATABASE_URL);
+    this.db = drizzle(sql);
+    
+    // Log successful database connection
+    console.log("✅ Database connection established successfully");
+  }
+
+  // User methods
+  async getUser(id: string): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users.id, id));
+    return result[0];
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const result = await this.db.select().from(users).where(eq(users.username, username));
+    return result[0];
+  }
+
+  async createUser(insertUser: InsertUser): Promise<User> {
+    const result = await this.db.insert(users).values(insertUser).returning();
+    return result[0];
+  }
+
+  // Todo methods
+  async getTodosByUserId(userId: string): Promise<Todo[]> {
+    return await this.db.select().from(todos).where(eq(todos.userId, userId));
+  }
+
+  async getTodo(id: string): Promise<Todo | undefined> {
+    const result = await this.db.select().from(todos).where(eq(todos.id, id));
+    return result[0];
+  }
+
+  async createTodo(insertTodo: InsertTodo): Promise<Todo> {
+    const result = await this.db.insert(todos).values(insertTodo).returning();
+    return result[0];
+  }
+
+  async updateTodo(id: string, todoUpdate: Partial<Omit<InsertTodo, 'id' | 'userId'>>): Promise<Todo | undefined> {
+    const result = await this.db.update(todos).set(todoUpdate).where(eq(todos.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteTodo(id: string): Promise<boolean> {
+    const result = await this.db.delete(todos).where(eq(todos.id, id)).returning({ id: todos.id });
+    return result.length > 0;
+  }
+
+  // Schedule methods
+  async getSchedulesByUserId(userId: string): Promise<Schedule[]> {
+    return await this.db.select().from(schedules).where(eq(schedules.userId, userId));
+  }
+
+  async getSchedule(id: string): Promise<Schedule | undefined> {
+    const result = await this.db.select().from(schedules).where(eq(schedules.id, id));
+    return result[0];
+  }
+
+  async createSchedule(insertSchedule: InsertSchedule): Promise<Schedule> {
+    const result = await this.db.insert(schedules).values(insertSchedule).returning();
+    return result[0];
+  }
+
+  async updateSchedule(id: string, scheduleUpdate: Partial<Omit<InsertSchedule, 'id' | 'userId'>>): Promise<Schedule | undefined> {
+    const result = await this.db.update(schedules).set(scheduleUpdate).where(eq(schedules.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteSchedule(id: string): Promise<boolean> {
+    const result = await this.db.delete(schedules).where(eq(schedules.id, id)).returning({ id: schedules.id });
+    return result.length > 0;
+  }
+
+  // Sleep record methods
+  async getSleepRecordsByUserId(userId: string): Promise<SleepRecord[]> {
+    return await this.db.select().from(sleepRecords).where(eq(sleepRecords.userId, userId));
+  }
+
+  async getSleepRecord(id: string): Promise<SleepRecord | undefined> {
+    const result = await this.db.select().from(sleepRecords).where(eq(sleepRecords.id, id));
+    return result[0];
+  }
+
+  async createSleepRecord(insertSleepRecord: InsertSleepRecord): Promise<SleepRecord> {
+    const result = await this.db.insert(sleepRecords).values(insertSleepRecord).returning();
+    return result[0];
+  }
+
+  async updateSleepRecord(id: string, sleepRecordUpdate: Partial<Omit<InsertSleepRecord, 'id' | 'userId'>>): Promise<SleepRecord | undefined> {
+    const result = await this.db.update(sleepRecords).set(sleepRecordUpdate).where(eq(sleepRecords.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteSleepRecord(id: string): Promise<boolean> {
+    const result = await this.db.delete(sleepRecords).where(eq(sleepRecords.id, id)).returning({ id: sleepRecords.id });
+    return result.length > 0;
+  }
+
+  // Weight record methods
+  async getWeightRecordsByUserId(userId: string): Promise<WeightRecord[]> {
+    return await this.db.select().from(weightRecords).where(eq(weightRecords.userId, userId));
+  }
+
+  async getWeightRecord(id: string): Promise<WeightRecord | undefined> {
+    const result = await this.db.select().from(weightRecords).where(eq(weightRecords.id, id));
+    return result[0];
+  }
+
+  async createWeightRecord(insertWeightRecord: InsertWeightRecord): Promise<WeightRecord> {
+    const result = await this.db.insert(weightRecords).values(insertWeightRecord).returning();
+    return result[0];
+  }
+
+  async updateWeightRecord(id: string, weightRecordUpdate: Partial<Omit<InsertWeightRecord, 'id' | 'userId'>>): Promise<WeightRecord | undefined> {
+    const result = await this.db.update(weightRecords).set(weightRecordUpdate).where(eq(weightRecords.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteWeightRecord(id: string): Promise<boolean> {
+    const result = await this.db.delete(weightRecords).where(eq(weightRecords.id, id)).returning({ id: weightRecords.id });
+    return result.length > 0;
+  }
+
+  // Meal record methods
+  async getMealRecordsByUserId(userId: string): Promise<MealRecord[]> {
+    return await this.db.select().from(mealRecords).where(eq(mealRecords.userId, userId));
+  }
+
+  async getMealRecord(id: string): Promise<MealRecord | undefined> {
+    const result = await this.db.select().from(mealRecords).where(eq(mealRecords.id, id));
+    return result[0];
+  }
+
+  async createMealRecord(insertMealRecord: InsertMealRecord): Promise<MealRecord> {
+    const result = await this.db.insert(mealRecords).values(insertMealRecord).returning();
+    return result[0];
+  }
+
+  async updateMealRecord(id: string, mealRecordUpdate: Partial<Omit<InsertMealRecord, 'id' | 'userId'>>): Promise<MealRecord | undefined> {
+    const result = await this.db.update(mealRecords).set(mealRecordUpdate).where(eq(mealRecords.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteMealRecord(id: string): Promise<boolean> {
+    const result = await this.db.delete(mealRecords).where(eq(mealRecords.id, id)).returning({ id: mealRecords.id });
+    return result.length > 0;
+  }
+
+  // Diary entry methods
+  async getDiaryEntriesByUserId(userId: string): Promise<DiaryEntry[]> {
+    return await this.db.select().from(diaryEntries).where(eq(diaryEntries.userId, userId));
+  }
+
+  async getDiaryEntry(id: string): Promise<DiaryEntry | undefined> {
+    const result = await this.db.select().from(diaryEntries).where(eq(diaryEntries.id, id));
+    return result[0];
+  }
+
+  async createDiaryEntry(insertDiaryEntry: InsertDiaryEntry): Promise<DiaryEntry> {
+    const result = await this.db.insert(diaryEntries).values(insertDiaryEntry).returning();
+    return result[0];
+  }
+
+  async updateDiaryEntry(id: string, diaryEntryUpdate: Partial<Omit<InsertDiaryEntry, 'id' | 'userId'>>): Promise<DiaryEntry | undefined> {
+    const result = await this.db.update(diaryEntries).set(diaryEntryUpdate).where(eq(diaryEntries.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteDiaryEntry(id: string): Promise<boolean> {
+    const result = await this.db.delete(diaryEntries).where(eq(diaryEntries.id, id)).returning({ id: diaryEntries.id });
+    return result.length > 0;
+  }
 }
 
 export class MemStorage implements IStorage {
@@ -118,7 +305,7 @@ export class MemStorage implements IStorage {
     return todo;
   }
 
-  async updateTodo(id: string, todoUpdate: Partial<InsertTodo>): Promise<Todo | undefined> {
+  async updateTodo(id: string, todoUpdate: Partial<Omit<InsertTodo, 'id' | 'userId'>>): Promise<Todo | undefined> {
     const existingTodo = this.todos.get(id);
     if (!existingTodo) return undefined;
     
@@ -152,7 +339,7 @@ export class MemStorage implements IStorage {
     return schedule;
   }
 
-  async updateSchedule(id: string, scheduleUpdate: Partial<InsertSchedule>): Promise<Schedule | undefined> {
+  async updateSchedule(id: string, scheduleUpdate: Partial<Omit<InsertSchedule, 'id' | 'userId'>>): Promise<Schedule | undefined> {
     const existingSchedule = this.schedules.get(id);
     if (!existingSchedule) return undefined;
     
@@ -181,7 +368,7 @@ export class MemStorage implements IStorage {
     return sleepRecord;
   }
 
-  async updateSleepRecord(id: string, sleepRecordUpdate: Partial<InsertSleepRecord>): Promise<SleepRecord | undefined> {
+  async updateSleepRecord(id: string, sleepRecordUpdate: Partial<Omit<InsertSleepRecord, 'id' | 'userId'>>): Promise<SleepRecord | undefined> {
     const existingSleepRecord = this.sleepRecords.get(id);
     if (!existingSleepRecord) return undefined;
     
@@ -214,7 +401,7 @@ export class MemStorage implements IStorage {
     return weightRecord;
   }
 
-  async updateWeightRecord(id: string, weightRecordUpdate: Partial<InsertWeightRecord>): Promise<WeightRecord | undefined> {
+  async updateWeightRecord(id: string, weightRecordUpdate: Partial<Omit<InsertWeightRecord, 'id' | 'userId'>>): Promise<WeightRecord | undefined> {
     const existingWeightRecord = this.weightRecords.get(id);
     if (!existingWeightRecord) return undefined;
     
@@ -243,7 +430,7 @@ export class MemStorage implements IStorage {
     return mealRecord;
   }
 
-  async updateMealRecord(id: string, mealRecordUpdate: Partial<InsertMealRecord>): Promise<MealRecord | undefined> {
+  async updateMealRecord(id: string, mealRecordUpdate: Partial<Omit<InsertMealRecord, 'id' | 'userId'>>): Promise<MealRecord | undefined> {
     const existingMealRecord = this.mealRecords.get(id);
     if (!existingMealRecord) return undefined;
     
@@ -277,7 +464,7 @@ export class MemStorage implements IStorage {
     return diaryEntry;
   }
 
-  async updateDiaryEntry(id: string, diaryEntryUpdate: Partial<InsertDiaryEntry>): Promise<DiaryEntry | undefined> {
+  async updateDiaryEntry(id: string, diaryEntryUpdate: Partial<Omit<InsertDiaryEntry, 'id' | 'userId'>>): Promise<DiaryEntry | undefined> {
     const existingDiaryEntry = this.diaryEntries.get(id);
     if (!existingDiaryEntry) return undefined;
     
@@ -291,4 +478,4 @@ export class MemStorage implements IStorage {
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DbStorage();

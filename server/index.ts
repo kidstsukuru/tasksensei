@@ -12,7 +12,7 @@ app.use(express.urlencoded({ extended: false }));
 
 // Session configuration
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'your-secret-key-change-in-production',
+  secret: process.env.SESSION_SECRET || '2e9041c7cc9bba4be9307534f2b24c828459ef3428cd678406bf3ab7f81eac2b',
   resave: false,
   saveUninitialized: false,
   store: new MemoryStoreSession({
