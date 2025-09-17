@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>タスク管理アプリ プロトタイプ</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --theme-50: #fdf2f8;
+            --theme-100: #fce7f3;
+            --theme-200: #fbcfe8;
+            --theme-400: #f472b6;
+            --theme-500: #ec4899;
+            --theme-600: #db2777;
+            --theme-900: #831843;
+        }
+        body {
+            font-family: 'Noto Sans JP', 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--theme-50); }
+        ::-webkit-scrollbar-thumb { background: var(--theme-400); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--theme-500); }
+        .nav-active svg, .nav-active span { color: var(--theme-500); }
+        .pomodoro-btn.active { background-color: var(--theme-500); color: white; }
+    </style>
+</head>
+<body class="bg-[var(--theme-50)] text-[var(--theme-900)]">
+
+    <div id="app" class="max-w-md mx-auto bg-white shadow-lg min-h-screen pb-24">
+        <!-- Modals -->
+        <div id="camera-modal" class="hidden fixed inset-0 bg-black z-50 flex flex-col justify-center items-center">
+            <video id="camera-stream" class="w-full h-full object-cover" autoplay playsinline></video>
+            <button id="capture-btn" class="absolute bottom-10 w-20 h-20 rounded-full bg-white/80 border-4 border-white/90"></button>
+            <button id="close-camera-btn" class="absolute top-5 right-5 text-white bg-black/50 rounded-full p-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+            </button>
+        </div>
+        <canvas id="photo-canvas" class="hidden"></canvas>
+        <div id="schedule-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+                <h2 class="text-xl font-bold mb-4">予定を追加</h2>
+                <input type="text" id="schedule-input" placeholder="予定を入力" class="form-input mb-4">
+                <div class="flex justify-end space-x-3">
+                    <button id="cancel-schedule" class="btn-secondary">キャンセル</button>
+                    <button id="save-schedule" class="btn-primary">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Header -->
+        <header class="sticky top-0 bg-white/80 backdrop-blur-sm z-10 px-4 py-3 flex justify-between items-center border-b border-[var(--theme-200)]">
+            <h1 class="text-lg font-bold text-gray-900">タスク管理</h1>
+            <div id="header-date" class="text-sm font-medium text-gray-600"></div>
+            <div class="flex items-center space-x-4">
+                <button id="notification-btn" class="text-gray-500 hover:text-[var(--theme-500)] transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" /><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" /></svg>
+                </button>
+                <button id="clock-btn" class="text-gray-500 hover:text-[var(--theme-500)] transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main>
+            <div id="home-screen" class="page p-4 space-y-6">
+                <section id="scheduled-today-section" class="space-y-2 mb-6"></section>
+                <section class="hidden">
+                    <div class="flex items-center mb-3">
+                        <h2 class="text-xl font-bold">今日のタスク</h2>
+                        <button id="add-today-task-btn" class="ml-2 bg-[var(--theme-500)] text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-[var(--theme-600)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-500)] focus:ring-opacity-75">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                        </button>
+                    </div>
+                    <div id="today-tasks-list" class="space-y-2"></div>
+                </section>
+                <section>
+                    <div class="flex justify-between items-center mb-3">
+                        <div id="toggle-todo-visibility" class="flex items-center cursor-pointer flex-grow">
+                            <h2 class="text-xl font-bold">TODOリスト</h2>
+                            <button id="add-todo-header-btn" class="ml-2 bg-[var(--theme-500)] text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-[var(--theme-600)] transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--theme-500)] focus:ring-opacity-75">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            </button>
+                            <svg id="todo-arrow-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="transition-transform ml-auto"><path d="m6 9 6 6 6-6" /></svg>
+                        </div>
+                    </div>
+                    <div id="todo-content" class="hidden"><div id="todo-list" class="space-y-2"></div></div>
+                </section>
+                <section>
+                    <h2 class="text-xl font-bold mb-3">マイページ</h2>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="record-card" data-target="sleep-detail-screen"><h3 class="font-bold">睡眠</h3><p id="today-sleep-summary" class="text-sm text-gray-500">未記録</p></div>
+                        <div class="record-card" data-target="meal-detail-screen"><h3 class="font-bold">食事</h3><p class="text-sm text-gray-500">1800 kcal</p></div>
+                        <div class="record-card" data-target="body-detail-screen"><h3 class="font-bold">身体</h3><p class="text-sm text-gray-500">65.2 kg</p></div>
+                        <div class="record-card" data-target="diary-detail-screen"><h3 class="font-bold">メモ</h3><p class="text-sm text-gray-500">今日の振り返り...</p></div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Screens -->
+            <div id="pomodoro-screen" class="page hidden p-4 text-center">
+                <header class="flex items-center mb-6">
+                    <button class="back-btn p-2 rounded-full hover:bg-gray-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6" /></svg>
+                    </button>
+                    <h2 class="text-xl font-bold mx-auto pr-8">ポモドーロタイマー</h2>
+                </header>
+                <div class="bg-white rounded-lg shadow-inner p-6">
+                    <div class="flex justify-center space-x-2 mb-6">
+                        <button class="pomodoro-btn active px-4 py-1 rounded-full text-sm font-medium" data-mode="pomodoro">ポモドーロ</button>
+                        <button class="pomodoro-btn px-4 py-1 rounded-full text-sm font-medium" data-mode="shortBreak">短い休憩</button>
+                        <button class="pomodoro-btn px-4 py-1 rounded-full text-sm font-medium" data-mode="longBreak">長い休憩</button>
+                    </div>
+                    <div id="pomodoro-timer-display" class="text-7xl font-bold text-[var(--theme-900)] mb-6">25:00</div>
+                    <div class="flex justify-center items-center space-x-6">
+                        <button id="pomodoro-toggle-btn" class="w-16 h-16 flex items-center justify-center bg-[var(--theme-500)] text-white font-semibold rounded-full shadow-md hover:bg-[var(--theme-600)] transition">
+                            <svg id="pomodoro-play-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                            <svg id="pomodoro-pause-icon" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" class="hidden"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>
+                        </button>
+                        <button id="pomodoro-reset-btn" class="w-12 h-12 flex items-center justify-center bg-gray-200 text-gray-800 font-semibold rounded-full hover:bg-gray-300 transition">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M2.5 22v-6h6" /><path d="M22 11.5A10 10 0 0 0 3.5 12.5" /><path d="M2 12.5a10 10 0 0 0 18.5-1" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div id="task-detail-screen" class="page hidden p-4"></div>
+            <div id="sleep-detail-screen" class="page hidden p-4">
+                <header class="flex items-center mb-6">
+                    <button class="back-btn p-2 rounded-full hover:bg-gray-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 18-6-6 6-6"/></svg>
+                    </button>
+                    <h2 class="text-xl font-bold mx-auto pr-8">睡眠記録</h2>
+                </header>
+                <div class="px-4 space-y-6">
+                    <!-- Pending Sleep Record -->
+                    <div class="bg-white rounded-lg shadow p-4 space-y-4">
+                        <div id="pending-bedtime-section">
+                            <label class="block text-sm font-medium text-gray-500">就寝時間</label>
+                            <div class="flex items-center justify-between">
+                                <span id="pending-bedtime-display" class="text-2xl font-semibold">--:--</span>
+                                <div class="flex items-center space-x-2">
+                                    <button id="delete-bedtime-btn" class="hidden p-2 bg-red-500 text-white rounded-full hover:bg-red-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
+                                    <button id="set-bedtime-btn" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 w-20 text-center">記録</button>
+                                </div>
+                            </div>
+                            <div id="bedtime-input-container" class="hidden mt-2">
+                                <input type="time" id="bedtime-input-edit" class="w-full p-2 border border-gray-300 rounded-md">
+                                <button id="save-bedtime-edit-btn" class="w-full mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">セット</button>
+                            </div>
+                        </div>
+                        <hr>
+                        <div id="pending-wakeup-section">
+                            <label class="block text-sm font-medium text-gray-500">起床時間</label>
+                            <div class="flex items-center justify-between">
+                                <span id="pending-wakeup-display" class="text-2xl font-semibold">--:--</span>
+                                <div class="flex items-center space-x-2">
+                                    <button id="delete-wakeup-btn" class="hidden p-2 bg-red-500 text-white rounded-full hover:bg-red-600">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                                    </button>
+                                    <button id="set-wakeup-btn" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 w-20 text-center">記録</button>
+                                </div>
+                            </div>
+                            <div id="wakeup-input-container" class="hidden mt-2">
+                                <input type="time" id="wakeup-input-edit" class="w-full p-2 border border-gray-300 rounded-md">
+                                <button id="save-wakeup-edit-btn" class="w-full mt-2 px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600">セット</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button id="save-pending-sleep-btn" class="w-full px-6 py-3 bg-gray-400 text-white font-bold rounded-lg shadow-md transition" disabled>睡眠を保存</button>
+
+                    <hr class="my-4">
+                    <div id="sleep-records-list" class="space-y-4"></div>
+                </div>
+            </div>
+            <div id="meal-detail-screen" class="page hidden p-4"></div>
+            <div id="body-detail-screen" class="page hidden p-4"></div>
+            <div id="diary-detail-screen" class="page hidden p-4"></div>
+            <div id="calendar-screen" class="page hidden p-4"><div id="calendar-container"></div></div>
+            <div id="my-page-screen" class="page hidden p-4 flex flex-col items-center">
+                <h2 class="text-xl font-bold mb-6">マイページ</h2>
+                <div class="relative group w-32 h-32">
+                    <img id="profile-icon" src="https://via.placeholder.com/128" alt="プロフィール画像" class="rounded-full w-full h-full object-cover border-4 border-[var(--theme-200)] cursor-pointer">
+                    <div class="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer" id="profile-icon-overlay">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z" /><circle cx="12" cy="13" r="3" /></svg>
+                    </div>
+                </div>
+                <input type="file" id="profile-icon-input" class="hidden" accept="image/*">
+                <button id="go-to-settings-btn" class="mt-6 px-8 py-2 bg-white border border-gray-300 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-50 transition">設定</button>
+                <p class="mt-4 text-gray-500">アイコンをタップして変更できます</p>
+            </div>
+            <div id="game-screen" class="page hidden p-4 text-center"><h2 class="text-xl font-bold">ゲーム</h2><p class="mt-4 text-gray-500">この画面は現在開発中です。</p></div>
+            <div id="settings-screen" class="page hidden p-4">
+                <h2 class="text-xl font-bold mb-6 text-center">設定</h2>
+                <div class="space-y-6">
+                    <div>
+                        <h3 class="text-lg font-medium text-gray-800 mb-3">テーマカラー</h3>
+                        <div id="theme-selector" class="grid grid-cols-4 gap-4 justify-items-center"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="fixed bottom-0 left-0 right-0 max-w-md mx-auto bg-white border-t border-[var(--theme-200)]">
+            <nav class="flex justify-around py-2">
+                <button class="nav-btn nav-active" data-target="home-screen"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" /><polyline points="9 22 9 12 15 12 15 22" /></svg><span class="text-xs">ホーム</span></button>
+                <button class="nav-btn" data-target="calendar-screen"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2" /><line x1="16" x2="16" y1="2" y2="6" /><line x1="8" x2="8" y1="2" y2="6" /><line x1="3" x2="21" y1="10" y2="10" /></svg><span class="text-xs">カレンダー</span></button>
+                <button class="nav-btn" data-target="my-page-screen"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg><span class="text-xs">マイページ</span></button>
+                <button class="nav-btn" data-target="diary-detail-screen"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" /><path d="M2 12h2" /><path d="M2 7h2" /><path d="M2 17h2" /></svg><span class="text-xs">日誌</span></button>
+            </nav>
+        </footer>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM Elements ---
+        const pages = document.querySelectorAll('.page');
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const recordCards = document.querySelectorAll('.record-card');
+        const headerDateEl = document.getElementById('header-date');
+        const notificationBtn = document.getElementById('notification-btn');
+        const clockBtn = document.getElementById('clock-btn');
+        const todayTasksList = document.getElementById('today-tasks-list');
+        const addTodayTaskBtn = document.getElementById('add-today-task-btn');
+        const todoList = document.getElementById('todo-list');
+        const calendarContainer = document.getElementById('calendar-container');
+        const scheduleModal = document.getElementById('schedule-modal');
+        const scheduleInput = document.getElementById('schedule-input');
+        const saveScheduleBtn = document.getElementById('save-schedule');
+        const cancelScheduleBtn = document.getElementById('cancel-schedule');
+        const scheduledTodaySection = document.getElementById('scheduled-today-section');
+        const toggleTodoVisibility = document.getElementById('toggle-todo-visibility');
+        const todoContent = document.getElementById('todo-content');
+        const todoArrowIcon = document.getElementById('todo-arrow-icon');
+        const addTodoHeaderBtn = document.getElementById('add-todo-header-btn');
+        const cameraModal = document.getElementById('camera-modal');
+        const cameraStream = document.getElementById('camera-stream');
+        const captureBtn = document.getElementById('capture-btn');
+        const closeCameraBtn = document.getElementById('close-camera-btn');
+        const photoCanvas = document.getElementById('photo-canvas');
+        const profileIcon = document.getElementById('profile-icon');
+        const profileIconInput = document.getElementById('profile-icon-input');
+        const profileIconOverlay = document.getElementById('profile-icon-overlay');
+        const themeSelector = document.getElementById('theme-selector');
+        const goToSettingsBtn = document.getElementById('go-to-settings-btn');
+        const todaySleepSummary = document.getElementById('today-sleep-summary');
+
+        // Pomodoro Elements
+        const pomodoroTimerDisplay = document.getElementById('pomodoro-timer-display');
+        const pomodoroToggleBtn = document.getElementById('pomodoro-toggle-btn');
+        const pomodoroResetBtn = document.getElementById('pomodoro-reset-btn');
+        const pomodoroModeBtns = document.querySelectorAll('.pomodoro-btn');
+        const pomodoroPlayIcon = document.getElementById('pomodoro-play-icon');
+        const pomodoroPauseIcon = document.getElementById('pomodoro-pause-icon');
+        
+        // Sleep Elements
+        const sleepRecordsList = document.getElementById('sleep-records-list');
+        const pendingBedtimeDisplay = document.getElementById('pending-bedtime-display');
+        const setBedtimeBtn = document.getElementById('set-bedtime-btn');
+        const deleteBedtimeBtn = document.getElementById('delete-bedtime-btn');
+        const bedtimeInputContainer = document.getElementById('bedtime-input-container');
+        const bedtimeInputEdit = document.getElementById('bedtime-input-edit');
+        const saveBedtimeEditBtn = document.getElementById('save-bedtime-edit-btn');
+        const pendingWakeupDisplay = document.getElementById('pending-wakeup-display');
+        const setWakeupBtn = document.getElementById('set-wakeup-btn');
+        const deleteWakeupBtn = document.getElementById('delete-wakeup-btn');
+        const wakeupInputContainer = document.getElementById('wakeup-input-container');
+        const wakeupInputEdit = document.getElementById('wakeup-input-edit');
+        const saveWakeupEditBtn = document.getElementById('save-wakeup-edit-btn');
+        const savePendingSleepBtn = document.getElementById('save-pending-sleep-btn');
+
+        // --- App State ---
+        let currentYear = new Date().getFullYear();
+        let currentMonth = new Date().getMonth();
+        let selectedDate = null;
+        let weightChart = null;
+        let stream = null;
+        // Pomodoro State
+        let pomodoroTimerId = null;
+        let isPomodoroRunning = false;
+        let pomodoroTimeRemaining = 25 * 60;
+        let pomodoroCurrentMode = 'pomodoro';
+        const pomodoroTimes = { pomodoro: 25 * 60, shortBreak: 5 * 60, longBreak: 15 * 60 };
+
+        // --- Data Management ---
+        const getScheduleData = () => JSON.parse(localStorage.getItem('schedules') || '[]');
+        const saveScheduleData = (data) => localStorage.setItem('schedules', JSON.stringify(data));
+        const getMemoData = () => JSON.parse(localStorage.getItem('memoData') || '{}');
+        const saveMemoData = (data) => localStorage.setItem('memoData', JSON.stringify(data));
+        const getWeightData = () => JSON.parse(localStorage.getItem('weightData') || '[]');
+        const saveWeightData = (data) => localStorage.setItem('weightData', JSON.stringify(data));
+        const getNotificationSetting = () => JSON.parse(localStorage.getItem('notificationEnabled') || 'true');
+        const saveNotificationSetting = (isEnabled) => localStorage.setItem('notificationEnabled', JSON.stringify(isEnabled));
+        const getSleepData = () => JSON.parse(localStorage.getItem('sleepData') || '[]');
+        const saveSleepData = (data) => localStorage.setItem('sleepData', JSON.stringify(data));
+        const getPendingBedtime = () => localStorage.getItem('pendingBedtime');
+        const savePendingBedtime = (time) => localStorage.setItem('pendingBedtime', time);
+        const clearPendingBedtime = () => localStorage.removeItem('pendingBedtime');
+        const getPendingWakeupTime = () => localStorage.getItem('pendingWakeupTime');
+        const savePendingWakeupTime = (time) => localStorage.setItem('pendingWakeupTime', time);
+        const clearPendingWakeupTime = () => localStorage.removeItem('pendingWakeupTime');
+
+        const mockData = {
+            todayTasks: [],
+            todos: [],
+            schedules: getScheduleData()
+        };
+
+        // --- Theming ---
+        const themes = {
+            pink: { '--theme-50': '#fdf2f8', '--theme-100': '#fce7f3', '--theme-200': '#fbcfe8', '--theme-400': '#f472b6', '--theme-500': '#ec4899', '--theme-600': '#db2777', '--theme-900': '#831843' },
+            sky: { '--theme-50': '#f0f9ff', '--theme-100': '#e0f2fe', '--theme-200': '#bae6fd', '--theme-400': '#38bdf8', '--theme-500': '#0ea5e9', '--theme-600': '#0284c7', '--theme-900': '#0c4a6e' },
+            yellow: { '--theme-50': '#fefce8', '--theme-100': '#fef9c3', '--theme-200': '#fef08a', '--theme-400': '#facc15', '--theme-500': '#eab308', '--theme-600': '#ca8a04', '--theme-900': '#713f12' },
+            green: { '--theme-50': '#f0fdf4', '--theme-100': '#dcfce7', '--theme-200': '#bbf7d0', '--theme-400': '#4ade80', '--theme-500': '#22c55e', '--theme-600': '#16a34a', '--theme-900': '#14532d' },
+            purple: { '--theme-50': '#f5f3ff', '--theme-100': '#ede9fe', '--theme-200': '#ddd6fe', '--theme-400': '#a78bfa', '--theme-500': '#8b5cf6', '--theme-600': '#7c3aed', '--theme-900': '#4c1d95' },
+            orange: { '--theme-50': '#fff7ed', '--theme-100': '#ffedd5', '--theme-200': '#fed7aa', '--theme-400': '#fb923c', '--theme-500': '#f97316', '--theme-600': '#ea580c', '--theme-900': '#7c2d12' },
+            black: { '--theme-50': '#f1f5f9', '--theme-100': '#e2e8f0', '--theme-200': '#cbd5e1', '--theme-400': '#94a3b8', '--theme-500': '#64748b', '--theme-600': '#475569', '--theme-900': '#0f172a' }
+        };
+
+        const applyTheme = (themeName) => {
+            const theme = themes[themeName];
+            if (!theme) return;
+            const root = document.documentElement;
+            for (const [key, value] of Object.entries(theme)) {
+                root.style.setProperty(key, value);
+            }
+            localStorage.setItem('theme', themeName);
+        };
+
+        // --- UI Rendering & Logic ---
+        const showPage = (targetId) => {
+            pages.forEach(page => page.classList.toggle('hidden', page.id !== targetId));
+            navButtons.forEach(btn => btn.classList.toggle('nav-active', btn.dataset.target === targetId));
+            window.scrollTo(0, 0);
+            if (targetId === 'body-detail-screen') setTimeout(renderWeightChart, 0);
+            else if (targetId === 'diary-detail-screen') { renderDiaryList(); showDiaryListView(); }
+            else if (targetId === 'sleep-detail-screen') { renderSleepRecords(); updatePendingSleepUI(); }
+        };
+
+        const renderTask = (task, isTodo) => {
+            const taskEl = document.createElement('div');
+            taskEl.className = 'task-item';
+            taskEl.dataset.id = task.id;
+            taskEl.innerHTML = `
+                <div class="flex items-center">
+                    <input type="checkbox" id="task-${isTodo ? 'todo' : 'today'}-${task.id}" class="h-5 w-5 rounded border-gray-300 text-[var(--theme-600)] focus:ring-[var(--theme-500)]" ${task.completed ? 'checked' : ''}>
+                    <input type="text" value="${task.text}" class="flex-grow ml-3 bg-transparent focus:bg-[var(--theme-100)] rounded px-1 outline-none ${task.completed ? 'line-through text-gray-400' : ''}">
+                </div>
+                ${isTodo ? '<button class="delete-todo-btn text-gray-400 hover:text-red-500">×</button>' : ''}
+            `;
+            taskEl.querySelector('input[type="checkbox"]').addEventListener('change', (e) => {
+                task.completed = e.target.checked;
+                taskEl.querySelector('input[type="text"]').classList.toggle('line-through', task.completed);
+                taskEl.querySelector('input[type="text"]').classList.toggle('text-gray-400', task.completed);
+            });
+            taskEl.querySelector('input[type="text"]').addEventListener('click', () => { if(isTodo) showPage('task-detail-screen'); });
+            return taskEl;
+        };
+
+        const renderAllTodayTasks = () => {
+            todayTasksList.innerHTML = '';
+            mockData.todayTasks.forEach(task => {
+                const taskEl = renderTask(task, false);
+                todayTasksList.appendChild(taskEl);
+            });
+        };
+
+        const renderAllTodos = () => {
+            todoList.innerHTML = '';
+            mockData.todos.forEach(task => {
+                const todoEl = renderTask(task, true);
+                todoEl.querySelector('.delete-todo-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    mockData.todos = mockData.todos.filter(t => t.id !== parseInt(todoEl.dataset.id));
+                    renderAllTodos();
+                });
+                todoList.appendChild(todoEl);
+            });
+        };
+
+        const addNewTodayTask = () => {
+            const newId = mockData.todayTasks.length > 0 ? Math.max(...mockData.todayTasks.map(t => t.id)) + 1 : 1;
+            mockData.todayTasks.push({ id: newId, text: '', completed: false });
+            renderAllTodayTasks();
+            todayTasksList.lastChild.querySelector('input[type="text"]').focus();
+        };
+
+        const addNewTodo = () => {
+            if (todoContent.classList.contains('hidden')) {
+                todoContent.classList.remove('hidden');
+                todoArrowIcon.classList.add('rotate-180');
+            }
+            const newId = mockData.todos.length > 0 ? Math.max(...mockData.todos.map(t => t.id)) + 1 : 1;
+            mockData.todos.push({ id: newId, text: '', completed: false });
+            renderAllTodos();
+            todoList.lastChild.querySelector('input[type="text"]').focus();
+        };
+
+        const renderScheduledToday = () => {
+            scheduledTodaySection.innerHTML = '';
+            const todayStr = new Date().toISOString().split('T')[0];
+            const todaysSchedules = getScheduleData().filter(s => s.date === todayStr);
+            if (todaysSchedules.length > 0) {
+                const title = document.createElement('h2');
+                title.className = 'text-xl font-bold mb-3';
+                title.textContent = '今日の予定';
+                scheduledTodaySection.appendChild(title);
+                todaysSchedules.forEach(schedule => {
+                    const scheduleEl = document.createElement('div');
+                    scheduleEl.className = 'task-item';
+                    scheduleEl.textContent = schedule.text;
+                    scheduledTodaySection.appendChild(scheduleEl);
+                });
+            }
+        };
+
+        const generateCalendar = (year, month) => {
+            calendarContainer.innerHTML = '';
+            const calendarEl = document.createElement('div');
+            const header = document.createElement('div');
+            header.className = 'flex justify-between items-center mb-4';
+            header.innerHTML = `
+                <button id="prev-month" class="p-2 rounded-full hover:bg-[var(--theme-100)]">&lt;</button>
+                <h2 class="text-xl font-bold">${year}年 ${month + 1}月</h2>
+                <button id="next-month" class="p-2 rounded-full hover:bg-[var(--theme-100)]">&gt;</button>
+            `;
+            calendarEl.appendChild(header);
+
+            const grid = document.createElement('div');
+            grid.className = 'grid grid-cols-7 gap-1 text-center';
+            const days = ['日', '月', '火', '水', '木', '金', '土'];
+            days.forEach(day => grid.innerHTML += `<div class="font-bold text-[var(--theme-500)]">${day}</div>`);
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayEl = document.createElement('div');
+                dayEl.className = 'p-2 cursor-pointer rounded-full hover:bg-[var(--theme-200)]';
+                dayEl.textContent = i;
+                dayEl.addEventListener('click', () => openScheduleModal(year, month, i));
+                if (i === new Date().getDate() && year === new Date().getFullYear() && month === new Date().getMonth()) {
+                    dayEl.classList.add('bg-[var(--theme-500)]', 'text-white');
+                }
+                grid.appendChild(dayEl);
+            }
+            calendarEl.appendChild(grid);
+            calendarContainer.appendChild(calendarEl);
+
+            document.getElementById('prev-month').addEventListener('click', () => { currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; } generateCalendar(currentYear, currentMonth); });
+            document.getElementById('next-month').addEventListener('click', () => { currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; } generateCalendar(currentYear, currentMonth); });
+        };
+
+        const openScheduleModal = (year, month, day) => {
+            selectedDate = new Date(year, month, day);
+            scheduleInput.value = '';
+            scheduleModal.classList.remove('hidden');
+            scheduleInput.focus();
+        };
+
+        const closeScheduleModal = () => scheduleModal.classList.add('hidden');
+
+        const updateNotificationIconColor = () => {
+            const isEnabled = getNotificationSetting();
+            notificationBtn.classList.toggle('text-[var(--theme-500)]', isEnabled);
+            notificationBtn.classList.toggle('text-gray-500', !isEnabled);
+        };
+
+        const toggleNotificationSetting = () => {
+            const currentSetting = getNotificationSetting();
+            const newSetting = !currentSetting;
+            saveNotificationSetting(newSetting);
+            updateNotificationIconColor();
+            alert(`通知を${newSetting ? 'オン' : 'オフ'}にしました。`);
+        };
+
+        // --- Pomodoro Timer Logic ---
+        const updatePomodoroDisplay = () => {
+            const minutes = Math.floor(pomodoroTimeRemaining / 60).toString().padStart(2, '0');
+            const seconds = (pomodoroTimeRemaining % 60).toString().padStart(2, '0');
+            pomodoroTimerDisplay.textContent = `${minutes}:${seconds}`;
+        };
+
+        const stopPomodoroTimer = () => {
+            clearInterval(pomodoroTimerId);
+            pomodoroTimerId = null;
+            isPomodoroRunning = false;
+            pomodoroPlayIcon.classList.remove('hidden');
+            pomodoroPauseIcon.classList.add('hidden');
+        };
+
+        const startPomodoroTimer = () => {
+            if (isPomodoroRunning) return;
+            isPomodoroRunning = true;
+            pomodoroPlayIcon.classList.add('hidden');
+            pomodoroPauseIcon.classList.remove('hidden');
+            pomodoroTimerId = setInterval(() => {
+                pomodoroTimeRemaining--;
+                updatePomodoroDisplay();
+                if (pomodoroTimeRemaining <= 0) {
+                    stopPomodoroTimer();
+                    alert(`${pomodoroCurrentMode === 'pomodoro' ? '作業' : '休憩'}時間が終了しました！`);
+                }
+            }, 1000);
+        };
+
+        const switchPomodoroMode = (mode) => {
+            stopPomodoroTimer();
+            pomodoroCurrentMode = mode;
+            pomodoroTimeRemaining = pomodoroTimes[mode];
+            updatePomodoroDisplay();
+            pomodoroModeBtns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.mode === mode);
+            });
+        };
+
+        // --- Sleep Logic ---
+        const formatTime = (date) => date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false }).replace('24:', '00:');
+
+        const updatePendingSleepUI = () => {
+            const bedtime = getPendingBedtime();
+            const wakeupTime = getPendingWakeupTime();
+
+            if (bedtime) {
+                pendingBedtimeDisplay.textContent = bedtime;
+                setBedtimeBtn.textContent = '編集';
+                deleteBedtimeBtn.classList.remove('hidden');
+            } else {
+                pendingBedtimeDisplay.textContent = '--:--';
+                setBedtimeBtn.textContent = '記録';
+                deleteBedtimeBtn.classList.add('hidden');
+            }
+
+            if (wakeupTime) {
+                pendingWakeupDisplay.textContent = wakeupTime;
+                setWakeupBtn.textContent = '編集';
+                deleteWakeupBtn.classList.remove('hidden');
+            } else {
+                pendingWakeupDisplay.textContent = '--:--';
+                setWakeupBtn.textContent = '記録';
+                deleteWakeupBtn.classList.add('hidden');
+            }
+
+            if (bedtime && wakeupTime) {
+                savePendingSleepBtn.disabled = false;
+                savePendingSleepBtn.classList.remove('bg-gray-400');
+                savePendingSleepBtn.classList.add('bg-green-500', 'hover:bg-green-600');
+            } else {
+                savePendingSleepBtn.disabled = true;
+                savePendingSleepBtn.classList.add('bg-gray-400');
+                savePendingSleepBtn.classList.remove('bg-green-500', 'hover:bg-green-600');
+            }
+            bedtimeInputContainer.classList.add('hidden');
+            wakeupInputContainer.classList.add('hidden');
+        };
+
+        const renderSleepRecords = () => {
+            const sleepData = getSleepData().sort((a, b) => new Date(b.date + 'T' + b.wakeupTime) - new Date(a.date + 'T' + a.wakeupTime));
+            sleepRecordsList.innerHTML = '';
+            if (sleepData.length === 0) {
+                sleepRecordsList.innerHTML = '<p class="text-gray-500 text-center">まだ睡眠記録がありません。</p>';
+                return;
+            }
+
+            sleepData.forEach(record => {
+                const recordEl = document.createElement('div');
+                recordEl.className = 'bg-gray-50 p-4 rounded-lg shadow-sm';
+
+                const date = new Date(record.date);
+                const dateString = `${date.getFullYear()}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}`;
+
+                let durationString = 'N/A';
+                if (record.bedtime && record.wakeupTime) {
+                    const wakeupTime = new Date(`${record.date}T${record.wakeupTime}`);
+                    let bedtime = new Date(`${record.date}T${record.bedtime}`);
+                    if (bedtime > wakeupTime) {
+                        bedtime.setDate(bedtime.getDate() - 1);
+                    }
+                    const diffMs = wakeupTime - bedtime;
+                    if (diffMs > 0) {
+                        const diffHours = Math.floor(diffMs / 3600000);
+                        const diffMins = Math.round((diffMs % 3600000) / 60000);
+                        durationString = `${diffHours}時間 ${diffMins}分`;
+                    }
+                }
+
+                recordEl.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <p class="font-bold text-lg">${dateString}</p>
+                        <p class="font-semibold text-lg text-[var(--theme-500)]">${durationString}</p>
+                    </div>
+                    <div class="flex justify-between items-center mt-2 text-sm text-gray-600">
+                        <span>就寝: ${record.bedtime || '--:--'}</span>
+                        <span>起床: ${record.wakeupTime || '--:--'}</span>
+                    </div>
+                `;
+                sleepRecordsList.appendChild(recordEl);
+            });
+        };
+
+        const updateTodaySleepSummary = () => {
+            const today = new Date();
+            const sleepData = getSleepData();
+            const todayRecord = sleepData
+                .filter(r => r.date === today.toISOString().split('T')[0])
+                .sort((a, b) => new Date(`${b.date}T${b.wakeupTime}`) - new Date(`${a.date}T${a.wakeupTime}`))
+                [0];
+
+            if (todayRecord && todayRecord.bedtime && todayRecord.wakeupTime) {
+                const wakeupTime = new Date(`${todayRecord.date}T${todayRecord.wakeupTime}`);
+                let bedtime = new Date(`${todayRecord.date}T${todayRecord.bedtime}`);
+                if (bedtime > wakeupTime) { bedtime.setDate(bedtime.getDate() - 1); }
+                
+                const diffMs = wakeupTime - bedtime;
+                if (diffMs > 0) {
+                    const diffHours = Math.floor(diffMs / 3600000);
+                    const diffMins = Math.round((diffMs % 3600000) / 60000);
+                    todaySleepSummary.textContent = `${diffHours}時間 ${diffMins}分`;
+                } else {
+                    todaySleepSummary.textContent = '計算エラー';
+                }
+            } else {
+                todaySleepSummary.textContent = '未記録';
+            }
+        };
+
+        // --- Init & Event Listeners ---
+        const savedTheme = localStorage.getItem('theme') || 'pink';
+        applyTheme(savedTheme);
+
+        Object.keys(themes).forEach(themeName => {
+            const color = themes[themeName]['--theme-500'];
+            const swatch = document.createElement('button');
+            swatch.className = 'w-12 h-12 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2';
+            swatch.style.backgroundColor = color;
+            swatch.dataset.theme = themeName;
+            if (themeName === savedTheme) swatch.classList.add('ring-2', 'ring-offset-2', 'ring-[var(--theme-500)]');
+            swatch.addEventListener('click', () => {
+                applyTheme(themeName);
+                document.querySelectorAll('#theme-selector button').forEach(b => b.classList.remove('ring-2', 'ring-offset-2', 'ring-[var(--theme-500)]'));
+                swatch.classList.add('ring-2', 'ring-offset-2', 'ring-[var(--theme-500)]');
+            });
+            if (themeSelector) themeSelector.appendChild(swatch);
+        });
+
+        const savedProfileIcon = localStorage.getItem('profileIcon');
+        if (savedProfileIcon && profileIcon) profileIcon.src = savedProfileIcon;
+
+        renderAllTodayTasks();
+        renderAllTodos();
+        renderScheduledToday();
+        updateTodaySleepSummary();
+        generateCalendar(currentYear, currentMonth);
+        updateNotificationIconColor();
+        updatePendingSleepUI();
+        
+        const today = new Date();
+        headerDateEl.textContent = `${today.getFullYear()}年${today.getMonth() + 1}月${today.getDate()}日 (${['日', '月', '火', '水', '木', '金', '土'][today.getDay()]})`;
+
+        if (addTodayTaskBtn) {
+            addTodayTaskBtn.addEventListener('click', addNewTodayTask);
+        }
+        addTodoHeaderBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            addNewTodo();
+        });
+        toggleTodoVisibility.addEventListener('click', () => {
+            todoContent.classList.toggle('hidden');
+            todoArrowIcon.classList.toggle('rotate-180');
+        });
+        saveScheduleBtn.addEventListener('click', () => {
+            const scheduleText = scheduleInput.value.trim();
+            if (scheduleText && selectedDate) {
+                const schedules = getScheduleData();
+                schedules.push({ date: selectedDate.toISOString().split('T')[0], text: scheduleText });
+                saveScheduleData(schedules);
+                closeScheduleModal();
+                renderScheduledToday();
+            }
+        });
+        cancelScheduleBtn.addEventListener('click', closeScheduleModal);
+        if (profileIconOverlay) profileIconOverlay.addEventListener('click', () => profileIconInput.click());
+        if (profileIcon) profileIcon.addEventListener('click', () => profileIconInput.click());
+        if (profileIconInput) profileIconInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file && file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    profileIcon.src = e.target.result;
+                    localStorage.setItem('profileIcon', e.target.result);
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+        navButtons.forEach(button => button.addEventListener('click', () => showPage(button.dataset.target)));
+        recordCards.forEach(card => card.addEventListener('click', () => showPage(card.dataset.target)));
+        notificationBtn.addEventListener('click', toggleNotificationSetting);
+        clockBtn.addEventListener('click', () => showPage('pomodoro-screen'));
+        if (goToSettingsBtn) goToSettingsBtn.addEventListener('click', () => showPage('settings-screen'));
+        document.querySelectorAll('.back-btn').forEach(button => button.addEventListener('click', () => showPage('home-screen')));
+
+        // Pomodoro Listeners
+        pomodoroToggleBtn.addEventListener('click', () => {
+            if (isPomodoroRunning) {
+                stopPomodoroTimer();
+            } else {
+                startPomodoroTimer();
+            }
+        });
+        pomodoroResetBtn.addEventListener('click', () => switchPomodoroMode(pomodoroCurrentMode));
+        pomodoroModeBtns.forEach(btn => {
+            btn.addEventListener('click', () => switchPomodoroMode(btn.dataset.mode));
+        });
+
+        // Sleep Listeners
+        setBedtimeBtn.addEventListener('click', () => {
+            if (getPendingBedtime()) {
+                bedtimeInputContainer.classList.remove('hidden');
+                bedtimeInputEdit.value = getPendingBedtime();
+            } else {
+                savePendingBedtime(formatTime(new Date()));
+                updatePendingSleepUI();
+            }
+        });
+
+        deleteBedtimeBtn.addEventListener('click', () => {
+            clearPendingBedtime();
+            updatePendingSleepUI();
+        });
+
+        saveBedtimeEditBtn.addEventListener('click', () => {
+            if (bedtimeInputEdit.value) {
+                savePendingBedtime(bedtimeInputEdit.value);
+                updatePendingSleepUI();
+            }
+        });
+
+        setWakeupBtn.addEventListener('click', () => {
+            if (getPendingWakeupTime()) {
+                wakeupInputContainer.classList.remove('hidden');
+                wakeupInputEdit.value = getPendingWakeupTime();
+            } else {
+                savePendingWakeupTime(formatTime(new Date()));
+                updatePendingSleepUI();
+            }
+        });
+
+        deleteWakeupBtn.addEventListener('click', () => {
+            clearPendingWakeupTime();
+            updatePendingSleepUI();
+        });
+
+        saveWakeupEditBtn.addEventListener('click', () => {
+            if (wakeupInputEdit.value) {
+                savePendingWakeupTime(wakeupInputEdit.value);
+                updatePendingSleepUI();
+            }
+        });
+
+        savePendingSleepBtn.addEventListener('click', () => {
+            const bedtime = getPendingBedtime();
+            const wakeupTime = getPendingWakeupTime();
+
+            if (!bedtime || !wakeupTime) {
+                alert('就寝時間と起床時間の両方を入力してください。');
+                return;
+            }
+
+            const recordDate = new Date().toISOString().split('T')[0];
+
+            const newRecord = { date: recordDate, bedtime, wakeupTime };
+            const sleepData = getSleepData();
+            sleepData.push(newRecord);
+            saveSleepData(sleepData);
+
+            clearPendingBedtime();
+            clearPendingWakeupTime();
+
+            alert('睡眠を記録しました。');
+            updatePendingSleepUI();
+            renderSleepRecords();
+            updateTodaySleepSummary();
+        });
+    });
+    </script>
+</body>
+</html>
