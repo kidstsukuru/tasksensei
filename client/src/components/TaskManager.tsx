@@ -52,6 +52,15 @@ const TaskManager: React.FC = () => {
   // Calendar functionality state
   const [calendarModalVisible, setCalendarModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  
+  // TODO input functionality state
+  const [todoInputModalVisible, setTodoInputModalVisible] = useState(false);
+  const [todoInputText, setTodoInputText] = useState('');
+  
+  // Schedule input functionality state
+  const [scheduleInputModalVisible, setScheduleInputModalVisible] = useState(false);
+  const [scheduleInputText, setScheduleInputText] = useState('');
+  const [scheduleInputDate, setScheduleInputDate] = useState<Date | null>(null);
 
   // React Query hooks for data fetching
   const { data: todos = [], isLoading: todosLoading } = useQuery<Todo[]>({
@@ -370,15 +379,40 @@ const TaskManager: React.FC = () => {
   };
 
   const addTodo = () => {
-    const text = prompt('TODOを入力してください:');
-    if (text?.trim()) {
+    setTodoInputModalVisible(true);
+  };
+  
+  const saveTodoInput = () => {
+    if (todoInputText.trim()) {
       createTodoMutation.mutate({
-        text: text.trim(),
+        text: todoInputText.trim(),
         completed: false
       });
+      setTodoInputText('');
       if (!todoVisible) {
         setTodoVisible(true);
       }
+      // Keep modal open for continuous input
+    }
+  };
+  
+  const addScheduleForDate = (date: Date) => {
+    setScheduleInputDate(date);
+    setScheduleInputModalVisible(true);
+    setCalendarModalVisible(false);
+  };
+  
+  const saveScheduleInput = () => {
+    if (scheduleInputText.trim() && scheduleInputDate) {
+      createScheduleMutation.mutate({
+        text: scheduleInputText.trim(),
+        date: scheduleInputDate.toLocaleDateString('sv-SE'),
+        time: new Date(),
+        completed: false
+      });
+      setScheduleInputText('');
+      setScheduleInputModalVisible(false);
+      setCalendarModalVisible(true);
     }
   };
 
@@ -1151,6 +1185,7 @@ const TaskManager: React.FC = () => {
                         onClick={() => {
                           if (isCurrentMonth) {
                             setSelectedDate(new Date(currentDate));
+                            addScheduleForDate(new Date(currentDate));
                           }
                         }}
                         data-testid={`calendar-day-${currentDate.getDate()}`}
@@ -1184,6 +1219,98 @@ const TaskManager: React.FC = () => {
                     <p className="text-sm text-gray-500">予定がありません</p>
                   );
                 })()}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* TODO Input Modal */}
+        {todoInputModalVisible && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+              <h2 className="text-xl font-bold mb-4">TODO追加</h2>
+              <input
+                type="text"
+                placeholder="TODOを入力してください"
+                value={todoInputText}
+                onChange={(e) => setTodoInputText(e.target.value)}
+                className="form-input mb-4 w-full"
+                data-testid="input-todo-text"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    saveTodoInput();
+                  }
+                }}
+                autoFocus
+              />
+              <div className="flex justify-end space-x-3">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => {
+                    setTodoInputModalVisible(false);
+                    setTodoInputText('');
+                  }}
+                  data-testid="button-close-todo-input"
+                >
+                  完了
+                </button>
+                <button 
+                  className="btn-primary"
+                  onClick={saveTodoInput}
+                  disabled={!todoInputText.trim()}
+                  data-testid="button-save-todo"
+                >
+                  追加
+                </button>
+              </div>
+              <div className="mt-3 text-sm text-gray-600">
+                Enterキーでも追加できます。「完了」を押すまで続けて追加できます。
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Schedule Input Modal */}
+        {scheduleInputModalVisible && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+              <h2 className="text-xl font-bold mb-4">
+                予定追加 - {scheduleInputDate?.getFullYear()}年{(scheduleInputDate?.getMonth() ?? 0) + 1}月{scheduleInputDate?.getDate()}日
+              </h2>
+              <input
+                type="text"
+                placeholder="予定を入力してください"
+                value={scheduleInputText}
+                onChange={(e) => setScheduleInputText(e.target.value)}
+                className="form-input mb-4 w-full"
+                data-testid="input-schedule-text"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    saveScheduleInput();
+                  }
+                }}
+                autoFocus
+              />
+              <div className="flex justify-end space-x-3">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => {
+                    setScheduleInputModalVisible(false);
+                    setScheduleInputText('');
+                    setCalendarModalVisible(true);
+                  }}
+                  data-testid="button-cancel-schedule-input"
+                >
+                  キャンセル
+                </button>
+                <button 
+                  className="btn-primary"
+                  onClick={saveScheduleInput}
+                  disabled={!scheduleInputText.trim()}
+                  data-testid="button-save-schedule-input"
+                >
+                  保存
+                </button>
               </div>
             </div>
           </div>
