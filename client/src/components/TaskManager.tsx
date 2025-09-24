@@ -657,7 +657,7 @@ const TaskManager: React.FC = () => {
             data-testid="card-diary"
           >
             <h3 className="font-bold">メモ</h3>
-            <p className="text-sm text-gray-500">今日の振り返り...</p>
+            <p className="text-sm text-gray-500">メモを記録・管理...</p>
           </div>
         </div>
       </section>
@@ -920,9 +920,9 @@ const TaskManager: React.FC = () => {
       </header>
       <div className="px-4 space-y-6">
         <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="font-bold text-lg mb-4">今日の振り返り</h3>
+          <h3 className="font-bold text-lg mb-4">新しいメモ</h3>
           <textarea 
-            placeholder="今日はどんな一日でしたか？" 
+            placeholder="メモを入力してください" 
             rows={8}
             value={diaryText}
             onChange={(e) => setDiaryText(e.target.value)}
@@ -951,7 +951,7 @@ const TaskManager: React.FC = () => {
         </div>
         
         <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="font-bold text-lg mb-4">過去の記録</h3>
+          <h3 className="font-bold text-lg mb-4">過去のメモ</h3>
           <div className="space-y-3">
             {diaryEntries.slice(-5).reverse().map(entry => (
               <div key={entry.id} className="p-3 border rounded-lg">
