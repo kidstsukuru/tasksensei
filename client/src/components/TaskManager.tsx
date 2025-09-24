@@ -30,7 +30,8 @@ import {
   Smile,
   LogOut,
   User,
-  Download
+  Download,
+  Star
 } from 'lucide-react';
 
 const TaskManager: React.FC = () => {
@@ -652,12 +653,26 @@ const TaskManager: React.FC = () => {
             </p>
           </div>
           <div 
-            className="record-card" 
+            className="record-card relative" 
             onClick={() => showScreen('diary-detail-screen')}
             data-testid="card-diary"
           >
-            <h3 className="font-bold">メモ</h3>
-            <p className="text-sm text-gray-500">メモを記録・管理...</p>
+            <h3 className="font-bold flex items-center">
+              メモ
+              {diaryEntries.length > 0 && (
+                <Star 
+                  size={16} 
+                  className="ml-2 text-yellow-500 fill-yellow-500" 
+                  data-testid="memo-star-indicator"
+                />
+              )}
+            </h3>
+            <p className="text-sm text-gray-500">
+              {diaryEntries.length > 0 
+                ? `${diaryEntries.length}件のメモあり` 
+                : 'メモを記録・管理...'
+              }
+            </p>
           </div>
         </div>
       </section>
