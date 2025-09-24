@@ -48,6 +48,10 @@ const TaskManager: React.FC = () => {
   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage('notificationsEnabled', false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  
+  // Calendar functionality state
+  const [calendarModalVisible, setCalendarModalVisible] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
   // React Query hooks for data fetching
   const { data: todos = [], isLoading: todosLoading } = useQuery<Todo[]>({
@@ -1077,6 +1081,114 @@ const TaskManager: React.FC = () => {
           </div>
         )}
 
+        {/* Calendar Modal */}
+        {calendarModalVisible && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">カレンダー</h2>
+                <button 
+                  className="text-gray-500 hover:text-gray-700"
+                  onClick={() => setCalendarModalVisible(false)}
+                  data-testid="button-close-calendar"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              {/* Calendar Navigation */}
+              <div className="flex justify-between items-center mb-4">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))}
+                  data-testid="button-prev-month"
+                >
+                  ‹
+                </button>
+                <span className="font-medium" data-testid="text-current-month">
+                  {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月
+                </span>
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}
+                  data-testid="button-next-month"
+                >
+                  ›
+                </button>
+              </div>
+
+              {/* Calendar Grid */}
+              <div className="grid grid-cols-7 gap-1 mb-4">
+                {['日', '月', '火', '水', '木', '金', '土'].map(day => (
+                  <div key={day} className="text-center p-2 font-medium text-gray-600 text-sm">
+                    {day}
+                  </div>
+                ))}
+                {(() => {
+                  const year = selectedDate.getFullYear();
+                  const month = selectedDate.getMonth();
+                  const firstDay = new Date(year, month, 1);
+                  const lastDay = new Date(year, month + 1, 0);
+                  const startDate = new Date(firstDay);
+                  startDate.setDate(startDate.getDate() - firstDay.getDay());
+                  
+                  const days = [];
+                  for (let i = 0; i < 42; i++) {
+                    const currentDate = new Date(startDate);
+                    currentDate.setDate(startDate.getDate() + i);
+                    const isCurrentMonth = currentDate.getMonth() === month;
+                    const isToday = currentDate.toDateString() === new Date().toDateString();
+                    const hasSchedule = schedules.some(schedule => 
+                      schedule.date === currentDate.toLocaleDateString('sv-SE')
+                    );
+                    
+                    days.push(
+                      <button
+                        key={i}
+                        className={`p-2 text-sm rounded hover:bg-theme-100 relative ${
+                          isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                        } ${isToday ? 'bg-theme-500 text-white hover:bg-theme-600' : ''}`}
+                        onClick={() => {
+                          if (isCurrentMonth) {
+                            setSelectedDate(new Date(currentDate));
+                          }
+                        }}
+                        data-testid={`calendar-day-${currentDate.getDate()}`}
+                      >
+                        {currentDate.getDate()}
+                        {hasSchedule && isCurrentMonth && (
+                          <div className="absolute bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-theme-500 rounded-full"></div>
+                        )}
+                      </button>
+                    );
+                  }
+                  return days;
+                })()}
+              </div>
+
+              {/* Selected Date Schedules */}
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-2">選択日の予定</h3>
+                {(() => {
+                  const selectedDateStr = selectedDate.toLocaleDateString('sv-SE');
+                  const daySchedules = schedules.filter(s => s.date === selectedDateStr);
+                  return daySchedules.length > 0 ? (
+                    <div className="space-y-2 max-h-32 overflow-y-auto">
+                      {daySchedules.map(schedule => (
+                        <div key={schedule.id} className="text-sm p-2 bg-gray-50 rounded" data-testid={`schedule-${schedule.id}`}>
+                          {schedule.text}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500">予定がありません</p>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Notification Modal */}
         {notificationModalVisible && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
@@ -1159,13 +1271,6 @@ const TaskManager: React.FC = () => {
             </button>
             <button 
               className="text-gray-500 hover:text-theme-500 transition-colors"
-              onClick={() => showScreen('pomodoro-screen')}
-              data-testid="button-clock"
-            >
-              <Clock size={24} />
-            </button>
-            <button 
-              className="text-gray-500 hover:text-theme-500 transition-colors"
               onClick={() => setExportModalVisible(true)}
               data-testid="button-export"
               title="データエクスポート"
@@ -1212,11 +1317,11 @@ const TaskManager: React.FC = () => {
           </button>
           <button 
             className="nav-btn flex-1 flex flex-col items-center py-2 text-center"
-            onClick={() => setScheduleModalVisible(true)}
-            data-testid="nav-schedule"
+            onClick={() => setCalendarModalVisible(true)}
+            data-testid="nav-calendar"
           >
             <Calendar size={24} className="mb-1" />
-            <span className="text-xs">スケジュール</span>
+            <span className="text-xs">カレンダー</span>
           </button>
         </nav>
       </div>
