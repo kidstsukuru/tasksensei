@@ -43,6 +43,11 @@ const TaskManager: React.FC = () => {
   // Export functionality state
   const [exportModalVisible, setExportModalVisible] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
+  
+  // Notification functionality state
+  const [notificationModalVisible, setNotificationModalVisible] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage('notificationsEnabled', false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
 
   // React Query hooks for data fetching
   const { data: todos = [], isLoading: todosLoading } = useQuery<Todo[]>({
@@ -230,6 +235,85 @@ const TaskManager: React.FC = () => {
       setExportLoading(false);
     }
   };
+
+  // Notification functionality
+  const requestNotificationPermission = async () => {
+    if ('Notification' in window) {
+      const permission = await Notification.requestPermission();
+      setNotificationPermission(permission);
+      if (permission === 'granted') {
+        setNotificationsEnabled(true);
+      } else {
+        setNotificationsEnabled(false);
+      }
+      return permission;
+    }
+    return 'denied';
+  };
+
+  const showNotification = (title: string, options?: NotificationOptions) => {
+    if (notificationPermission === 'granted' && notificationsEnabled) {
+      new Notification(title, {
+        icon: '/favicon.ico',
+        badge: '/favicon.ico',
+        ...options
+      });
+    }
+  };
+
+  const checkTaskReminders = () => {
+    const now = new Date();
+    const currentTime = now.getHours() * 60 + now.getMinutes();
+    
+    // Check for incomplete todos and schedules
+    const incompleteTodos = todos.filter(todo => !todo.completed);
+    const todaySchedules = schedules.filter(schedule => {
+      const scheduleDate = new Date(schedule.date);
+      return scheduleDate.toDateString() === now.toDateString() && !schedule.completed;
+    });
+
+    if (incompleteTodos.length > 0) {
+      showNotification('タスクリマインダー', {
+        body: `${incompleteTodos.length}件の未完了タスクがあります`,
+        tag: 'task-reminder'
+      });
+    }
+
+    if (todaySchedules.length > 0) {
+      showNotification('予定リマインダー', {
+        body: `今日は${todaySchedules.length}件の予定があります`,
+        tag: 'schedule-reminder'
+      });
+    }
+  };
+
+  const toggleNotifications = async () => {
+    if (!notificationsEnabled) {
+      const permission = await requestNotificationPermission();
+      if (permission === 'granted') {
+        // Check reminders immediately when enabled
+        setTimeout(() => checkTaskReminders(), 1000);
+      }
+    } else {
+      setNotificationsEnabled(false);
+    }
+  };
+
+  // Check for reminders every 30 minutes when notifications are enabled
+  useEffect(() => {
+    if (notificationsEnabled && notificationPermission === 'granted') {
+      const interval = setInterval(checkTaskReminders, 30 * 60 * 1000); // 30 minutes
+      return () => clearInterval(interval);
+    }
+  }, [notificationsEnabled, notificationPermission, todos, schedules]);
+
+  // Initialize notification permission status
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+      // Don't automatically enable notifications - respect user's saved preference
+    }
+  }, []);
 
   const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
   const [scheduleInput, setScheduleInput] = useState('');
@@ -993,6 +1077,65 @@ const TaskManager: React.FC = () => {
           </div>
         )}
 
+        {/* Notification Modal */}
+        {notificationModalVisible && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+              <h2 className="text-xl font-bold mb-4">通知設定</h2>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">通知を有効にする</span>
+                  <button
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      notificationsEnabled ? 'bg-theme-500' : 'bg-gray-200'
+                    }`}
+                    onClick={toggleNotifications}
+                    data-testid="toggle-notifications"
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                        notificationsEnabled ? 'translate-x-5' : 'translate-x-0'
+                      }`}
+                    />
+                  </button>
+                </div>
+                <div className="text-sm text-gray-600">
+                  {notificationPermission === 'denied' && (
+                    <p className="text-red-600">ブラウザの通知がブロックされています。ブラウザ設定で通知を許可してください。</p>
+                  )}
+                  {notificationPermission === 'default' && (
+                    <p>通知を有効にすると、タスクと予定のリマインダーが表示されます。</p>
+                  )}
+                  {notificationPermission === 'granted' && notificationsEnabled && (
+                    <p className="text-green-600">通知が有効になっています。30分ごとにリマインダーを確認します。</p>
+                  )}
+                  {notificationPermission === 'granted' && !notificationsEnabled && (
+                    <p>通知は無効になっています。</p>
+                  )}
+                </div>
+                {notificationsEnabled && (
+                  <button 
+                    className="w-full btn-secondary"
+                    onClick={checkTaskReminders}
+                    data-testid="button-test-notification"
+                  >
+                    今すぐリマインダーを確認
+                  </button>
+                )}
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setNotificationModalVisible(false)}
+                  data-testid="button-close-notification"
+                >
+                  閉じる
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <header className="sticky top-0 bg-white/80 backdrop-blur-sm z-10 px-4 py-3 flex justify-between items-center border-b border-theme-200">
           <h1 className="text-lg font-bold text-gray-900">タスク管理</h1>
@@ -1006,7 +1149,12 @@ const TaskManager: React.FC = () => {
                 {user?.username}
               </span>
             </div>
-            <button className="text-gray-500 hover:text-theme-500 transition-colors" data-testid="button-notification">
+            <button 
+              className={`transition-colors ${notificationsEnabled ? 'text-theme-500 hover:text-theme-600' : 'text-gray-500 hover:text-theme-500'}`}
+              onClick={() => setNotificationModalVisible(true)}
+              data-testid="button-notification"
+              title="通知設定"
+            >
               <Bell size={24} />
             </button>
             <button 
