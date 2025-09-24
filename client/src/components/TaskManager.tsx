@@ -155,7 +155,7 @@ const TaskManager: React.FC = () => {
   });
 
   const createWeightRecordMutation = useMutation({
-    mutationFn: (weightData: { date: string; weight: string; bodyFat?: string }) =>
+    mutationFn: (weightData: { date: string; weight: string; height?: string; bodyFat?: string }) =>
       apiRequest('POST', '/api/weight-records', weightData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/weight-records'] });
@@ -333,6 +333,7 @@ const TaskManager: React.FC = () => {
   const [scheduleInput, setScheduleInput] = useState('');
   const [diaryText, setDiaryText] = useState('');
   const [weightInput, setWeightInput] = useState('');
+  const [heightInput, setHeightInput] = useState('');
   const [bodyFatInput, setBodyFatInput] = useState('');
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -500,9 +501,11 @@ const TaskManager: React.FC = () => {
         createWeightRecordMutation.mutate({
           date: new Date().toISOString().split('T')[0],
           weight: weight.toString(),
+          height: heightInput ? parseFloat(heightInput).toString() : undefined,
           bodyFat: bodyFatInput ? parseFloat(bodyFatInput).toString() : undefined
         });
         setWeightInput('');
+        setHeightInput('');
         setBodyFatInput('');
       }
     }
@@ -881,6 +884,28 @@ const TaskManager: React.FC = () => {
                   className="px-3 py-1 bg-theme-500 text-white text-sm rounded hover:bg-theme-600"
                   onClick={saveWeight}
                   data-testid="button-save-weight"
+                >
+                  保存
+                </button>
+              </div>
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <label className="font-medium">身長 (cm)</label>
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="number" 
+                  step="0.1" 
+                  placeholder="170.0" 
+                  value={heightInput}
+                  onChange={(e) => setHeightInput(e.target.value)}
+                  className="w-20 px-2 py-1 border rounded text-center"
+                  data-testid="input-height"
+                />
+                <button 
+                  className="px-3 py-1 bg-theme-500 text-white text-sm rounded hover:bg-theme-600"
+                  onClick={saveWeight}
+                  data-testid="button-save-height"
                 >
                   保存
                 </button>
