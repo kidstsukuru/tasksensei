@@ -338,6 +338,23 @@ const TaskManager: React.FC = () => {
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // BMI計算関数
+  const calculateBMI = () => {
+    if (weightRecords.length === 0) return null;
+    
+    const latestRecord = weightRecords[weightRecords.length - 1];
+    const weight = parseFloat(latestRecord.weight);
+    const height = latestRecord.height ? parseFloat(latestRecord.height) : null;
+    
+    if (height && height > 0) {
+      const heightInMeters = height / 100; // cmをmに変換
+      const bmi = weight / (heightInMeters * heightInMeters);
+      return bmi.toFixed(1);
+    }
+    
+    return null;
+  };
+
   useEffect(() => {
     if (pomodoro.isRunning) {
       intervalRef.current = setInterval(() => {
@@ -862,7 +879,9 @@ const TaskManager: React.FC = () => {
               <div className="text-sm text-gray-500">体重 (kg)</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-4 text-center">
-              <div className="text-2xl font-bold text-theme-600">22.4</div>
+              <div className="text-2xl font-bold text-theme-600" data-testid="text-current-bmi">
+                {calculateBMI() || '--'}
+              </div>
               <div className="text-sm text-gray-500">BMI</div>
             </div>
           </div>
