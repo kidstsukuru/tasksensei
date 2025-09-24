@@ -40,6 +40,7 @@ export const weightRecords = pgTable("weight_records", {
   userId: varchar("user_id").notNull().references(() => users.id),
   date: varchar("date").notNull(),
   weight: decimal("weight", { precision: 5, scale: 2 }).notNull(),
+  height: decimal("height", { precision: 5, scale: 2 }),
   bodyFat: decimal("body_fat", { precision: 5, scale: 2 }),
 });
 
