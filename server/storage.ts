@@ -63,6 +63,16 @@ export interface IStorage {
   createDiaryEntry(diaryEntry: InsertDiaryEntry): Promise<DiaryEntry>;
   updateDiaryEntry(id: string, diaryEntry: Partial<Omit<InsertDiaryEntry, 'id' | 'userId'>>): Promise<DiaryEntry | undefined>;
   deleteDiaryEntry(id: string): Promise<boolean>;
+
+  // Export methods
+  getAllUserData(userId: string): Promise<{
+    todos: Todo[];
+    schedules: Schedule[];
+    sleepRecords: SleepRecord[];
+    weightRecords: WeightRecord[];
+    mealRecords: MealRecord[];
+    diaryEntries: DiaryEntry[];
+  }>;
 }
 
 // Database storage using DrizzleORM and PostgreSQL
@@ -245,6 +255,41 @@ export class DbStorage implements IStorage {
   async deleteDiaryEntry(id: string): Promise<boolean> {
     const result = await this.db.delete(diaryEntries).where(eq(diaryEntries.id, id)).returning({ id: diaryEntries.id });
     return result.length > 0;
+  }
+
+  // Export methods
+  async getAllUserData(userId: string): Promise<{
+    todos: Todo[];
+    schedules: Schedule[];
+    sleepRecords: SleepRecord[];
+    weightRecords: WeightRecord[];
+    mealRecords: MealRecord[];
+    diaryEntries: DiaryEntry[];
+  }> {
+    const [
+      userTodos,
+      userSchedules,
+      userSleepRecords,
+      userWeightRecords,
+      userMealRecords,
+      userDiaryEntries
+    ] = await Promise.all([
+      this.getTodosByUserId(userId),
+      this.getSchedulesByUserId(userId),
+      this.getSleepRecordsByUserId(userId),
+      this.getWeightRecordsByUserId(userId),
+      this.getMealRecordsByUserId(userId),
+      this.getDiaryEntriesByUserId(userId)
+    ]);
+
+    return {
+      todos: userTodos,
+      schedules: userSchedules,
+      sleepRecords: userSleepRecords,
+      weightRecords: userWeightRecords,
+      mealRecords: userMealRecords,
+      diaryEntries: userDiaryEntries
+    };
   }
 }
 
@@ -475,6 +520,25 @@ export class MemStorage implements IStorage {
 
   async deleteDiaryEntry(id: string): Promise<boolean> {
     return this.diaryEntries.delete(id);
+  }
+
+  // Export methods
+  async getAllUserData(userId: string): Promise<{
+    todos: Todo[];
+    schedules: Schedule[];
+    sleepRecords: SleepRecord[];
+    weightRecords: WeightRecord[];
+    mealRecords: MealRecord[];
+    diaryEntries: DiaryEntry[];
+  }> {
+    return {
+      todos: await this.getTodosByUserId(userId),
+      schedules: await this.getSchedulesByUserId(userId),
+      sleepRecords: await this.getSleepRecordsByUserId(userId),
+      weightRecords: await this.getWeightRecordsByUserId(userId),
+      mealRecords: await this.getMealRecordsByUserId(userId),
+      diaryEntries: await this.getDiaryEntriesByUserId(userId)
+    };
   }
 }
 

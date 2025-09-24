@@ -29,7 +29,8 @@ import {
   Camera,
   Smile,
   LogOut,
-  User
+  User,
+  Download
 } from 'lucide-react';
 
 const TaskManager: React.FC = () => {
@@ -38,6 +39,10 @@ const TaskManager: React.FC = () => {
   const [todoVisible, setTodoVisible] = useLocalStorage('todoVisible', false);
   const [pendingBedtime, setPendingBedtime] = useLocalStorage<Date | null>('pendingBedtime', null);
   const [pendingWakeupTime, setPendingWakeupTime] = useLocalStorage<Date | null>('pendingWakeupTime', null);
+  
+  // Export functionality state
+  const [exportModalVisible, setExportModalVisible] = useState(false);
+  const [exportLoading, setExportLoading] = useState(false);
 
   // React Query hooks for data fetching
   const { data: todos = [], isLoading: todosLoading } = useQuery<Todo[]>({
@@ -145,6 +150,86 @@ const TaskManager: React.FC = () => {
       queryClient.invalidateQueries({ queryKey: ['/api/diary-entries'] });
     }
   });
+
+  // Export functionality
+  const convertToCSV = (data: any[], type: string): string => {
+    if (data.length === 0) return '';
+    
+    const headers = Object.keys(data[0]);
+    const csvContent = [
+      headers.join(','),
+      ...data.map(row => 
+        headers.map(header => {
+          const value = row[header];
+          if (value === null || value === undefined) return '';
+          if (typeof value === 'string') return `"${value.replace(/"/g, '""')}"`;
+          if (value instanceof Date) return `"${value.toISOString()}"`;
+          return `"${value}"`;
+        }).join(',')
+      )
+    ].join('\n');
+    
+    return csvContent;
+  };
+
+  const downloadFile = (content: string, filename: string, contentType: string) => {
+    const blob = new Blob([content], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  const exportData = async (format: 'json' | 'csv') => {
+    setExportLoading(true);
+    try {
+      const response = await fetch('/api/export', { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error('エクスポートに失敗しました');
+      }
+      
+      const exportData = await response.json();
+      const timestamp = new Date().toISOString().split('T')[0];
+      
+      if (format === 'json') {
+        const content = JSON.stringify(exportData, null, 2);
+        downloadFile(content, `task-manager-export-${timestamp}.json`, 'application/json');
+      } else if (format === 'csv') {
+        // Create separate CSV files for each data type
+        const { data } = exportData;
+        const csvFiles = [
+          { name: 'todos', data: data.todos },
+          { name: 'schedules', data: data.schedules },
+          { name: 'sleep-records', data: data.sleepRecords },
+          { name: 'weight-records', data: data.weightRecords },
+          { name: 'meal-records', data: data.mealRecords },
+          { name: 'diary-entries', data: data.diaryEntries }
+        ];
+        
+        // Create a single CSV file with all data sections
+        let allCsvContent = '';
+        csvFiles.forEach((file, index) => {
+          if (file.data.length > 0) {
+            if (allCsvContent) allCsvContent += '\n\n';
+            allCsvContent += `### ${file.name.toUpperCase()} ###\n`;
+            allCsvContent += convertToCSV(file.data, file.name);
+          }
+        });
+        
+        downloadFile(allCsvContent, `task-manager-export-${timestamp}.csv`, 'text/csv');
+      }
+      
+      setExportModalVisible(false);
+    } catch (error) {
+      alert('エクスポートに失敗しました: ' + error);
+    } finally {
+      setExportLoading(false);
+    }
+  };
 
   const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
   const [scheduleInput, setScheduleInput] = useState('');
@@ -868,6 +953,46 @@ const TaskManager: React.FC = () => {
           </div>
         )}
 
+        {/* Export Modal */}
+        {exportModalVisible && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+              <h2 className="text-xl font-bold mb-4">データエクスポート</h2>
+              <p className="text-sm text-gray-600 mb-6">
+                すべてのデータをエクスポートします。形式を選択してください。
+              </p>
+              <div className="space-y-3">
+                <button 
+                  className="w-full btn-primary"
+                  onClick={() => exportData('json')}
+                  disabled={exportLoading}
+                  data-testid="button-export-json"
+                >
+                  {exportLoading ? '処理中...' : 'JSON形式でエクスポート'}
+                </button>
+                <button 
+                  className="w-full btn-secondary"
+                  onClick={() => exportData('csv')}
+                  disabled={exportLoading}
+                  data-testid="button-export-csv"
+                >
+                  {exportLoading ? '処理中...' : 'CSV形式でエクスポート'}
+                </button>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <button 
+                  className="btn-secondary"
+                  onClick={() => setExportModalVisible(false)}
+                  disabled={exportLoading}
+                  data-testid="button-cancel-export"
+                >
+                  キャンセル
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <header className="sticky top-0 bg-white/80 backdrop-blur-sm z-10 px-4 py-3 flex justify-between items-center border-b border-theme-200">
           <h1 className="text-lg font-bold text-gray-900">タスク管理</h1>
@@ -890,6 +1015,14 @@ const TaskManager: React.FC = () => {
               data-testid="button-clock"
             >
               <Clock size={24} />
+            </button>
+            <button 
+              className="text-gray-500 hover:text-theme-500 transition-colors"
+              onClick={() => setExportModalVisible(true)}
+              data-testid="button-export"
+              title="データエクスポート"
+            >
+              <Download size={20} />
             </button>
             <button 
               className="text-gray-500 hover:text-red-500 transition-colors"

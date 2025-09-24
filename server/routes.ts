@@ -529,6 +529,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export route - get all user data
+  app.get("/api/export", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const userData = await storage.getAllUserData(userId);
+      
+      // Add user info and metadata
+      const user = await storage.getUser(userId);
+      const exportData = {
+        user: { id: user?.id, username: user?.username },
+        exportDate: new Date().toISOString(),
+        data: userData
+      };
+      
+      res.json(exportData);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to export data" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   return httpServer;
