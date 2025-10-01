@@ -168,6 +168,14 @@ const TaskManager: React.FC = () => {
     }
   });
 
+  const deleteDiaryEntryMutation = useMutation({
+    mutationFn: (id: string) =>
+      apiRequest('DELETE', `/api/diary-entries/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/diary-entries'] });
+    }
+  });
+
   // Export functionality
   const convertToCSV = (data: any[], type: string): string => {
     if (data.length === 0) return '';
