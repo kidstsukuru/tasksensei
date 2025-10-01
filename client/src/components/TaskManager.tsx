@@ -120,6 +120,14 @@ const TaskManager: React.FC = () => {
   const [stopwatchMinutes, setStopwatchMinutes] = useState(0);
   const [stopwatchSeconds, setStopwatchSeconds] = useState(0);
   const [stopwatchRunning, setStopwatchRunning] = useState(false);
+  
+  // Stop all other modes when switching
+  const switchTimerMode = (mode: 'pomodoro' | 'timer' | 'stopwatch') => {
+    setPomodoro(prev => ({ ...prev, isRunning: false }));
+    setTimerRunning(false);
+    setStopwatchRunning(false);
+    setTimerScreenMode(mode);
+  };
 
   // Mutation hooks for CRUD operations
   const createTodoMutation = useMutation({
@@ -803,9 +811,9 @@ const TaskManager: React.FC = () => {
       {/* Mode Selection Tabs */}
       <div className="flex justify-center space-x-2 mb-6">
         {[
-          { mode: 'pomodoro', label: 'ポモドーロ' },
-          { mode: 'timer', label: 'タイマー' },
-          { mode: 'stopwatch', label: 'ストップウォッチ' }
+          { mode: 'pomodoro' as const, label: 'ポモドーロ' },
+          { mode: 'timer' as const, label: 'タイマー' },
+          { mode: 'stopwatch' as const, label: 'ストップウォッチ' }
         ].map(({ mode, label }) => (
           <button
             key={mode}
@@ -814,7 +822,7 @@ const TaskManager: React.FC = () => {
                 ? 'bg-theme-500 text-white' 
                 : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
             }`}
-            onClick={() => setTimerScreenMode(mode as any)}
+            onClick={() => switchTimerMode(mode)}
             data-testid={`button-mode-${mode}`}
           >
             {label}
