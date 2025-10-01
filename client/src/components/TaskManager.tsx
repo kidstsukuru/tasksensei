@@ -722,14 +722,14 @@ const TaskManager: React.FC = () => {
               }
             </p>
           </div>
+          <div 
+            className="record-card"
+            data-testid="card-daily-routine"
+          >
+            <h3 className="font-bold">日課</h3>
+            <p className="text-sm text-gray-500">管理...</p>
+          </div>
         </div>
-        
-        <button 
-          className="w-full mt-4 py-3 bg-theme-500 text-white rounded-lg font-medium hover:bg-theme-600 transition-colors"
-          data-testid="button-daily-routine"
-        >
-          日課
-        </button>
       </section>
     </div>
   );
