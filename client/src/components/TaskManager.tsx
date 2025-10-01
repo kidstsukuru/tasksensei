@@ -111,6 +111,15 @@ const TaskManager: React.FC = () => {
     isRunning: false,
     mode: 'pomodoro'
   });
+  
+  // Timer and Stopwatch states
+  const [timerScreenMode, setTimerScreenMode] = useState<'pomodoro' | 'timer' | 'stopwatch'>('pomodoro');
+  const [timerMinutes, setTimerMinutes] = useState(0);
+  const [timerSeconds, setTimerSeconds] = useState(0);
+  const [timerRunning, setTimerRunning] = useState(false);
+  const [stopwatchMinutes, setStopwatchMinutes] = useState(0);
+  const [stopwatchSeconds, setStopwatchSeconds] = useState(0);
+  const [stopwatchRunning, setStopwatchRunning] = useState(false);
 
   // Mutation hooks for CRUD operations
   const createTodoMutation = useMutation({
@@ -395,6 +404,50 @@ const TaskManager: React.FC = () => {
       }
     };
   }, [pomodoro.isRunning]);
+
+  // Timer effect (countdown)
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (timerRunning) {
+      interval = setInterval(() => {
+        setTimerSeconds(prev => {
+          if (prev > 0) {
+            return prev - 1;
+          } else if (timerMinutes > 0) {
+            setTimerMinutes(m => m - 1);
+            return 59;
+          } else {
+            setTimerRunning(false);
+            alert('タイマー終了！');
+            return 0;
+          }
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [timerRunning, timerMinutes]);
+
+  // Stopwatch effect (count up)
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (stopwatchRunning) {
+      interval = setInterval(() => {
+        setStopwatchSeconds(prev => {
+          if (prev < 59) {
+            return prev + 1;
+          } else {
+            setStopwatchMinutes(m => m + 1);
+            return 0;
+          }
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [stopwatchRunning]);
 
   const getCurrentDate = () => {
     return new Date().toLocaleDateString('ja-JP', {
@@ -744,46 +797,162 @@ const TaskManager: React.FC = () => {
         >
           <ArrowLeft size={24} />
         </button>
-        <h2 className="text-xl font-bold mx-auto pr-8">ポモドーロタイマー</h2>
+        <h2 className="text-xl font-bold mx-auto pr-8">タイマー</h2>
       </header>
+      
+      {/* Mode Selection Tabs */}
+      <div className="flex justify-center space-x-2 mb-6">
+        {[
+          { mode: 'pomodoro', label: 'ポモドーロ' },
+          { mode: 'timer', label: 'タイマー' },
+          { mode: 'stopwatch', label: 'ストップウォッチ' }
+        ].map(({ mode, label }) => (
+          <button
+            key={mode}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
+              timerScreenMode === mode 
+                ? 'bg-theme-500 text-white' 
+                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            }`}
+            onClick={() => setTimerScreenMode(mode as any)}
+            data-testid={`button-mode-${mode}`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="bg-white rounded-lg shadow-inner p-6">
-        <div className="flex justify-center space-x-2 mb-6">
-          {[
-            { mode: 'pomodoro', label: 'ポモドーロ' },
-            { mode: 'shortBreak', label: '短い休憩' },
-            { mode: 'longBreak', label: '長い休憩' }
-          ].map(({ mode, label }) => (
-            <button
-              key={mode}
-              className={`pomodoro-btn px-4 py-1 rounded-full text-sm font-medium ${
-                pomodoro.mode === mode ? 'active' : ''
-              }`}
-              onClick={() => setPomodoroMode(mode as any)}
-              data-testid={`button-pomodoro-${mode}`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-        <div className="text-7xl font-bold text-theme-900 mb-6" data-testid="text-pomodoro-timer">
-          {String(pomodoro.minutes).padStart(2, '0')}:{String(pomodoro.seconds).padStart(2, '0')}
-        </div>
-        <div className="flex justify-center items-center space-x-6">
-          <button
-            className="w-16 h-16 flex items-center justify-center bg-theme-500 text-white font-semibold rounded-full shadow-md hover:bg-theme-600 transition"
-            onClick={togglePomodoro}
-            data-testid="button-pomodoro-toggle"
-          >
-            {pomodoro.isRunning ? <Pause size={32} /> : <Play size={32} />}
-          </button>
-          <button
-            className="w-12 h-12 flex items-center justify-center bg-gray-200 text-gray-800 font-semibold rounded-full hover:bg-gray-300 transition"
-            onClick={resetPomodoro}
-            data-testid="button-pomodoro-reset"
-          >
-            <RotateCcw size={24} />
-          </button>
-        </div>
+        {/* Pomodoro Mode */}
+        {timerScreenMode === 'pomodoro' && (
+          <>
+            <div className="flex justify-center space-x-2 mb-6">
+              {[
+                { mode: 'pomodoro', label: 'ポモドーロ' },
+                { mode: 'shortBreak', label: '短い休憩' },
+                { mode: 'longBreak', label: '長い休憩' }
+              ].map(({ mode, label }) => (
+                <button
+                  key={mode}
+                  className={`pomodoro-btn px-4 py-1 rounded-full text-sm font-medium ${
+                    pomodoro.mode === mode ? 'active' : ''
+                  }`}
+                  onClick={() => setPomodoroMode(mode as any)}
+                  data-testid={`button-pomodoro-${mode}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="text-7xl font-bold text-theme-900 mb-6" data-testid="text-pomodoro-timer">
+              {String(pomodoro.minutes).padStart(2, '0')}:{String(pomodoro.seconds).padStart(2, '0')}
+            </div>
+            <div className="flex justify-center items-center space-x-6">
+              <button
+                className="w-16 h-16 flex items-center justify-center bg-theme-500 text-white font-semibold rounded-full shadow-md hover:bg-theme-600 transition"
+                onClick={togglePomodoro}
+                data-testid="button-pomodoro-toggle"
+              >
+                {pomodoro.isRunning ? <Pause size={32} /> : <Play size={32} />}
+              </button>
+              <button
+                className="w-12 h-12 flex items-center justify-center bg-gray-200 text-gray-800 font-semibold rounded-full hover:bg-gray-300 transition"
+                onClick={resetPomodoro}
+                data-testid="button-pomodoro-reset"
+              >
+                <RotateCcw size={24} />
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Timer Mode */}
+        {timerScreenMode === 'timer' && (
+          <>
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">時間を設定</label>
+              <div className="flex justify-center items-center space-x-2">
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="99"
+                  placeholder="0" 
+                  value={timerMinutes || ''}
+                  onChange={(e) => setTimerMinutes(parseInt(e.target.value) || 0)}
+                  className="w-20 px-2 py-2 border rounded text-center text-2xl"
+                  disabled={timerRunning}
+                  data-testid="input-timer-minutes"
+                />
+                <span className="text-2xl font-medium">分</span>
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="59"
+                  placeholder="0" 
+                  value={timerSeconds || ''}
+                  onChange={(e) => setTimerSeconds(parseInt(e.target.value) || 0)}
+                  className="w-20 px-2 py-2 border rounded text-center text-2xl"
+                  disabled={timerRunning}
+                  data-testid="input-timer-seconds"
+                />
+                <span className="text-2xl font-medium">秒</span>
+              </div>
+            </div>
+            <div className="text-7xl font-bold text-theme-900 mb-6" data-testid="text-timer-display">
+              {String(timerMinutes).padStart(2, '0')}:{String(timerSeconds).padStart(2, '0')}
+            </div>
+            <div className="flex justify-center items-center space-x-6">
+              <button
+                className="w-16 h-16 flex items-center justify-center bg-theme-500 text-white font-semibold rounded-full shadow-md hover:bg-theme-600 transition"
+                onClick={() => setTimerRunning(!timerRunning)}
+                disabled={timerMinutes === 0 && timerSeconds === 0}
+                data-testid="button-timer-toggle"
+              >
+                {timerRunning ? <Pause size={32} /> : <Play size={32} />}
+              </button>
+              <button
+                className="w-12 h-12 flex items-center justify-center bg-gray-200 text-gray-800 font-semibold rounded-full hover:bg-gray-300 transition"
+                onClick={() => {
+                  setTimerRunning(false);
+                  setTimerMinutes(0);
+                  setTimerSeconds(0);
+                }}
+                data-testid="button-timer-reset"
+              >
+                <RotateCcw size={24} />
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Stopwatch Mode */}
+        {timerScreenMode === 'stopwatch' && (
+          <>
+            <div className="text-7xl font-bold text-theme-900 mb-6" data-testid="text-stopwatch-display">
+              {String(stopwatchMinutes).padStart(2, '0')}:{String(stopwatchSeconds).padStart(2, '0')}
+            </div>
+            <div className="flex justify-center items-center space-x-6">
+              <button
+                className="w-16 h-16 flex items-center justify-center bg-theme-500 text-white font-semibold rounded-full shadow-md hover:bg-theme-600 transition"
+                onClick={() => setStopwatchRunning(!stopwatchRunning)}
+                data-testid="button-stopwatch-toggle"
+              >
+                {stopwatchRunning ? <Pause size={32} /> : <Play size={32} />}
+              </button>
+              <button
+                className="w-12 h-12 flex items-center justify-center bg-gray-200 text-gray-800 font-semibold rounded-full hover:bg-gray-300 transition"
+                onClick={() => {
+                  setStopwatchRunning(false);
+                  setStopwatchMinutes(0);
+                  setStopwatchSeconds(0);
+                }}
+                data-testid="button-stopwatch-reset"
+              >
+                <RotateCcw size={24} />
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
