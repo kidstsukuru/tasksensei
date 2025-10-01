@@ -38,8 +38,6 @@ const TaskManager: React.FC = () => {
   const { user, logout } = useAuth();
   const [currentScreen, setCurrentScreen] = useState('home-screen');
   const [todoVisible, setTodoVisible] = useLocalStorage('todoVisible', false);
-  const [pendingBedtime, setPendingBedtime] = useLocalStorage<Date | null>('pendingBedtime', null);
-  const [pendingWakeupTime, setPendingWakeupTime] = useLocalStorage<Date | null>('pendingWakeupTime', null);
   
   // Export functionality state
   const [exportModalVisible, setExportModalVisible] = useState(false);
