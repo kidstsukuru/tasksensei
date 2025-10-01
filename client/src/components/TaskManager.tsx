@@ -335,6 +335,12 @@ const TaskManager: React.FC = () => {
   const [weightInput, setWeightInput] = useState('');
   const [heightInput, setHeightInput] = useState('');
   const [bodyFatInput, setBodyFatInput] = useState('');
+  
+  // Sleep time input states
+  const [bedtimeHour, setBedtimeHour] = useState('');
+  const [bedtimeMinute, setBedtimeMinute] = useState('');
+  const [wakeupHour, setWakeupHour] = useState('');
+  const [wakeupMinute, setWakeupMinute] = useState('');
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -472,30 +478,46 @@ const TaskManager: React.FC = () => {
     });
   };
 
-  const recordBedtime = () => {
-    const now = new Date();
-    setPendingBedtime(now);
-  };
-
-  const recordWakeup = () => {
-    if (!pendingBedtime) return;
+  const saveSleepRecord = () => {
+    if (!bedtimeHour || !bedtimeMinute || !wakeupHour || !wakeupMinute) {
+      return;
+    }
+    
+    const bedHour = parseInt(bedtimeHour);
+    const bedMin = parseInt(bedtimeMinute);
+    const wakeHour = parseInt(wakeupHour);
+    const wakeMin = parseInt(wakeupMinute);
+    
+    if (isNaN(bedHour) || isNaN(bedMin) || isNaN(wakeHour) || isNaN(wakeMin)) {
+      return;
+    }
     
     const now = new Date();
-    const duration = now.getTime() - pendingBedtime.getTime();
+    const bedtime = new Date(now);
+    bedtime.setHours(bedHour, bedMin, 0, 0);
+    
+    const wakeup = new Date(now);
+    wakeup.setHours(wakeHour, wakeMin, 0, 0);
+    
+    // 起床時間が就寝時間より前の場合、翌日とみなす
+    if (wakeup <= bedtime) {
+      wakeup.setDate(wakeup.getDate() + 1);
+    }
+    
+    const duration = wakeup.getTime() - bedtime.getTime();
     const todayDate = new Date().toISOString().split('T')[0];
     
     createSleepRecordMutation.mutate({
       date: todayDate,
-      bedtime: pendingBedtime,
-      wakeup: now,
+      bedtime: bedtime,
+      wakeup: wakeup,
       duration
     });
-    setPendingBedtime(null);
-    setPendingWakeupTime(null);
-  };
-
-  const deleteBedtime = () => {
-    setPendingBedtime(null);
+    
+    setBedtimeHour('');
+    setBedtimeMinute('');
+    setWakeupHour('');
+    setWakeupMinute('');
   };
 
   const saveSchedule = () => {
@@ -766,51 +788,75 @@ const TaskManager: React.FC = () => {
         <h2 className="text-xl font-bold mx-auto pr-8">睡眠記録</h2>
       </header>
       <div className="px-4 space-y-6">
-        {/* Pending Sleep Record */}
-        <div className="bg-white rounded-lg shadow p-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-500">就寝時間</label>
-            <div className="flex items-center justify-between">
-              <span className="text-2xl font-semibold" data-testid="text-pending-bedtime">
-                {formatTime(pendingBedtime)}
-              </span>
-              <div className="flex items-center space-x-2">
-                {pendingBedtime && (
-                  <button 
-                    className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600"
-                    onClick={deleteBedtime}
-                    data-testid="button-delete-bedtime"
-                  >
-                    <X size={16} strokeWidth={3} />
-                  </button>
-                )}
-                <button 
-                  className="px-4 py-2 bg-theme-500 text-white rounded-lg hover:bg-theme-600 w-20 text-center"
-                  onClick={recordBedtime}
-                  data-testid="button-record-bedtime"
-                >
-                  記録
-                </button>
-              </div>
-            </div>
-          </div>
+        {/* Sleep Time Input */}
+        <div className="bg-white rounded-lg shadow p-4">
+          <h3 className="font-bold text-lg mb-4">睡眠時間を記録</h3>
           
-          {pendingBedtime && (
+          <div className="space-y-4">
             <div>
-              <hr />
-              <label className="block text-sm font-medium text-gray-500">起床時間</label>
-              <div className="flex items-center justify-between">
-                <span className="text-2xl font-semibold" data-testid="text-pending-wakeup">--:--</span>
-                <button 
-                  className="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 w-20 text-center"
-                  onClick={recordWakeup}
-                  data-testid="button-record-wakeup"
-                >
-                  記録
-                </button>
+              <label className="block text-sm font-medium text-gray-700 mb-2">就寝時間</label>
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="23"
+                  placeholder="22" 
+                  value={bedtimeHour}
+                  onChange={(e) => setBedtimeHour(e.target.value)}
+                  className="w-16 px-2 py-2 border rounded text-center"
+                  data-testid="input-bedtime-hour"
+                />
+                <span className="text-lg">時</span>
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="59"
+                  placeholder="30" 
+                  value={bedtimeMinute}
+                  onChange={(e) => setBedtimeMinute(e.target.value)}
+                  className="w-16 px-2 py-2 border rounded text-center"
+                  data-testid="input-bedtime-minute"
+                />
+                <span className="text-lg">分</span>
               </div>
             </div>
-          )}
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">起床時間</label>
+              <div className="flex items-center space-x-2">
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="23"
+                  placeholder="6" 
+                  value={wakeupHour}
+                  onChange={(e) => setWakeupHour(e.target.value)}
+                  className="w-16 px-2 py-2 border rounded text-center"
+                  data-testid="input-wakeup-hour"
+                />
+                <span className="text-lg">時</span>
+                <input 
+                  type="number" 
+                  min="0" 
+                  max="59"
+                  placeholder="30" 
+                  value={wakeupMinute}
+                  onChange={(e) => setWakeupMinute(e.target.value)}
+                  className="w-16 px-2 py-2 border rounded text-center"
+                  data-testid="input-wakeup-minute"
+                />
+                <span className="text-lg">分</span>
+              </div>
+            </div>
+            
+            <button 
+              className="w-full px-4 py-2 bg-theme-500 text-white rounded-lg hover:bg-theme-600"
+              onClick={saveSleepRecord}
+              data-testid="button-save-sleep"
+            >
+              睡眠時間を保存
+            </button>
+          </div>
         </div>
 
         {/* Today's Sleep Record */}
