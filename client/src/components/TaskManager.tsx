@@ -1073,9 +1073,17 @@ const TaskManager: React.FC = () => {
           <h3 className="font-bold text-lg mb-4">過去のメモ</h3>
           <div className="space-y-3">
             {diaryEntries.slice(-5).reverse().map(entry => (
-              <div key={entry.id} className="p-3 border rounded-lg">
+              <div key={entry.id} className="p-3 border rounded-lg relative">
+                <button
+                  onClick={() => deleteDiaryEntryMutation.mutate(entry.id)}
+                  className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-colors"
+                  data-testid={`button-delete-diary-${entry.id}`}
+                  aria-label="メモを削除"
+                >
+                  <X size={16} />
+                </button>
                 <div className="text-sm text-gray-500 mb-1">{entry.date}</div>
-                <div className="text-sm">{entry.content}</div>
+                <div className="text-sm pr-6">{entry.content}</div>
               </div>
             ))}
           </div>
