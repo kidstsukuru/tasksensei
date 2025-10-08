@@ -33,7 +33,8 @@ import {
   LogOut,
   User,
   Download,
-  Star
+  Star,
+  Repeat
 } from 'lucide-react';
 
 const TaskManager: React.FC = () => {
@@ -57,6 +58,9 @@ const TaskManager: React.FC = () => {
   // TODO input functionality state
   const [todoInputModalVisible, setTodoInputModalVisible] = useState(false);
   const [todoInputText, setTodoInputText] = useState('');
+  const [repeatType, setRepeatType] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
+  const [repeatDays, setRepeatDays] = useState<number[]>([]);
+  const [repeatDate, setRepeatDate] = useState<number | null>(null);
   
   // Schedule input functionality state
   const [scheduleInputModalVisible, setScheduleInputModalVisible] = useState(false);
@@ -534,9 +538,19 @@ const TaskManager: React.FC = () => {
     if (todoInputText.trim()) {
       createTodoMutation.mutate({
         text: todoInputText.trim(),
-        completed: false
+        completed: false,
+        repeatType: repeatType === 'none' ? null : repeatType,
+        repeatDays: repeatType === 'weekly' && repeatDays.length > 0 ? repeatDays : null,
+        repeatDate: repeatType === 'monthly' ? repeatDate : null,
+        location: null,
+        locationLat: null,
+        locationLng: null,
+        locationRadius: null
       });
       setTodoInputText('');
+      setRepeatType('none');
+      setRepeatDays([]);
+      setRepeatDate(null);
       if (!todoVisible) {
         setTodoVisible(true);
       }
@@ -771,6 +785,19 @@ const TaskManager: React.FC = () => {
                 <span className={`flex-grow ${todo.completed ? 'line-through text-gray-400' : ''}`}>
                   {todo.text}
                 </span>
+                {todo.repeatType && (
+                  <Repeat 
+                    size={16} 
+                    className="text-theme-500 mr-2" 
+                    data-testid={`icon-repeat-${todo.id}`}
+                    title={
+                      todo.repeatType === 'daily' ? '毎日' :
+                      todo.repeatType === 'weekly' ? `毎週 ${todo.repeatDays?.map(d => ['日', '月', '火', '水', '木', '金', '土'][d]).join(', ')}` :
+                      todo.repeatType === 'monthly' ? `毎月 ${todo.repeatDate}日` :
+                      '繰り返し'
+                    }
+                  />
+                )}
                 <button 
                   onClick={() => deleteTodo(todo.id)}
                   className="text-red-500 hover:text-red-700"
@@ -1853,18 +1880,86 @@ const TaskManager: React.FC = () => {
                 className="form-input mb-4 w-full"
                 data-testid="input-todo-text"
                 onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
+                  if (e.key === 'Enter' && repeatType === 'none') {
                     saveTodoInput();
                   }
                 }}
                 autoFocus
               />
+              
+              {/* 繰り返し設定 */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-2">繰り返し設定</label>
+                <select
+                  value={repeatType}
+                  onChange={(e) => setRepeatType(e.target.value as any)}
+                  className="form-input w-full"
+                  data-testid="select-repeat-type"
+                >
+                  <option value="none">繰り返しなし</option>
+                  <option value="daily">毎日</option>
+                  <option value="weekly">毎週</option>
+                  <option value="monthly">毎月</option>
+                </select>
+              </div>
+
+              {/* 曜日選択（毎週の場合） */}
+              {repeatType === 'weekly' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">曜日を選択</label>
+                  <div className="flex flex-wrap gap-2">
+                    {['日', '月', '火', '水', '木', '金', '土'].map((day, index) => (
+                      <button
+                        key={index}
+                        type="button"
+                        onClick={() => {
+                          if (repeatDays.includes(index)) {
+                            setRepeatDays(repeatDays.filter(d => d !== index));
+                          } else {
+                            setRepeatDays([...repeatDays, index]);
+                          }
+                        }}
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          repeatDays.includes(index)
+                            ? 'bg-theme-500 text-white'
+                            : 'bg-gray-200 text-gray-700'
+                        }`}
+                        data-testid={`button-weekday-${index}`}
+                      >
+                        {day}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* 日付選択（毎月の場合） */}
+              {repeatType === 'monthly' && (
+                <div className="mb-4">
+                  <label className="block text-sm font-medium mb-2">日付を選択</label>
+                  <select
+                    value={repeatDate || ''}
+                    onChange={(e) => setRepeatDate(e.target.value ? parseInt(e.target.value) : null)}
+                    className="form-input w-full"
+                    data-testid="select-repeat-date"
+                  >
+                    <option value="">日付を選択</option>
+                    {Array.from({ length: 31 }, (_, i) => i + 1).map(date => (
+                      <option key={date} value={date}>{date}日</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              
               <div className="flex justify-end space-x-3">
                 <button 
                   className="btn-secondary"
                   onClick={() => {
                     setTodoInputModalVisible(false);
                     setTodoInputText('');
+                    setRepeatType('none');
+                    setRepeatDays([]);
+                    setRepeatDate(null);
                   }}
                   data-testid="button-close-todo-input"
                 >
