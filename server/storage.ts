@@ -6,12 +6,13 @@ import {
   type WeightRecord, type InsertWeightRecord,
   type MealRecord, type InsertMealRecord,
   type DiaryEntry, type InsertDiaryEntry,
-  users, todos, schedules, sleepRecords, weightRecords, mealRecords, diaryEntries
+  type DailyRoutine, type InsertDailyRoutine,
+  users, todos, schedules, sleepRecords, weightRecords, mealRecords, diaryEntries, dailyRoutines
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 
 // modify the interface with any CRUD methods
 // you might need
@@ -63,6 +64,13 @@ export interface IStorage {
   createDiaryEntry(diaryEntry: InsertDiaryEntry): Promise<DiaryEntry>;
   updateDiaryEntry(id: string, diaryEntry: Partial<Omit<InsertDiaryEntry, 'id' | 'userId'>>): Promise<DiaryEntry | undefined>;
   deleteDiaryEntry(id: string): Promise<boolean>;
+
+  // Daily routine methods
+  getDailyRoutinesByUserId(userId: string): Promise<DailyRoutine[]>;
+  getDailyRoutineByUserIdAndDate(userId: string, date: string): Promise<DailyRoutine | undefined>;
+  createDailyRoutine(dailyRoutine: InsertDailyRoutine): Promise<DailyRoutine>;
+  updateDailyRoutine(id: string, dailyRoutine: Partial<Omit<InsertDailyRoutine, 'id' | 'userId'>>): Promise<DailyRoutine | undefined>;
+  deleteDailyRoutine(id: string): Promise<boolean>;
 
   // Export methods
   getAllUserData(userId: string): Promise<{
@@ -257,6 +265,36 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
+  // Daily routine methods
+  async getDailyRoutinesByUserId(userId: string): Promise<DailyRoutine[]> {
+    return await this.db.select().from(dailyRoutines).where(eq(dailyRoutines.userId, userId));
+  }
+
+  async getDailyRoutineByUserIdAndDate(userId: string, date: string): Promise<DailyRoutine | undefined> {
+    const result = await this.db.select().from(dailyRoutines).where(
+      and(
+        eq(dailyRoutines.userId, userId),
+        eq(dailyRoutines.date, date)
+      )
+    );
+    return result[0];
+  }
+
+  async createDailyRoutine(insertDailyRoutine: InsertDailyRoutine): Promise<DailyRoutine> {
+    const result = await this.db.insert(dailyRoutines).values(insertDailyRoutine).returning();
+    return result[0];
+  }
+
+  async updateDailyRoutine(id: string, dailyRoutineUpdate: Partial<Omit<InsertDailyRoutine, 'id' | 'userId'>>): Promise<DailyRoutine | undefined> {
+    const result = await this.db.update(dailyRoutines).set(dailyRoutineUpdate).where(eq(dailyRoutines.id, id)).returning();
+    return result[0];
+  }
+
+  async deleteDailyRoutine(id: string): Promise<boolean> {
+    const result = await this.db.delete(dailyRoutines).where(eq(dailyRoutines.id, id)).returning({ id: dailyRoutines.id });
+    return result.length > 0;
+  }
+
   // Export methods
   async getAllUserData(userId: string): Promise<{
     todos: Todo[];
@@ -301,6 +339,7 @@ export class MemStorage implements IStorage {
   private weightRecords: Map<string, WeightRecord>;
   private mealRecords: Map<string, MealRecord>;
   private diaryEntries: Map<string, DiaryEntry>;
+  private dailyRoutines: Map<string, DailyRoutine>;
 
   constructor() {
     this.users = new Map();
@@ -310,6 +349,7 @@ export class MemStorage implements IStorage {
     this.weightRecords = new Map();
     this.mealRecords = new Map();
     this.diaryEntries = new Map();
+    this.dailyRoutines = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -520,6 +560,37 @@ export class MemStorage implements IStorage {
 
   async deleteDiaryEntry(id: string): Promise<boolean> {
     return this.diaryEntries.delete(id);
+  }
+
+  // Daily routine methods
+  async getDailyRoutinesByUserId(userId: string): Promise<DailyRoutine[]> {
+    return Array.from(this.dailyRoutines.values()).filter(routine => routine.userId === userId);
+  }
+
+  async getDailyRoutineByUserIdAndDate(userId: string, date: string): Promise<DailyRoutine | undefined> {
+    return Array.from(this.dailyRoutines.values()).find(
+      routine => routine.userId === userId && routine.date === date
+    );
+  }
+
+  async createDailyRoutine(insertDailyRoutine: InsertDailyRoutine): Promise<DailyRoutine> {
+    const id = randomUUID();
+    const dailyRoutine: DailyRoutine = { ...insertDailyRoutine, id };
+    this.dailyRoutines.set(id, dailyRoutine);
+    return dailyRoutine;
+  }
+
+  async updateDailyRoutine(id: string, dailyRoutineUpdate: Partial<Omit<InsertDailyRoutine, 'id' | 'userId'>>): Promise<DailyRoutine | undefined> {
+    const existingDailyRoutine = this.dailyRoutines.get(id);
+    if (!existingDailyRoutine) return undefined;
+    
+    const updatedDailyRoutine: DailyRoutine = { ...existingDailyRoutine, ...dailyRoutineUpdate };
+    this.dailyRoutines.set(id, updatedDailyRoutine);
+    return updatedDailyRoutine;
+  }
+
+  async deleteDailyRoutine(id: string): Promise<boolean> {
+    return this.dailyRoutines.delete(id);
   }
 
   // Export methods

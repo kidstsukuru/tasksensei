@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, boolean, timestamp, decimal, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, boolean, timestamp, decimal, integer, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -62,6 +62,15 @@ export const diaryEntries = pgTable("diary_entries", {
   photos: text("photos").array(),
 });
 
+export const dailyRoutines = pgTable("daily_routines", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  date: varchar("date").notNull(),
+  content: text("content").notNull(),
+}, (table) => ({
+  uniqueUserDate: unique().on(table.userId, table.date),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -99,6 +108,10 @@ export const insertDiaryEntrySchema = createInsertSchema(diaryEntries).omit({
   id: true,
 });
 
+export const insertDailyRoutineSchema = createInsertSchema(dailyRoutines).omit({
+  id: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -120,3 +133,6 @@ export type MealRecord = typeof mealRecords.$inferSelect;
 
 export type InsertDiaryEntry = z.infer<typeof insertDiaryEntrySchema>;
 export type DiaryEntry = typeof diaryEntries.$inferSelect;
+
+export type InsertDailyRoutine = z.infer<typeof insertDailyRoutineSchema>;
+export type DailyRoutine = typeof dailyRoutines.$inferSelect;
