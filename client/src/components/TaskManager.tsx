@@ -935,6 +935,14 @@ const TaskManager: React.FC = () => {
             <h3 className="font-bold">週次振り返り</h3>
             <p className="text-sm text-gray-500">今週の記録を確認...</p>
           </div>
+          <div 
+            className="record-card"
+            onClick={() => showScreen('week-tracker-screen')}
+            data-testid="card-week-tracker"
+          >
+            <h3 className="font-bold">週間トラッカー</h3>
+            <p className="text-sm text-gray-500">日ごとの進捗を確認...</p>
+          </div>
         </div>
       </section>
     </div>
@@ -1773,6 +1781,117 @@ const TaskManager: React.FC = () => {
     );
   };
 
+  const renderWeekTrackerScreen = () => {
+    const { weekStart, weekEnd } = getWeekStartEnd(weekOffset);
+    const weekLabel = weekOffset === 0 ? '今週' : weekOffset === -1 ? '先週' : '来週';
+    const weekDateRange = `${weekStart.getMonth() + 1}/${weekStart.getDate()} - ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`;
+
+    // Generate array of days in the week
+    const weekDays = [];
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(weekStart);
+      day.setDate(weekStart.getDate() + i);
+      weekDays.push(day);
+    }
+
+    return (
+      <div className="page p-4">
+        <header className="flex items-center mb-6">
+          <button 
+            className="p-2 rounded-full hover:bg-gray-100"
+            onClick={() => showScreen('home-screen')}
+            data-testid="button-back"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-bold mx-auto pr-8">週間トラッカー</h2>
+        </header>
+        
+        <div className="px-4 space-y-6">
+          {/* Week Navigation */}
+          <div className="flex items-center justify-between bg-white rounded-lg shadow p-4">
+            <button
+              onClick={() => setWeekOffset(weekOffset - 1)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+              data-testid="button-prev-week-tracker"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div className="text-center">
+              <div className="font-bold text-lg" data-testid="text-week-tracker-label">{weekLabel}</div>
+              <div className="text-sm text-gray-500">{weekDateRange}</div>
+            </div>
+            <button
+              onClick={() => setWeekOffset(weekOffset + 1)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+              data-testid="button-next-week-tracker"
+            >
+              <ArrowLeft size={20} className="rotate-180" />
+            </button>
+          </div>
+
+          {/* Daily Progress Table */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="font-bold text-lg mb-4">日ごとの記録</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm" data-testid="table-daily-progress">
+                <thead>
+                  <tr className="border-b">
+                    <th className="py-2 text-left">日付</th>
+                    <th className="py-2 text-center">タスク</th>
+                    <th className="py-2 text-center">睡眠</th>
+                    <th className="py-2 text-center">体重</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {weekDays.map((day, index) => {
+                    const dayStr = day.toLocaleDateString('sv-SE');
+                    const dayTodos = todos.filter(t => {
+                      const createdDate = new Date(t.createdAt);
+                      return createdDate.toLocaleDateString('sv-SE') === dayStr && t.completed;
+                    });
+                    const daySleep = sleepRecords.find(r => r.date === dayStr);
+                    const dayWeight = weightRecords.find(r => r.date === dayStr);
+                    
+                    const sleepHours = daySleep 
+                      ? (daySleep.duration / (1000 * 60 * 60)).toFixed(1) 
+                      : '-';
+                    const weight = dayWeight ? parseFloat(dayWeight.weight).toFixed(1) : '-';
+                    
+                    const dayLabel = ['日', '月', '火', '水', '木', '金', '土'][day.getDay()];
+                    const isToday = day.toDateString() === new Date().toDateString();
+                    
+                    return (
+                      <tr 
+                        key={index} 
+                        className={`border-b ${isToday ? 'bg-theme-50' : ''}`}
+                        data-testid={`row-day-${index}`}
+                      >
+                        <td className="py-3">
+                          <div className="font-medium">{day.getMonth() + 1}/{day.getDate()}</div>
+                          <div className="text-xs text-gray-500">{dayLabel}</div>
+                        </td>
+                        <td className="py-3 text-center">
+                          <div className="font-semibold text-theme-500">{dayTodos.length}</div>
+                        </td>
+                        <td className="py-3 text-center">
+                          <div className={sleepHours !== '-' ? 'font-semibold' : 'text-gray-400'}>{sleepHours}h</div>
+                        </td>
+                        <td className="py-3 text-center">
+                          <div className={weight !== '-' ? 'font-semibold' : 'text-gray-400'}>{weight}kg</div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderMealDetailScreen = () => (
     <div className="page p-4">
       <header className="flex items-center mb-6">
@@ -1846,6 +1965,8 @@ const TaskManager: React.FC = () => {
         return renderMonthlyGoalScreen();
       case 'weekly-review-screen':
         return renderWeeklyReviewScreen();
+      case 'week-tracker-screen':
+        return renderWeekTrackerScreen();
       case 'meal-detail-screen':
         return renderMealDetailScreen();
       default:
