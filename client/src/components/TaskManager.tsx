@@ -9,7 +9,8 @@ import {
   SleepRecord, 
   WeightRecord, 
   MealRecord, 
-  DiaryEntry, 
+  DiaryEntry,
+  DailyRoutine,
   PomodoroState,
   AppState 
 } from '../types';
@@ -104,6 +105,11 @@ const TaskManager: React.FC = () => {
     queryKey: ['/api/diary-entries'],
     queryFn: () => fetch('/api/diary-entries', { credentials: 'include' }).then(res => res.json())
   });
+
+  const { data: dailyRoutines = [], isLoading: dailyRoutinesLoading } = useQuery<DailyRoutine[]>({
+    queryKey: ['/api/daily-routines'],
+    queryFn: () => fetch('/api/daily-routines', { credentials: 'include' }).then(res => res.json())
+  });
   
   const [pomodoro, setPomodoro] = useState<PomodoroState>({
     minutes: 25,
@@ -190,6 +196,22 @@ const TaskManager: React.FC = () => {
       apiRequest('DELETE', `/api/diary-entries/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/diary-entries'] });
+    }
+  });
+
+  const createDailyRoutineMutation = useMutation({
+    mutationFn: (routineData: { date: string; content: string }) =>
+      apiRequest('POST', '/api/daily-routines', routineData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/daily-routines'] });
+    }
+  });
+
+  const updateDailyRoutineMutation = useMutation({
+    mutationFn: ({ id, content }: { id: string; content: string }) =>
+      apiRequest('PUT', `/api/daily-routines/${id}`, { content }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/daily-routines'] });
     }
   });
 
@@ -785,10 +807,11 @@ const TaskManager: React.FC = () => {
           </div>
           <div 
             className="record-card"
+            onClick={() => showScreen('daily-routine-screen')}
             data-testid="card-daily-routine"
           >
             <h3 className="font-bold">日課</h3>
-            <p className="text-sm text-gray-500">管理...</p>
+            <p className="text-sm text-gray-500">毎日の日記...</p>
           </div>
         </div>
       </section>
@@ -1276,6 +1299,111 @@ const TaskManager: React.FC = () => {
     </div>
   );
 
+  const renderDailyRoutineScreen = () => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayRoutine = dailyRoutines.find(r => r.date === today);
+    const [routineContent, setRoutineContent] = useState(todayRoutine?.content || '');
+    const [isEditing, setIsEditing] = useState(!todayRoutine);
+
+    const handleSave = async () => {
+      if (!routineContent.trim()) {
+        alert('内容を入力してください');
+        return;
+      }
+
+      try {
+        if (todayRoutine) {
+          await updateDailyRoutineMutation.mutateAsync({
+            id: todayRoutine.id,
+            content: routineContent
+          });
+        } else {
+          await createDailyRoutineMutation.mutateAsync({
+            date: today,
+            content: routineContent
+          });
+        }
+        setIsEditing(false);
+      } catch (error) {
+        console.error('Failed to save daily routine:', error);
+        alert('保存に失敗しました');
+      }
+    };
+
+    return (
+      <div className="page p-4">
+        <header className="flex items-center mb-6">
+          <button 
+            className="p-2 rounded-full hover:bg-gray-100"
+            onClick={() => showScreen('home-screen')}
+            data-testid="button-back"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-bold mx-auto pr-8">日課</h2>
+        </header>
+        <div className="px-4 space-y-6">
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">今日の日課</h3>
+              {!isEditing && todayRoutine && (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-3 py-1 text-sm bg-theme-500 text-white rounded-full hover:bg-theme-600"
+                  data-testid="button-edit-routine"
+                >
+                  編集
+                </button>
+              )}
+            </div>
+            <div className="mb-2 text-sm text-gray-500">{today}</div>
+            {isEditing ? (
+              <>
+                <textarea
+                  value={routineContent}
+                  onChange={(e) => setRoutineContent(e.target.value)}
+                  className="w-full p-3 border rounded-lg mb-4 min-h-[200px]"
+                  placeholder="今日の日課を書いてください..."
+                  data-testid="textarea-routine-content"
+                />
+                <button
+                  onClick={handleSave}
+                  className="w-full py-3 bg-theme-500 text-white rounded-full font-semibold hover:bg-theme-600"
+                  data-testid="button-save-routine"
+                >
+                  保存
+                </button>
+              </>
+            ) : (
+              <div className="p-3 border rounded-lg bg-gray-50" data-testid="text-routine-content">
+                {todayRoutine?.content || '今日の日課はまだ記録されていません'}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="font-bold text-lg mb-4">過去の日課</h3>
+            <div className="space-y-3">
+              {dailyRoutines
+                .filter(r => r.date !== today)
+                .sort((a, b) => b.date.localeCompare(a.date))
+                .slice(0, 5)
+                .map(routine => (
+                  <div key={routine.id} className="p-3 border rounded-lg">
+                    <div className="text-sm text-gray-500 mb-1">{routine.date}</div>
+                    <div className="text-sm">{routine.content}</div>
+                  </div>
+                ))}
+              {dailyRoutines.filter(r => r.date !== today).length === 0 && (
+                <div className="text-center text-gray-500 py-4">過去の記録はありません</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderMealDetailScreen = () => (
     <div className="page p-4">
       <header className="flex items-center mb-6">
@@ -1343,6 +1471,8 @@ const TaskManager: React.FC = () => {
         return renderBodyDetailScreen();
       case 'diary-detail-screen':
         return renderDiaryDetailScreen();
+      case 'daily-routine-screen':
+        return renderDailyRoutineScreen();
       case 'meal-detail-screen':
         return renderMealDetailScreen();
       default:

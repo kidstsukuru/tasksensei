@@ -6,12 +6,14 @@ import type {
   WeightRecord,
   MealRecord,
   DiaryEntry,
+  DailyRoutine,
   InsertTodo,
   InsertSchedule,
   InsertSleepRecord,
   InsertWeightRecord,
   InsertMealRecord,
-  InsertDiaryEntry
+  InsertDiaryEntry,
+  InsertDailyRoutine
 } from '@shared/schema';
 
 // Re-export for other components
@@ -22,12 +24,14 @@ export type {
   WeightRecord,
   MealRecord,
   DiaryEntry,
+  DailyRoutine,
   InsertTodo,
   InsertSchedule,
   InsertSleepRecord,
   InsertWeightRecord,
   InsertMealRecord,
-  InsertDiaryEntry
+  InsertDiaryEntry,
+  InsertDailyRoutine
 };
 
 export interface PomodoroState {
