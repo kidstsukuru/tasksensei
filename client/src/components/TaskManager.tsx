@@ -123,6 +123,10 @@ const TaskManager: React.FC = () => {
   const [timerMinutes, setTimerMinutes] = useState(0);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
+  
+  // Daily Routine states
+  const [routineContent, setRoutineContent] = useState('');
+  const [isRoutineEditing, setIsRoutineEditing] = useState(false);
   const [stopwatchMinutes, setStopwatchMinutes] = useState(0);
   const [stopwatchSeconds, setStopwatchSeconds] = useState(0);
   const [stopwatchRunning, setStopwatchRunning] = useState(false);
@@ -1299,36 +1303,47 @@ const TaskManager: React.FC = () => {
     </div>
   );
 
+  // Initialize daily routine state when screen changes
+  useEffect(() => {
+    if (currentScreen === 'daily-routine-screen') {
+      const today = new Date().toISOString().split('T')[0];
+      const todayRoutine = dailyRoutines.find(r => r.date === today);
+      setRoutineContent(todayRoutine?.content || '');
+      setIsRoutineEditing(!todayRoutine);
+    }
+  }, [currentScreen, dailyRoutines]);
+
+  const handleSaveDailyRoutine = async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const todayRoutine = dailyRoutines.find(r => r.date === today);
+    
+    if (!routineContent.trim()) {
+      alert('内容を入力してください');
+      return;
+    }
+
+    try {
+      if (todayRoutine) {
+        await updateDailyRoutineMutation.mutateAsync({
+          id: todayRoutine.id,
+          content: routineContent
+        });
+      } else {
+        await createDailyRoutineMutation.mutateAsync({
+          date: today,
+          content: routineContent
+        });
+      }
+      setIsRoutineEditing(false);
+    } catch (error) {
+      console.error('Failed to save daily routine:', error);
+      alert('保存に失敗しました');
+    }
+  };
+
   const renderDailyRoutineScreen = () => {
     const today = new Date().toISOString().split('T')[0];
     const todayRoutine = dailyRoutines.find(r => r.date === today);
-    const [routineContent, setRoutineContent] = useState(todayRoutine?.content || '');
-    const [isEditing, setIsEditing] = useState(!todayRoutine);
-
-    const handleSave = async () => {
-      if (!routineContent.trim()) {
-        alert('内容を入力してください');
-        return;
-      }
-
-      try {
-        if (todayRoutine) {
-          await updateDailyRoutineMutation.mutateAsync({
-            id: todayRoutine.id,
-            content: routineContent
-          });
-        } else {
-          await createDailyRoutineMutation.mutateAsync({
-            date: today,
-            content: routineContent
-          });
-        }
-        setIsEditing(false);
-      } catch (error) {
-        console.error('Failed to save daily routine:', error);
-        alert('保存に失敗しました');
-      }
-    };
 
     return (
       <div className="page p-4">
@@ -1346,9 +1361,9 @@ const TaskManager: React.FC = () => {
           <div className="bg-white rounded-lg shadow p-4">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-lg">今日の日課</h3>
-              {!isEditing && todayRoutine && (
+              {!isRoutineEditing && todayRoutine && (
                 <button
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => setIsRoutineEditing(true)}
                   className="px-3 py-1 text-sm bg-theme-500 text-white rounded-full hover:bg-theme-600"
                   data-testid="button-edit-routine"
                 >
@@ -1357,7 +1372,7 @@ const TaskManager: React.FC = () => {
               )}
             </div>
             <div className="mb-2 text-sm text-gray-500">{today}</div>
-            {isEditing ? (
+            {isRoutineEditing ? (
               <>
                 <textarea
                   value={routineContent}
@@ -1367,7 +1382,7 @@ const TaskManager: React.FC = () => {
                   data-testid="textarea-routine-content"
                 />
                 <button
-                  onClick={handleSave}
+                  onClick={handleSaveDailyRoutine}
                   className="w-full py-3 bg-theme-500 text-white rounded-full font-semibold hover:bg-theme-600"
                   data-testid="button-save-routine"
                 >
