@@ -61,6 +61,11 @@ const TaskManager: React.FC = () => {
   const [repeatType, setRepeatType] = useState<'none' | 'daily' | 'weekly' | 'monthly'>('none');
   const [repeatDays, setRepeatDays] = useState<number[]>([]);
   const [repeatDate, setRepeatDate] = useState<number | null>(null);
+  const [locationEnabled, setLocationEnabled] = useState(false);
+  const [locationName, setLocationName] = useState('');
+  const [locationLat, setLocationLat] = useState<number | null>(null);
+  const [locationLng, setLocationLng] = useState<number | null>(null);
+  const [locationRadius, setLocationRadius] = useState(100);
   
   // Schedule input functionality state
   const [scheduleInputModalVisible, setScheduleInputModalVisible] = useState(false);
@@ -550,6 +555,24 @@ const TaskManager: React.FC = () => {
   const addTodo = () => {
     setTodoInputModalVisible(true);
   };
+
+  const getCurrentLocation = () => {
+    if ('geolocation' in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setLocationLat(position.coords.latitude);
+          setLocationLng(position.coords.longitude);
+          setLocationName(`位置 (${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)})`);
+        },
+        (error) => {
+          console.error('位置情報の取得に失敗しました:', error);
+          alert('位置情報の取得に失敗しました。ブラウザの設定を確認してください。');
+        }
+      );
+    } else {
+      alert('このブラウザは位置情報をサポートしていません。');
+    }
+  };
   
   const saveTodoInput = () => {
     if (todoInputText.trim()) {
@@ -559,15 +582,20 @@ const TaskManager: React.FC = () => {
         repeatType: repeatType === 'none' ? null : repeatType,
         repeatDays: repeatType === 'weekly' && repeatDays.length > 0 ? repeatDays : null,
         repeatDate: repeatType === 'monthly' ? repeatDate : null,
-        location: null,
-        locationLat: null,
-        locationLng: null,
-        locationRadius: null
+        location: locationEnabled && locationName ? locationName : null,
+        locationLat: locationEnabled ? locationLat : null,
+        locationLng: locationEnabled ? locationLng : null,
+        locationRadius: locationEnabled ? locationRadius : null
       });
       setTodoInputText('');
       setRepeatType('none');
       setRepeatDays([]);
       setRepeatDate(null);
+      setLocationEnabled(false);
+      setLocationName('');
+      setLocationLat(null);
+      setLocationLng(null);
+      setLocationRadius(100);
       if (!todoVisible) {
         setTodoVisible(true);
       }
@@ -2093,6 +2121,59 @@ const TaskManager: React.FC = () => {
                   </select>
                 </div>
               )}
+
+              {/* 位置情報設定 */}
+              <div className="mb-4">
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={locationEnabled}
+                    onChange={(e) => setLocationEnabled(e.target.checked)}
+                    className="mr-2"
+                    data-testid="checkbox-location-enabled"
+                  />
+                  <span className="text-sm font-medium">位置情報ベースの通知</span>
+                </label>
+              </div>
+
+              {locationEnabled && (
+                <div className="mb-4 space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium mb-2">場所名</label>
+                    <input
+                      type="text"
+                      value={locationName}
+                      onChange={(e) => setLocationName(e.target.value)}
+                      placeholder="例: 自宅、オフィス"
+                      className="form-input w-full"
+                      data-testid="input-location-name"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-2">半径 (m)</label>
+                    <input
+                      type="number"
+                      value={locationRadius}
+                      onChange={(e) => setLocationRadius(parseInt(e.target.value) || 100)}
+                      className="form-input w-full"
+                      data-testid="input-location-radius"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={getCurrentLocation}
+                    className="w-full py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                    data-testid="button-get-current-location"
+                  >
+                    現在位置を取得
+                  </button>
+                  {locationLat && locationLng && (
+                    <div className="text-xs text-gray-500">
+                      位置: {locationLat.toFixed(4)}, {locationLng.toFixed(4)}
+                    </div>
+                  )}
+                </div>
+              )}
               
               <div className="flex justify-end space-x-3">
                 <button 
@@ -2103,6 +2184,11 @@ const TaskManager: React.FC = () => {
                     setRepeatType('none');
                     setRepeatDays([]);
                     setRepeatDate(null);
+                    setLocationEnabled(false);
+                    setLocationName('');
+                    setLocationLat(null);
+                    setLocationLng(null);
+                    setLocationRadius(100);
                   }}
                   data-testid="button-close-todo-input"
                 >
