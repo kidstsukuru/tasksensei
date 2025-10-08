@@ -11,6 +11,7 @@ import {
   MealRecord, 
   DiaryEntry,
   DailyRoutine,
+  MonthlyGoal,
   PomodoroState,
   AppState 
 } from '../types';
@@ -110,6 +111,15 @@ const TaskManager: React.FC = () => {
     queryKey: ['/api/daily-routines'],
     queryFn: () => fetch('/api/daily-routines', { credentials: 'include' }).then(res => res.json())
   });
+
+  const { data: monthlyGoals = [], isLoading: monthlyGoalsLoading } = useQuery<MonthlyGoal[]>({
+    queryKey: ['/api/monthly-goals'],
+    queryFn: () => fetch('/api/monthly-goals', { credentials: 'include' }).then(res => res.json())
+      .then((goals: any[]) => goals.map(goal => ({
+        ...goal,
+        createdAt: new Date(goal.createdAt)
+      })))
+  });
   
   const [pomodoro, setPomodoro] = useState<PomodoroState>({
     minutes: 25,
@@ -127,6 +137,10 @@ const TaskManager: React.FC = () => {
   // Daily Routine states
   const [routineContent, setRoutineContent] = useState('');
   const [isRoutineEditing, setIsRoutineEditing] = useState(false);
+  
+  // Monthly Goal states
+  const [monthlyGoalContent, setMonthlyGoalContent] = useState('');
+  const [isMonthlyGoalEditing, setIsMonthlyGoalEditing] = useState(false);
   const [stopwatchMinutes, setStopwatchMinutes] = useState(0);
   const [stopwatchSeconds, setStopwatchSeconds] = useState(0);
   const [stopwatchRunning, setStopwatchRunning] = useState(false);
@@ -216,6 +230,22 @@ const TaskManager: React.FC = () => {
       apiRequest('PUT', `/api/daily-routines/${id}`, { content }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/daily-routines'] });
+    }
+  });
+
+  const createMonthlyGoalMutation = useMutation({
+    mutationFn: (goalData: { month: string; goals: string }) =>
+      apiRequest('POST', '/api/monthly-goals', goalData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/monthly-goals'] });
+    }
+  });
+
+  const updateMonthlyGoalMutation = useMutation({
+    mutationFn: ({ id, goals }: { id: string; goals: string }) =>
+      apiRequest('PUT', `/api/monthly-goals/${id}`, { goals }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/monthly-goals'] });
     }
   });
 
@@ -817,6 +847,14 @@ const TaskManager: React.FC = () => {
             <h3 className="font-bold">日課</h3>
             <p className="text-sm text-gray-500">毎日の日記...</p>
           </div>
+          <div 
+            className="record-card"
+            onClick={() => showScreen('monthly-goal-screen')}
+            data-testid="card-monthly-goal"
+          >
+            <h3 className="font-bold">月間目標</h3>
+            <p className="text-sm text-gray-500">今月の目標を設定...</p>
+          </div>
         </div>
       </section>
     </div>
@@ -1313,6 +1351,16 @@ const TaskManager: React.FC = () => {
     }
   }, [currentScreen, dailyRoutines]);
 
+  // Initialize monthly goal state when screen changes
+  useEffect(() => {
+    if (currentScreen === 'monthly-goal-screen') {
+      const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+      const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
+      setMonthlyGoalContent(currentMonthGoal?.goals || '');
+      setIsMonthlyGoalEditing(!currentMonthGoal);
+    }
+  }, [currentScreen, monthlyGoals]);
+
   const handleSaveDailyRoutine = async () => {
     const today = new Date().toISOString().split('T')[0];
     const todayRoutine = dailyRoutines.find(r => r.date === today);
@@ -1337,6 +1385,34 @@ const TaskManager: React.FC = () => {
       setIsRoutineEditing(false);
     } catch (error) {
       console.error('Failed to save daily routine:', error);
+      alert('保存に失敗しました');
+    }
+  };
+
+  const handleSaveMonthlyGoal = async () => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
+    
+    if (!monthlyGoalContent.trim()) {
+      alert('目標を入力してください');
+      return;
+    }
+
+    try {
+      if (currentMonthGoal) {
+        await updateMonthlyGoalMutation.mutateAsync({
+          id: currentMonthGoal.id,
+          goals: monthlyGoalContent
+        });
+      } else {
+        await createMonthlyGoalMutation.mutateAsync({
+          month: currentMonth,
+          goals: monthlyGoalContent
+        });
+      }
+      setIsMonthlyGoalEditing(false);
+    } catch (error) {
+      console.error('Failed to save monthly goal:', error);
       alert('保存に失敗しました');
     }
   };
@@ -1419,6 +1495,88 @@ const TaskManager: React.FC = () => {
     );
   };
 
+  const renderMonthlyGoalScreen = () => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
+    const monthName = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+
+    return (
+      <div className="page p-4">
+        <header className="flex items-center mb-6">
+          <button 
+            className="p-2 rounded-full hover:bg-gray-100"
+            onClick={() => showScreen('home-screen')}
+            data-testid="button-back"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-bold mx-auto pr-8">月間目標</h2>
+        </header>
+        <div className="px-4 space-y-6">
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">{monthName}の目標</h3>
+              {!isMonthlyGoalEditing && currentMonthGoal && (
+                <button
+                  onClick={() => setIsMonthlyGoalEditing(true)}
+                  className="px-3 py-1 text-sm bg-theme-500 text-white rounded-full hover:bg-theme-600"
+                  data-testid="button-edit-goal"
+                >
+                  編集
+                </button>
+              )}
+            </div>
+            {isMonthlyGoalEditing ? (
+              <>
+                <textarea
+                  value={monthlyGoalContent}
+                  onChange={(e) => setMonthlyGoalContent(e.target.value)}
+                  className="w-full p-3 border rounded-lg mb-4 min-h-[200px]"
+                  placeholder="今月の目標を書いてください..."
+                  data-testid="textarea-goal-content"
+                />
+                <button
+                  onClick={handleSaveMonthlyGoal}
+                  className="w-full py-3 bg-theme-500 text-white rounded-full font-semibold hover:bg-theme-600"
+                  data-testid="button-save-goal"
+                >
+                  保存
+                </button>
+              </>
+            ) : (
+              <div className="p-3 border rounded-lg bg-gray-50" data-testid="text-goal-content">
+                {currentMonthGoal?.goals || '今月の目標はまだ設定されていません'}
+              </div>
+            )}
+          </div>
+
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="font-bold text-lg mb-4">過去の月間目標</h3>
+            <div className="space-y-3">
+              {monthlyGoals
+                .filter(g => g.month !== currentMonth)
+                .sort((a, b) => b.month.localeCompare(a.month))
+                .slice(0, 5)
+                .map(goal => {
+                  const date = new Date(goal.month + '-01');
+                  const monthLabel = date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+                  return (
+                    <div key={goal.id} className="p-3 border rounded-lg">
+                      <div className="text-sm text-gray-500 mb-1">{monthLabel}</div>
+                      <div className="text-sm">{goal.goals}</div>
+                    </div>
+                  );
+                })}
+              {monthlyGoals.filter(g => g.month !== currentMonth).length === 0 && (
+                <div className="text-center text-gray-500 py-4">過去の記録はありません</div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderMealDetailScreen = () => (
     <div className="page p-4">
       <header className="flex items-center mb-6">
@@ -1488,6 +1646,8 @@ const TaskManager: React.FC = () => {
         return renderDiaryDetailScreen();
       case 'daily-routine-screen':
         return renderDailyRoutineScreen();
+      case 'monthly-goal-screen':
+        return renderMonthlyGoalScreen();
       case 'meal-detail-screen':
         return renderMealDetailScreen();
       default:

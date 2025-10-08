@@ -10,6 +10,7 @@ import {
   insertMealRecordSchema,
   insertDiaryEntrySchema,
   insertDailyRoutineSchema,
+  insertMonthlyGoalSchema,
   insertUserSchema
 } from "@shared/schema";
 import { z } from "zod";
@@ -596,6 +597,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: error.errors });
       }
       res.status(500).json({ error: "Failed to update daily routine" });
+    }
+  });
+
+  // Monthly goal routes (protected)
+  app.get("/api/monthly-goals", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const monthlyGoals = await storage.getMonthlyGoalsByUserId(userId);
+      res.json(monthlyGoals);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch monthly goals" });
+    }
+  });
+
+  app.get("/api/monthly-goals/:month", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const { month } = req.params;
+      const monthlyGoal = await storage.getMonthlyGoalByUserIdAndMonth(userId, month);
+      if (!monthlyGoal) {
+        return res.status(404).json({ error: "Monthly goal not found" });
+      }
+      res.json(monthlyGoal);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch monthly goal" });
+    }
+  });
+
+  app.post("/api/monthly-goals", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const validatedData = insertMonthlyGoalSchema.parse({ ...req.body, userId });
+      
+      // Check if goal already exists for this month
+      const existing = await storage.getMonthlyGoalByUserIdAndMonth(userId, validatedData.month);
+      if (existing) {
+        return res.status(400).json({ error: "Monthly goal already exists for this month" });
+      }
+      
+      const monthlyGoal = await storage.createMonthlyGoal(validatedData);
+      res.status(201).json(monthlyGoal);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create monthly goal" });
+    }
+  });
+
+  app.put("/api/monthly-goals/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.session.userId!;
+      
+      // Check if monthly goal belongs to user
+      const existing = await storage.getMonthlyGoalsByUserId(userId);
+      const monthlyGoal = existing.find(g => g.id === id);
+      if (!monthlyGoal) {
+        return res.status(404).json({ error: "Monthly goal not found" });
+      }
+      
+      const validatedData = insertMonthlyGoalSchema.omit({ userId: true, month: true }).partial().parse(req.body);
+      const updated = await storage.updateMonthlyGoal(id, validatedData);
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update monthly goal" });
     }
   });
 

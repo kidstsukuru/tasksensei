@@ -7,7 +7,8 @@ import {
   type MealRecord, type InsertMealRecord,
   type DiaryEntry, type InsertDiaryEntry,
   type DailyRoutine, type InsertDailyRoutine,
-  users, todos, schedules, sleepRecords, weightRecords, mealRecords, diaryEntries, dailyRoutines
+  type MonthlyGoal, type InsertMonthlyGoal,
+  users, todos, schedules, sleepRecords, weightRecords, mealRecords, diaryEntries, dailyRoutines, monthlyGoals
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { drizzle } from "drizzle-orm/neon-http";
@@ -71,6 +72,13 @@ export interface IStorage {
   createDailyRoutine(dailyRoutine: InsertDailyRoutine): Promise<DailyRoutine>;
   updateDailyRoutine(id: string, dailyRoutine: Partial<Omit<InsertDailyRoutine, 'id' | 'userId'>>): Promise<DailyRoutine | undefined>;
   deleteDailyRoutine(id: string): Promise<boolean>;
+
+  // Monthly goal methods
+  getMonthlyGoalsByUserId(userId: string): Promise<MonthlyGoal[]>;
+  getMonthlyGoalByUserIdAndMonth(userId: string, month: string): Promise<MonthlyGoal | undefined>;
+  createMonthlyGoal(monthlyGoal: InsertMonthlyGoal): Promise<MonthlyGoal>;
+  updateMonthlyGoal(id: string, monthlyGoal: Partial<Omit<InsertMonthlyGoal, 'id' | 'userId'>>): Promise<MonthlyGoal | undefined>;
+  deleteMonthlyGoal(id: string): Promise<boolean>;
 
   // Export methods
   getAllUserData(userId: string): Promise<{
@@ -295,6 +303,36 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
+  // Monthly goal methods
+  async getMonthlyGoalsByUserId(userId: string): Promise<MonthlyGoal[]> {
+    return await this.db.select().from(monthlyGoals).where(eq(monthlyGoals.userId, userId));
+  }
+
+  async getMonthlyGoalByUserIdAndMonth(userId: string, month: string): Promise<MonthlyGoal | undefined> {
+    const result = await this.db.select().from(monthlyGoals).where(
+      and(
+        eq(monthlyGoals.userId, userId),
+        eq(monthlyGoals.month, month)
+      )
+    );
+    return result[0];
+  }
+
+  async createMonthlyGoal(insertMonthlyGoal: InsertMonthlyGoal): Promise<MonthlyGoal> {
+    const result = await this.db.insert(monthlyGoals).values(insertMonthlyGoal).returning();
+    return result[0];
+  }
+
+  async updateMonthlyGoal(id: string, monthlyGoalUpdate: Partial<Omit<InsertMonthlyGoal, 'id' | 'userId'>>): Promise<MonthlyGoal | undefined> {
+    const result = await this.db.update(monthlyGoals).set(monthlyGoalUpdate).where(eq(monthlyGoals.id, id)).returning();
+    return result.length > 0 ? result[0] : undefined;
+  }
+
+  async deleteMonthlyGoal(id: string): Promise<boolean> {
+    const result = await this.db.delete(monthlyGoals).where(eq(monthlyGoals.id, id)).returning({ id: monthlyGoals.id });
+    return result.length > 0;
+  }
+
   // Export methods
   async getAllUserData(userId: string): Promise<{
     todos: Todo[];
@@ -340,6 +378,7 @@ export class MemStorage implements IStorage {
   private mealRecords: Map<string, MealRecord>;
   private diaryEntries: Map<string, DiaryEntry>;
   private dailyRoutines: Map<string, DailyRoutine>;
+  private monthlyGoals: Map<string, MonthlyGoal>;
 
   constructor() {
     this.users = new Map();
@@ -350,6 +389,7 @@ export class MemStorage implements IStorage {
     this.mealRecords = new Map();
     this.diaryEntries = new Map();
     this.dailyRoutines = new Map();
+    this.monthlyGoals = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -384,7 +424,14 @@ export class MemStorage implements IStorage {
       ...insertTodo, 
       id,
       completed: insertTodo.completed ?? false,
-      createdAt: insertTodo.createdAt ?? new Date()
+      createdAt: insertTodo.createdAt ?? new Date(),
+      repeatType: insertTodo.repeatType ?? null,
+      repeatDays: insertTodo.repeatDays ?? null,
+      repeatDate: insertTodo.repeatDate ?? null,
+      location: insertTodo.location ?? null,
+      locationLat: insertTodo.locationLat ?? null,
+      locationLng: insertTodo.locationLng ?? null,
+      locationRadius: insertTodo.locationRadius ?? null
     };
     this.todos.set(id, todo);
     return todo;
@@ -480,6 +527,7 @@ export class MemStorage implements IStorage {
     const weightRecord: WeightRecord = { 
       ...insertWeightRecord, 
       id,
+      height: insertWeightRecord.height ?? null,
       bodyFat: insertWeightRecord.bodyFat ?? null
     };
     this.weightRecords.set(id, weightRecord);
@@ -591,6 +639,41 @@ export class MemStorage implements IStorage {
 
   async deleteDailyRoutine(id: string): Promise<boolean> {
     return this.dailyRoutines.delete(id);
+  }
+
+  // Monthly goal methods
+  async getMonthlyGoalsByUserId(userId: string): Promise<MonthlyGoal[]> {
+    return Array.from(this.monthlyGoals.values()).filter(goal => goal.userId === userId);
+  }
+
+  async getMonthlyGoalByUserIdAndMonth(userId: string, month: string): Promise<MonthlyGoal | undefined> {
+    return Array.from(this.monthlyGoals.values()).find(
+      goal => goal.userId === userId && goal.month === month
+    );
+  }
+
+  async createMonthlyGoal(insertMonthlyGoal: InsertMonthlyGoal): Promise<MonthlyGoal> {
+    const id = randomUUID();
+    const monthlyGoal: MonthlyGoal = { 
+      ...insertMonthlyGoal, 
+      id,
+      createdAt: new Date()
+    };
+    this.monthlyGoals.set(id, monthlyGoal);
+    return monthlyGoal;
+  }
+
+  async updateMonthlyGoal(id: string, monthlyGoalUpdate: Partial<Omit<InsertMonthlyGoal, 'id' | 'userId'>>): Promise<MonthlyGoal | undefined> {
+    const existingMonthlyGoal = this.monthlyGoals.get(id);
+    if (!existingMonthlyGoal) return undefined;
+    
+    const updatedMonthlyGoal: MonthlyGoal = { ...existingMonthlyGoal, ...monthlyGoalUpdate };
+    this.monthlyGoals.set(id, updatedMonthlyGoal);
+    return updatedMonthlyGoal;
+  }
+
+  async deleteMonthlyGoal(id: string): Promise<boolean> {
+    return this.monthlyGoals.delete(id);
   }
 
   // Export methods

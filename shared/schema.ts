@@ -15,6 +15,15 @@ export const todos = pgTable("todos", {
   text: text("text").notNull(),
   completed: boolean("completed").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  // 繰り返しタスク設定
+  repeatType: varchar("repeat_type", { enum: ["none", "daily", "weekly", "monthly"] }).default("none"),
+  repeatDays: integer("repeat_days").array(), // 曜日指定（0-6、日曜日=0）
+  repeatDate: integer("repeat_date"), // 月の日付指定（1-31）
+  // 位置情報ベースのリマインダー
+  location: text("location"), // 場所の名前
+  locationLat: decimal("location_lat", { precision: 10, scale: 7 }), // 緯度
+  locationLng: decimal("location_lng", { precision: 10, scale: 7 }), // 経度
+  locationRadius: integer("location_radius").default(100), // 半径（メートル）
 });
 
 export const schedules = pgTable("schedules", {
@@ -71,6 +80,16 @@ export const dailyRoutines = pgTable("daily_routines", {
   uniqueUserDate: unique().on(table.userId, table.date),
 }));
 
+export const monthlyGoals = pgTable("monthly_goals", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  month: varchar("month").notNull(), // YYYY-MM形式
+  goals: text("goals").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserMonth: unique().on(table.userId, table.month),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -112,6 +131,11 @@ export const insertDailyRoutineSchema = createInsertSchema(dailyRoutines).omit({
   id: true,
 });
 
+export const insertMonthlyGoalSchema = createInsertSchema(monthlyGoals).omit({
+  id: true,
+  createdAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -136,3 +160,6 @@ export type DiaryEntry = typeof diaryEntries.$inferSelect;
 
 export type InsertDailyRoutine = z.infer<typeof insertDailyRoutineSchema>;
 export type DailyRoutine = typeof dailyRoutines.$inferSelect;
+
+export type InsertMonthlyGoal = z.infer<typeof insertMonthlyGoalSchema>;
+export type MonthlyGoal = typeof monthlyGoals.$inferSelect;
