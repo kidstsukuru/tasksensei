@@ -9,6 +9,7 @@ import {
   insertWeightRecordSchema,
   insertMealRecordSchema,
   insertDiaryEntrySchema,
+  insertDailyRoutineSchema,
   insertUserSchema
 } from "@shared/schema";
 import { z } from "zod";
@@ -526,6 +527,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete diary entry" });
+    }
+  });
+
+  // Daily routine routes (protected)
+  app.get("/api/daily-routines", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const dailyRoutines = await storage.getDailyRoutinesByUserId(userId);
+      res.json(dailyRoutines);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch daily routines" });
+    }
+  });
+
+  app.get("/api/daily-routines/:date", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const { date } = req.params;
+      const dailyRoutine = await storage.getDailyRoutineByUserIdAndDate(userId, date);
+      if (!dailyRoutine) {
+        return res.status(404).json({ error: "Daily routine not found" });
+      }
+      res.json(dailyRoutine);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch daily routine" });
+    }
+  });
+
+  app.post("/api/daily-routines", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const validatedData = insertDailyRoutineSchema.parse({ ...req.body, userId });
+      
+      // Check if routine already exists for this date
+      const existing = await storage.getDailyRoutineByUserIdAndDate(userId, validatedData.date);
+      if (existing) {
+        return res.status(400).json({ error: "Daily routine already exists for this date" });
+      }
+      
+      const dailyRoutine = await storage.createDailyRoutine(validatedData);
+      res.status(201).json(dailyRoutine);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create daily routine" });
+    }
+  });
+
+  app.put("/api/daily-routines/:id", requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = req.session.userId!;
+      
+      // Check if daily routine belongs to user
+      const existing = await storage.getDailyRoutinesByUserId(userId);
+      const dailyRoutine = existing.find(r => r.id === id);
+      if (!dailyRoutine) {
+        return res.status(404).json({ error: "Daily routine not found" });
+      }
+      
+      const validatedData = insertDailyRoutineSchema.omit({ userId: true, date: true }).partial().parse(req.body);
+      const updated = await storage.updateDailyRoutine(id, validatedData);
+      res.json(updated);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update daily routine" });
     }
   });
 
