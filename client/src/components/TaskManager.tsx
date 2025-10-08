@@ -66,6 +66,9 @@ const TaskManager: React.FC = () => {
   const [scheduleInputModalVisible, setScheduleInputModalVisible] = useState(false);
   const [scheduleInputText, setScheduleInputText] = useState('');
   const [scheduleInputDate, setScheduleInputDate] = useState<Date | null>(null);
+  
+  // Weekly review functionality state
+  const [weekOffset, setWeekOffset] = useState(0); // 0 = this week, -1 = last week, 1 = next week
 
   // React Query hooks for data fetching
   const { data: todos = [], isLoading: todosLoading } = useQuery<Todo[]>({
@@ -525,6 +528,20 @@ const TaskManager: React.FC = () => {
     });
   };
 
+  const getWeekStartEnd = (offset: number = 0) => {
+    const now = new Date();
+    const dayOfWeek = now.getDay(); // 0 = Sunday
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - dayOfWeek + (offset * 7));
+    weekStart.setHours(0, 0, 0, 0);
+    
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekStart.getDate() + 6);
+    weekEnd.setHours(23, 59, 59, 999);
+    
+    return { weekStart, weekEnd };
+  };
+
   const showScreen = (screenId: string) => {
     setCurrentScreen(screenId);
     window.scrollTo(0, 0);
@@ -881,6 +898,14 @@ const TaskManager: React.FC = () => {
           >
             <h3 className="font-bold">月間目標</h3>
             <p className="text-sm text-gray-500">今月の目標を設定...</p>
+          </div>
+          <div 
+            className="record-card"
+            onClick={() => showScreen('weekly-review-screen')}
+            data-testid="card-weekly-review"
+          >
+            <h3 className="font-bold">週次振り返り</h3>
+            <p className="text-sm text-gray-500">今週の記録を確認...</p>
           </div>
         </div>
       </section>
@@ -1604,6 +1629,122 @@ const TaskManager: React.FC = () => {
     );
   };
 
+  const renderWeeklyReviewScreen = () => {
+    const { weekStart, weekEnd } = getWeekStartEnd(weekOffset);
+    const weekStartStr = weekStart.toISOString().split('T')[0];
+    const weekEndStr = weekEnd.toISOString().split('T')[0];
+    
+    // Filter data for the current week
+    const weekTodos = todos.filter(t => {
+      const createdDate = new Date(t.createdAt);
+      return createdDate >= weekStart && createdDate <= weekEnd && t.completed;
+    });
+    
+    const weekSleepRecords = sleepRecords.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
+    const weekWeightRecords = weightRecords.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
+    const weekMealRecords = mealRecords.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
+    const weekDiaryEntries = diaryEntries.filter(d => d.date >= weekStartStr && d.date <= weekEndStr);
+    
+    // Calculate averages
+    const avgSleepHours = weekSleepRecords.length > 0
+      ? weekSleepRecords.reduce((sum, r) => sum + r.duration, 0) / weekSleepRecords.length / (1000 * 60 * 60)
+      : 0;
+    
+    const avgWeight = weekWeightRecords.length > 0
+      ? weekWeightRecords.reduce((sum, r) => sum + parseFloat(r.weight), 0) / weekWeightRecords.length
+      : 0;
+    
+    const weightChange = weekWeightRecords.length >= 2
+      ? parseFloat(weekWeightRecords[weekWeightRecords.length - 1].weight) - parseFloat(weekWeightRecords[0].weight)
+      : 0;
+    
+    const weekLabel = weekOffset === 0 ? '今週' : weekOffset === -1 ? '先週' : '来週';
+    const weekDateRange = `${weekStart.getMonth() + 1}/${weekStart.getDate()} - ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`;
+
+    return (
+      <div className="page p-4">
+        <header className="flex items-center mb-6">
+          <button 
+            className="p-2 rounded-full hover:bg-gray-100"
+            onClick={() => showScreen('home-screen')}
+            data-testid="button-back"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-bold mx-auto pr-8">週次振り返り</h2>
+        </header>
+        
+        <div className="px-4 space-y-6">
+          {/* Week Navigation */}
+          <div className="flex items-center justify-between bg-white rounded-lg shadow p-4">
+            <button
+              onClick={() => setWeekOffset(weekOffset - 1)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+              data-testid="button-prev-week"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div className="text-center">
+              <div className="font-bold text-lg" data-testid="text-week-label">{weekLabel}</div>
+              <div className="text-sm text-gray-500">{weekDateRange}</div>
+            </div>
+            <button
+              onClick={() => setWeekOffset(weekOffset + 1)}
+              className="p-2 hover:bg-gray-100 rounded-full"
+              data-testid="button-next-week"
+            >
+              <ArrowLeft size={20} className="rotate-180" />
+            </button>
+          </div>
+
+          {/* Weekly Summary Cards */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-white rounded-lg shadow p-4 text-center" data-testid="card-completed-tasks">
+              <div className="text-3xl font-bold text-theme-500">{weekTodos.length}</div>
+              <div className="text-sm text-gray-500 mt-1">達成タスク</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 text-center" data-testid="card-avg-sleep">
+              <div className="text-3xl font-bold text-theme-500">{avgSleepHours > 0 ? avgSleepHours.toFixed(1) : '-'}</div>
+              <div className="text-sm text-gray-500 mt-1">平均睡眠時間 (h)</div>
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 text-center" data-testid="card-avg-weight">
+              <div className="text-3xl font-bold text-theme-500">{avgWeight > 0 ? avgWeight.toFixed(1) : '-'}</div>
+              <div className="text-sm text-gray-500 mt-1">平均体重 (kg)</div>
+              {weekWeightRecords.length >= 2 && (
+                <div className={`text-xs mt-1 ${weightChange > 0 ? 'text-red-500' : weightChange < 0 ? 'text-green-500' : 'text-gray-500'}`} data-testid="text-weight-change">
+                  {weightChange > 0 ? '+' : ''}{weightChange.toFixed(1)} kg
+                </div>
+              )}
+            </div>
+            <div className="bg-white rounded-lg shadow p-4 text-center" data-testid="card-diary-count">
+              <div className="text-3xl font-bold text-theme-500">{weekDiaryEntries.length}</div>
+              <div className="text-sm text-gray-500 mt-1">メモ記録</div>
+            </div>
+          </div>
+
+          {/* Record Details */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <h3 className="font-bold text-lg mb-4">週間記録の詳細</h3>
+            <div className="space-y-3">
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">睡眠記録</span>
+                <span className="font-semibold">{weekSleepRecords.length}件</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">体重記録</span>
+                <span className="font-semibold">{weekWeightRecords.length}件</span>
+              </div>
+              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
+                <span className="text-gray-700">食事記録</span>
+                <span className="font-semibold">{weekMealRecords.length}件</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderMealDetailScreen = () => (
     <div className="page p-4">
       <header className="flex items-center mb-6">
@@ -1675,6 +1816,8 @@ const TaskManager: React.FC = () => {
         return renderDailyRoutineScreen();
       case 'monthly-goal-screen':
         return renderMonthlyGoalScreen();
+      case 'weekly-review-screen':
+        return renderWeeklyReviewScreen();
       case 'meal-detail-screen':
         return renderMealDetailScreen();
       default:
