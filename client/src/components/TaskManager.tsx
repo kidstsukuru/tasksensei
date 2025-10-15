@@ -2892,14 +2892,6 @@ const TaskManager: React.FC = () => {
             <Timer size={24} className="mb-1" />
             <span className="text-xs">タイマー</span>
           </button>
-          <button 
-            className="nav-btn flex-1 flex flex-col items-center py-2 text-center"
-            onClick={() => setCalendarModalVisible(true)}
-            data-testid="nav-calendar"
-          >
-            <Calendar size={24} className="mb-1" />
-            <span className="text-xs">カレンダー</span>
-          </button>
         </nav>
       </div>
     </div>
