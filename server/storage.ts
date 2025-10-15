@@ -782,6 +782,7 @@ export class MemStorage implements IStorage {
     const link: Link = {
       ...insertLink,
       id,
+      category: insertLink.category ?? null,
       createdAt: new Date()
     };
     this.links.set(id, link);
