@@ -163,6 +163,10 @@ const TaskManager: React.FC = () => {
   const [stopwatchMinutes, setStopwatchMinutes] = useState(0);
   const [stopwatchSeconds, setStopwatchSeconds] = useState(0);
   const [stopwatchRunning, setStopwatchRunning] = useState(false);
+
+  // Calendar states
+  const [calendarMonth, setCalendarMonth] = useState(new Date());
+  const [calendarSelectedDay, setCalendarSelectedDay] = useState<Date | null>(null);
   
   // Stop all other modes when switching
   const switchTimerMode = (mode: 'pomodoro' | 'timer' | 'stopwatch') => {
@@ -1985,6 +1989,219 @@ const TaskManager: React.FC = () => {
     </div>
   );
 
+  const renderCalendarScreen = () => {
+    // Generate calendar days
+    const getCalendarDays = () => {
+      const year = calendarMonth.getFullYear();
+      const month = calendarMonth.getMonth();
+      const firstDay = new Date(year, month, 1);
+      const lastDay = new Date(year, month + 1, 0);
+      const daysInMonth = lastDay.getDate();
+      const startingDayOfWeek = firstDay.getDay();
+
+      const days: (Date | null)[] = [];
+      
+      // Add empty cells for days before the first day of the month
+      for (let i = 0; i < startingDayOfWeek; i++) {
+        days.push(null);
+      }
+      
+      // Add all days of the month
+      for (let day = 1; day <= daysInMonth; day++) {
+        days.push(new Date(year, month, day));
+      }
+      
+      return days;
+    };
+
+    const getDayTasks = (date: Date) => {
+      const dateStr = date.toLocaleDateString('sv-SE');
+      return todos.filter(todo => {
+        const todoDate = new Date(todo.createdAt).toLocaleDateString('sv-SE');
+        return todoDate === dateStr;
+      });
+    };
+
+    const getDaySchedules = (date: Date) => {
+      const dateStr = date.toLocaleDateString('sv-SE');
+      return schedules.filter(schedule => schedule.date === dateStr);
+    };
+
+    const hasOverdueTasks = (date: Date) => {
+      const dateStr = date.toLocaleDateString('sv-SE');
+      const today = new Date().toLocaleDateString('sv-SE');
+      if (dateStr >= today) return false;
+      
+      const dayTasks = getDayTasks(date);
+      return dayTasks.some(task => !task.completed);
+    };
+
+    const goToPreviousMonth = () => {
+      setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1));
+    };
+
+    const goToNextMonth = () => {
+      setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1));
+    };
+
+    const isToday = (date: Date | null) => {
+      if (!date) return false;
+      const today = new Date();
+      return date.toDateString() === today.toDateString();
+    };
+
+    const calendarDays = getCalendarDays();
+
+    return (
+      <div className="page p-4">
+        <header className="flex items-center mb-6">
+          <button 
+            className="p-2 rounded-full hover:bg-gray-100"
+            onClick={() => showScreen('home-screen')}
+            data-testid="button-back"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-bold mx-auto pr-8">カレンダー</h2>
+        </header>
+        
+        <div className="px-4 space-y-6">
+          {/* Month Navigation */}
+          <div className="flex items-center justify-between bg-white rounded-lg shadow p-4">
+            <button
+              onClick={goToPreviousMonth}
+              className="p-2 hover:bg-gray-100 rounded-full"
+              data-testid="button-prev-month"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <div className="text-center">
+              <div className="font-bold text-lg" data-testid="text-current-month">
+                {calendarMonth.getFullYear()}年 {calendarMonth.getMonth() + 1}月
+              </div>
+            </div>
+            <button
+              onClick={goToNextMonth}
+              className="p-2 hover:bg-gray-100 rounded-full"
+              data-testid="button-next-month"
+            >
+              <ArrowLeft size={20} className="rotate-180" />
+            </button>
+          </div>
+
+          {/* Calendar Grid */}
+          <div className="bg-white rounded-lg shadow p-4">
+            {/* Weekday Headers */}
+            <div className="grid grid-cols-7 gap-1 mb-2">
+              {['日', '月', '火', '水', '木', '金', '土'].map((day, index) => (
+                <div key={index} className="text-center text-sm font-semibold text-gray-500 py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+            
+            {/* Calendar Days */}
+            <div className="grid grid-cols-7 gap-1">
+              {calendarDays.map((date, index) => {
+                if (!date) {
+                  return <div key={`empty-${index}`} className="h-12" />;
+                }
+                
+                const dayTasks = getDayTasks(date);
+                const daySchedules = getDaySchedules(date);
+                const hasOverdue = hasOverdueTasks(date);
+                const isSelected = calendarSelectedDay?.toDateString() === date.toDateString();
+                
+                return (
+                  <button
+                    key={index}
+                    onClick={() => setCalendarSelectedDay(date)}
+                    className={`h-12 rounded-lg flex flex-col items-center justify-center relative transition-colors ${
+                      isToday(date)
+                        ? 'border-2 border-theme-500 text-theme-600 font-bold'
+                        : isSelected
+                        ? 'bg-theme-100 text-theme-700'
+                        : 'hover:bg-gray-100'
+                    }`}
+                    data-testid={`calendar-day-${date.getDate()}`}
+                  >
+                    <span className="text-sm">{date.getDate()}</span>
+                    <div className="flex gap-0.5 mt-1">
+                      {dayTasks.length > 0 && (
+                        <div className="w-1 h-1 rounded-full bg-theme-500" data-testid={`task-dot-${date.getDate()}`} />
+                      )}
+                      {daySchedules.length > 0 && (
+                        <div className="w-1 h-1 rounded-full bg-blue-500" data-testid={`schedule-dot-${date.getDate()}`} />
+                      )}
+                      {hasOverdue && (
+                        <div className="w-1 h-1 rounded-full bg-red-500" data-testid={`overdue-dot-${date.getDate()}`} />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Selected Day Details */}
+          {calendarSelectedDay && (
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="font-bold text-lg mb-4">
+                {calendarSelectedDay.getMonth() + 1}月{calendarSelectedDay.getDate()}日の予定・タスク
+              </h3>
+              
+              {/* Schedules */}
+              {getDaySchedules(calendarSelectedDay).length > 0 && (
+                <div className="mb-4">
+                  <h4 className="font-semibold text-sm text-gray-500 mb-2">予定</h4>
+                  <div className="space-y-2">
+                    {getDaySchedules(calendarSelectedDay).map(schedule => (
+                      <div key={schedule.id} className="flex items-center gap-2 p-2 bg-blue-50 rounded-lg" data-testid={`calendar-schedule-${schedule.id}`}>
+                        <Clock size={16} className="text-blue-500" />
+                        <span className="flex-grow">{schedule.text}</span>
+                        {schedule.time && (
+                          <span className="text-xs text-gray-500">
+                            {formatTime(schedule.time)}
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {/* Tasks */}
+              {getDayTasks(calendarSelectedDay).length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-sm text-gray-500 mb-2">タスク</h4>
+                  <div className="space-y-2">
+                    {getDayTasks(calendarSelectedDay).map(task => (
+                      <div key={task.id} className="flex items-center gap-2 p-2 bg-theme-50 rounded-lg" data-testid={`calendar-task-${task.id}`}>
+                        <input
+                          type="checkbox"
+                          checked={task.completed}
+                          onChange={() => toggleTodo(task.id)}
+                          className="h-4 w-4 rounded border-gray-300 text-theme-600 focus:ring-theme-500"
+                        />
+                        <span className={task.completed ? 'line-through text-gray-400 flex-grow' : 'flex-grow'}>
+                          {task.text}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {getDaySchedules(calendarSelectedDay).length === 0 && getDayTasks(calendarSelectedDay).length === 0 && (
+                <p className="text-gray-500 text-center py-4">この日の予定・タスクはありません</p>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderSettingsScreen = () => {
     const themeColors = [
       { value: 'pink', label: 'ピンク', color: 'bg-pink-500' },
@@ -2137,6 +2354,8 @@ const TaskManager: React.FC = () => {
         return renderWeekTrackerScreen();
       case 'meal-detail-screen':
         return renderMealDetailScreen();
+      case 'calendar-screen':
+        return renderCalendarScreen();
       case 'settings-screen':
         return renderSettingsScreen();
       default:
