@@ -1998,6 +1998,158 @@ const TaskManager: React.FC = () => {
     </div>
   );
 
+  const renderTasksScreen = () => (
+    <div className="page p-4 space-y-6">
+      {/* Header */}
+      <header className="flex items-center mb-4">
+        <button 
+          className="p-2 rounded-full hover:bg-gray-100"
+          onClick={() => showScreen('home-screen')}
+          data-testid="button-back"
+        >
+          <ArrowLeft size={24} />
+        </button>
+        <h1 className="text-2xl font-bold mx-auto pr-8">タスク管理</h1>
+      </header>
+
+      {/* TODO List Section */}
+      <section>
+        <div className="flex justify-between items-center mb-3">
+          <div 
+            className="flex items-center cursor-pointer flex-grow"
+            onClick={() => setTodoVisible(!todoVisible)}
+            data-testid="toggle-todo-visibility"
+          >
+            <h2 className="text-xl font-bold">TODOリスト</h2>
+            <button 
+              className="ml-2 bg-theme-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-theme-600 transition-colors focus:outline-none focus:ring-2 focus:ring-theme-500 focus:ring-opacity-75"
+              onClick={(e) => {
+                e.stopPropagation();
+                addTodo();
+              }}
+              data-testid="button-add-todo-tasks"
+            >
+              <Plus size={20} strokeWidth={2.5} />
+            </button>
+            <ChevronDown 
+              className={`transition-transform ml-auto ${todoVisible ? 'rotate-180' : ''}`}
+              size={24}
+            />
+          </div>
+        </div>
+        <div className={`${todoVisible ? '' : 'hidden'}`}>
+          {todosLoading ? (
+            <div className="text-center py-4 text-gray-500">Loading todos...</div>
+          ) : (
+          <div className="space-y-2">
+            {todos.map(todo => (
+              <div key={todo.id} className="task-item" data-testid={`todo-item-tasks-${todo.id}`}>
+                <input
+                  type="checkbox"
+                  checked={todo.completed}
+                  onChange={() => toggleTodo(todo.id)}
+                  className="h-5 w-5 rounded border-gray-300 text-theme-600 focus:ring-theme-500"
+                  data-testid={`checkbox-todo-tasks-${todo.id}`}
+                />
+                <span className={`flex-grow ${todo.completed ? 'line-through text-gray-400' : ''}`}>
+                  {todo.text}
+                </span>
+                {todo.repeatType && (
+                  <Repeat 
+                    size={16} 
+                    className="text-theme-500 mr-2" 
+                    data-testid={`icon-repeat-tasks-${todo.id}`}
+                    title={
+                      todo.repeatType === 'daily' ? '毎日' :
+                      todo.repeatType === 'weekly' ? `毎週 ${todo.repeatDays?.map(d => ['日', '月', '火', '水', '木', '金', '土'][d]).join(', ')}` :
+                      todo.repeatType === 'monthly' ? `毎月 ${todo.repeatDate}日` :
+                      '繰り返し'
+                    }
+                  />
+                )}
+                <button 
+                  onClick={() => deleteTodo(todo.id)}
+                  className="text-red-500 hover:text-red-700"
+                  data-testid={`button-delete-todo-tasks-${todo.id}`}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+          )}
+        </div>
+      </section>
+
+      {/* Schedules Section */}
+      <section className="space-y-2">
+        <h2 className="text-xl font-bold">予定</h2>
+        {schedulesLoading ? (
+          <div className="text-center py-4 text-gray-500">Loading schedules...</div>
+        ) : schedules.length > 0 ? (
+          <div className="space-y-2">
+            {schedules.map(schedule => (
+              <div key={schedule.id} className="task-card" data-testid={`schedule-item-tasks-${schedule.id}`}>
+                <div className="flex items-center justify-between">
+                  <span className="font-medium">{schedule.text}</span>
+                  <span className="text-sm text-gray-500">
+                    {schedule.time ? new Date(schedule.time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : ''}
+                  </span>
+                </div>
+                {schedule.date && (
+                  <div className="text-sm text-gray-500 mt-1">
+                    {new Date(schedule.date).toLocaleDateString('ja-JP')}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-gray-500 text-center py-4">予定がありません</p>
+        )}
+      </section>
+
+      {/* Management Cards */}
+      <section>
+        <h2 className="text-xl font-bold mb-3">管理</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div 
+            className="record-card"
+            onClick={() => showScreen('daily-routine-screen')}
+            data-testid="card-daily-routine-tasks"
+          >
+            <h3 className="font-bold">日課</h3>
+            <p className="text-sm text-gray-500">毎日の習慣...</p>
+          </div>
+          <div 
+            className="record-card"
+            onClick={() => showScreen('monthly-goal-screen')}
+            data-testid="card-monthly-goal-tasks"
+          >
+            <h3 className="font-bold">月間目標</h3>
+            <p className="text-sm text-gray-500">今月の目標を設定...</p>
+          </div>
+          <div 
+            className="record-card"
+            onClick={() => showScreen('weekly-review-screen')}
+            data-testid="card-weekly-review-tasks"
+          >
+            <h3 className="font-bold">週次振り返り</h3>
+            <p className="text-sm text-gray-500">今週の記録を確認...</p>
+          </div>
+          <div 
+            className="record-card"
+            onClick={() => showScreen('week-tracker-screen')}
+            data-testid="card-week-tracker-tasks"
+          >
+            <h3 className="font-bold">週間トラッカー</h3>
+            <p className="text-sm text-gray-500">日ごとの進捗を確認...</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+
   const renderCalendarScreen = () => {
     // Generate calendar days
     const getCalendarDays = () => {
@@ -2345,6 +2497,8 @@ const TaskManager: React.FC = () => {
     switch (currentScreen) {
       case 'home-screen':
         return renderHomeScreen();
+      case 'tasks-screen':
+        return renderTasksScreen();
       case 'pomodoro-screen':
         return renderPomodoroScreen();
       case 'sleep-detail-screen':
@@ -2892,8 +3046,10 @@ const TaskManager: React.FC = () => {
             <span className="text-xs">ホーム</span>
           </button>
           <button 
-            className="nav-btn flex-1 flex flex-col items-center py-2 text-center"
-            onClick={() => showScreen('home-screen')}
+            className={`nav-btn flex-1 flex flex-col items-center py-2 text-center ${
+              currentScreen === 'tasks-screen' ? 'nav-active' : ''
+            }`}
+            onClick={() => showScreen('tasks-screen')}
             data-testid="nav-tasks"
           >
             <ListChecks size={24} className="mb-1" />
