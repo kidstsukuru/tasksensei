@@ -9,7 +9,8 @@ import {
   type DailyRoutine, type InsertDailyRoutine,
   type MonthlyGoal, type InsertMonthlyGoal,
   type UserSettings, type InsertUserSettings,
-  users, todos, schedules, sleepRecords, weightRecords, mealRecords, diaryEntries, dailyRoutines, monthlyGoals, userSettings
+  type Link, type InsertLink,
+  users, todos, schedules, sleepRecords, weightRecords, mealRecords, diaryEntries, dailyRoutines, monthlyGoals, userSettings, links
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { drizzle } from "drizzle-orm/neon-http";
@@ -85,6 +86,12 @@ export interface IStorage {
   getUserSettings(userId: string): Promise<UserSettings | undefined>;
   createUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
   updateUserSettings(userId: string, settings: Partial<Omit<InsertUserSettings, 'id' | 'userId'>>): Promise<UserSettings | undefined>;
+
+  // Link methods
+  getLinksByUserId(userId: string): Promise<Link[]>;
+  getLink(id: string): Promise<Link | undefined>;
+  createLink(link: InsertLink): Promise<Link>;
+  deleteLink(id: string): Promise<boolean>;
 
   // Export methods
   getAllUserData(userId: string): Promise<{
@@ -356,6 +363,26 @@ export class DbStorage implements IStorage {
       .where(eq(userSettings.userId, userId))
       .returning();
     return result.length > 0 ? result[0] : undefined;
+  }
+
+  // Link methods
+  async getLinksByUserId(userId: string): Promise<Link[]> {
+    return await this.db.select().from(links).where(eq(links.userId, userId));
+  }
+
+  async getLink(id: string): Promise<Link | undefined> {
+    const result = await this.db.select().from(links).where(eq(links.id, id));
+    return result[0];
+  }
+
+  async createLink(insertLink: InsertLink): Promise<Link> {
+    const result = await this.db.insert(links).values(insertLink).returning();
+    return result[0];
+  }
+
+  async deleteLink(id: string): Promise<boolean> {
+    const result = await this.db.delete(links).where(eq(links.id, id)).returning({ id: links.id });
+    return result.length > 0;
   }
 
   // Export methods

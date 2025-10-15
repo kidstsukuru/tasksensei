@@ -12,7 +12,8 @@ import {
   insertDailyRoutineSchema,
   insertMonthlyGoalSchema,
   insertUserSettingsSchema,
-  insertUserSchema
+  insertUserSchema,
+  insertLinkSchema
 } from "@shared/schema";
 import { z } from "zod";
 
@@ -716,6 +717,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: error.errors });
       }
       res.status(500).json({ error: "Failed to update settings" });
+    }
+  });
+
+  // Link routes
+  app.get("/api/links", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const links = await storage.getLinksByUserId(userId);
+      res.json(links);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch links" });
+    }
+  });
+
+  app.post("/api/links", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const validatedData = insertLinkSchema.parse({ ...req.body, userId });
+      const link = await storage.createLink(validatedData);
+      res.status(201).json(link);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to create link" });
+    }
+  });
+
+  app.delete("/api/links/:id", requireAuth, async (req, res) => {
+    try {
+      const deleted = await storage.deleteLink(req.params.id);
+      if (!deleted) {
+        return res.status(404).json({ error: "Link not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete link" });
     }
   });
 
