@@ -36,7 +36,8 @@ import {
   Download,
   Star,
   Repeat,
-  Settings
+  Settings,
+  ListChecks
 } from 'lucide-react';
 
 const TaskManager: React.FC = () => {
@@ -2889,6 +2890,14 @@ const TaskManager: React.FC = () => {
           >
             <Home size={24} className="mb-1" />
             <span className="text-xs">ホーム</span>
+          </button>
+          <button 
+            className="nav-btn flex-1 flex flex-col items-center py-2 text-center"
+            onClick={() => showScreen('home-screen')}
+            data-testid="nav-tasks"
+          >
+            <ListChecks size={24} className="mb-1" />
+            <span className="text-xs">タスク管理</span>
           </button>
         </nav>
       </div>
