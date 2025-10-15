@@ -1,10 +1,20 @@
 # Overview
 
-This is a Japanese task management mobile web application built as a React TypeScript single-page application with an Express.js backend. The app provides comprehensive life management features including todo lists, scheduling, Pomodoro timer, sleep tracking, weight tracking, meal logging, and diary entries. It uses a mobile-first design approach with Tailwind CSS and shadcn/ui components, targeting Japanese users with a pink theme color scheme.
+This is a Japanese task management mobile web application built as a React TypeScript single-page application with an Express.js backend. The app provides comprehensive life management features including todo lists, scheduling, Pomodoro timer, sleep tracking, weight tracking, meal logging, diary entries, weekly tracker, calendar view, and user settings (dark mode, custom themes, push notifications). It uses a mobile-first design approach with Tailwind CSS and shadcn/ui components, targeting Japanese users with a customizable theme color scheme (default: pink).
 
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
+
+# Recent Changes
+
+## October 15, 2025
+- **Calendar View Implementation**: Added monthly calendar screen with task/schedule visualization, deadline alerts (overdue tasks shown in red), and day selection to view detailed tasks and schedules
+- **Settings Screen Implementation**: Implemented user settings with dark mode toggle, custom theme selection (5 colors: pink, blue, green, purple, orange), and push notification preferences
+- **Header Navigation**: Added calendar and settings icons to home screen header for easy access
+- **User Settings Database**: Created userSettings table to persist user preferences (dark mode, theme color, push notifications)
+- **React Hooks Fix**: Resolved React Rules of Hooks violations by moving calendar screen state (calendarMonth, calendarSelectedDay) to TaskManager component top level
+- **All features tested**: End-to-end tests confirmed calendar navigation, settings changes, and theme persistence work correctly
 
 # System Architecture
 
