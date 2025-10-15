@@ -8,7 +8,8 @@ import {
   type DiaryEntry, type InsertDiaryEntry,
   type DailyRoutine, type InsertDailyRoutine,
   type MonthlyGoal, type InsertMonthlyGoal,
-  users, todos, schedules, sleepRecords, weightRecords, mealRecords, diaryEntries, dailyRoutines, monthlyGoals
+  type UserSettings, type InsertUserSettings,
+  users, todos, schedules, sleepRecords, weightRecords, mealRecords, diaryEntries, dailyRoutines, monthlyGoals, userSettings
 } from "@shared/schema";
 import { randomUUID } from "crypto";
 import { drizzle } from "drizzle-orm/neon-http";
@@ -79,6 +80,11 @@ export interface IStorage {
   createMonthlyGoal(monthlyGoal: InsertMonthlyGoal): Promise<MonthlyGoal>;
   updateMonthlyGoal(id: string, monthlyGoal: Partial<Omit<InsertMonthlyGoal, 'id' | 'userId'>>): Promise<MonthlyGoal | undefined>;
   deleteMonthlyGoal(id: string): Promise<boolean>;
+
+  // User settings methods
+  getUserSettings(userId: string): Promise<UserSettings | undefined>;
+  createUserSettings(settings: InsertUserSettings): Promise<UserSettings>;
+  updateUserSettings(userId: string, settings: Partial<Omit<InsertUserSettings, 'id' | 'userId'>>): Promise<UserSettings | undefined>;
 
   // Export methods
   getAllUserData(userId: string): Promise<{
@@ -333,6 +339,25 @@ export class DbStorage implements IStorage {
     return result.length > 0;
   }
 
+  // User settings methods
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    const result = await this.db.select().from(userSettings).where(eq(userSettings.userId, userId));
+    return result[0];
+  }
+
+  async createUserSettings(insertUserSettings: InsertUserSettings): Promise<UserSettings> {
+    const result = await this.db.insert(userSettings).values(insertUserSettings).returning();
+    return result[0];
+  }
+
+  async updateUserSettings(userId: string, settingsUpdate: Partial<Omit<InsertUserSettings, 'id' | 'userId'>>): Promise<UserSettings | undefined> {
+    const result = await this.db.update(userSettings)
+      .set({ ...settingsUpdate, updatedAt: new Date() })
+      .where(eq(userSettings.userId, userId))
+      .returning();
+    return result.length > 0 ? result[0] : undefined;
+  }
+
   // Export methods
   async getAllUserData(userId: string): Promise<{
     todos: Todo[];
@@ -379,6 +404,7 @@ export class MemStorage implements IStorage {
   private diaryEntries: Map<string, DiaryEntry>;
   private dailyRoutines: Map<string, DailyRoutine>;
   private monthlyGoals: Map<string, MonthlyGoal>;
+  private userSettingsMap: Map<string, UserSettings>;
 
   constructor() {
     this.users = new Map();
@@ -390,6 +416,7 @@ export class MemStorage implements IStorage {
     this.diaryEntries = new Map();
     this.dailyRoutines = new Map();
     this.monthlyGoals = new Map();
+    this.userSettingsMap = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -674,6 +701,40 @@ export class MemStorage implements IStorage {
 
   async deleteMonthlyGoal(id: string): Promise<boolean> {
     return this.monthlyGoals.delete(id);
+  }
+
+  // User settings methods
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    return Array.from(this.userSettingsMap.values()).find(
+      settings => settings.userId === userId
+    );
+  }
+
+  async createUserSettings(insertUserSettings: InsertUserSettings): Promise<UserSettings> {
+    const id = randomUUID();
+    const settings: UserSettings = {
+      ...insertUserSettings,
+      id,
+      darkMode: insertUserSettings.darkMode ?? false,
+      themeColor: insertUserSettings.themeColor ?? 'pink',
+      pushNotifications: insertUserSettings.pushNotifications ?? false,
+      updatedAt: new Date()
+    };
+    this.userSettingsMap.set(id, settings);
+    return settings;
+  }
+
+  async updateUserSettings(userId: string, settingsUpdate: Partial<Omit<InsertUserSettings, 'id' | 'userId'>>): Promise<UserSettings | undefined> {
+    const existingSettings = await this.getUserSettings(userId);
+    if (!existingSettings) return undefined;
+    
+    const updatedSettings: UserSettings = {
+      ...existingSettings,
+      ...settingsUpdate,
+      updatedAt: new Date()
+    };
+    this.userSettingsMap.set(existingSettings.id, updatedSettings);
+    return updatedSettings;
   }
 
   // Export methods

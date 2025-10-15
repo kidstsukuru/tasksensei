@@ -3,6 +3,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useAuth } from '@/contexts/AuthContext';
+import { Switch } from '@/components/ui/switch';
 import { 
   Todo, 
   Schedule, 
@@ -34,7 +35,8 @@ import {
   User,
   Download,
   Star,
-  Repeat
+  Repeat,
+  Settings
 } from 'lucide-react';
 
 const TaskManager: React.FC = () => {
@@ -131,6 +133,11 @@ const TaskManager: React.FC = () => {
         ...goal,
         createdAt: new Date(goal.createdAt)
       })))
+  });
+
+  const { data: userSettings, isLoading: settingsLoading } = useQuery<any>({
+    queryKey: ['/api/settings'],
+    queryFn: () => fetch('/api/settings', { credentials: 'include' }).then(res => res.json())
   });
   
   const [pomodoro, setPomodoro] = useState<PomodoroState>({
@@ -258,6 +265,14 @@ const TaskManager: React.FC = () => {
       apiRequest('PUT', `/api/monthly-goals/${id}`, { goals }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/monthly-goals'] });
+    }
+  });
+
+  const updateSettingsMutation = useMutation({
+    mutationFn: (settingsData: { darkMode?: boolean; themeColor?: string; pushNotifications?: boolean }) =>
+      apiRequest('PUT', '/api/settings', settingsData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
     }
   });
 
@@ -767,6 +782,29 @@ const TaskManager: React.FC = () => {
 
   const renderHomeScreen = () => (
     <div className="page p-4 space-y-6">
+      {/* Header */}
+      <header className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold">タスク管理</h1>
+        <div className="flex items-center gap-2">
+          <button 
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            onClick={() => showScreen('calendar-screen')}
+            data-testid="button-calendar"
+            title="カレンダー"
+          >
+            <Calendar size={24} />
+          </button>
+          <button 
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            onClick={() => showScreen('settings-screen')}
+            data-testid="button-settings"
+            title="設定"
+          >
+            <Settings size={24} />
+          </button>
+        </div>
+      </header>
+
       {/* Scheduled Today Section */}
       <section className="space-y-2 mb-6">
         {schedulesLoading ? (
@@ -1947,6 +1985,136 @@ const TaskManager: React.FC = () => {
     </div>
   );
 
+  const renderSettingsScreen = () => {
+    const themeColors = [
+      { value: 'pink', label: 'ピンク', color: 'bg-pink-500' },
+      { value: 'blue', label: 'ブルー', color: 'bg-blue-500' },
+      { value: 'green', label: 'グリーン', color: 'bg-green-500' },
+      { value: 'purple', label: 'パープル', color: 'bg-purple-500' },
+      { value: 'orange', label: 'オレンジ', color: 'bg-orange-500' }
+    ];
+
+    const handleSettingChange = async (key: string, value: any) => {
+      try {
+        await updateSettingsMutation.mutateAsync({ [key]: value });
+      } catch (error) {
+        console.error('Failed to update settings:', error);
+      }
+    };
+
+    if (settingsLoading) {
+      return (
+        <div className="page p-4 flex items-center justify-center">
+          <div className="text-gray-500">読み込み中...</div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="page p-4">
+        <header className="flex items-center mb-6">
+          <button 
+            className="p-2 rounded-full hover:bg-gray-100"
+            onClick={() => showScreen('home-screen')}
+            data-testid="button-back"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-bold mx-auto pr-8">設定</h2>
+        </header>
+        
+        <div className="px-4 space-y-6">
+          {/* Dark Mode Section */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-4 border-b">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase">表示設定</h3>
+            </div>
+            <div className="p-4 flex items-center justify-between" style={{ minHeight: '56px' }}>
+              <div>
+                <div className="font-medium">ダークモード</div>
+                <div className="text-sm text-gray-500">暗いテーマを使用</div>
+              </div>
+              <Switch
+                checked={userSettings?.darkMode || false}
+                onCheckedChange={(checked) => handleSettingChange('darkMode', checked)}
+                data-testid="switch-dark-mode"
+              />
+            </div>
+          </div>
+
+          {/* Theme Color Section */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-4 border-b">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase">テーマカラー</h3>
+            </div>
+            <div className="p-4 space-y-3">
+              {themeColors.map((theme) => (
+                <button
+                  key={theme.value}
+                  className={`w-full p-3 rounded-lg border-2 transition-all ${
+                    userSettings?.themeColor === theme.value
+                      ? 'border-theme-500 bg-theme-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                  onClick={() => handleSettingChange('themeColor', theme.value)}
+                  data-testid={`button-theme-${theme.value}`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-8 h-8 rounded-full ${theme.color}`} />
+                    <span className="font-medium">{theme.label}</span>
+                    {userSettings?.themeColor === theme.value && (
+                      <span className="ml-auto text-theme-500">✓</span>
+                    )}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Push Notifications Section */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-4 border-b">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase">通知設定</h3>
+            </div>
+            <div className="p-4 flex items-center justify-between" style={{ minHeight: '56px' }}>
+              <div>
+                <div className="font-medium">プッシュ通知</div>
+                <div className="text-sm text-gray-500">タスクのリマインダーを受け取る</div>
+              </div>
+              <Switch
+                checked={userSettings?.pushNotifications || false}
+                onCheckedChange={(checked) => handleSettingChange('pushNotifications', checked)}
+                data-testid="switch-push-notifications"
+              />
+            </div>
+          </div>
+
+          {/* User Info Section */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-4 border-b">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase">アカウント</h3>
+            </div>
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <div className="font-medium">ユーザー名</div>
+                  <div className="text-sm text-gray-500">{user?.username}</div>
+                </div>
+              </div>
+              <button
+                onClick={logout}
+                className="w-full py-3 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                data-testid="button-logout"
+              >
+                ログアウト
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'home-screen':
@@ -1969,6 +2137,8 @@ const TaskManager: React.FC = () => {
         return renderWeekTrackerScreen();
       case 'meal-detail-screen':
         return renderMealDetailScreen();
+      case 'settings-screen':
+        return renderSettingsScreen();
       default:
         return renderHomeScreen();
     }

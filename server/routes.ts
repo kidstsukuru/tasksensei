@@ -11,6 +11,7 @@ import {
   insertDiaryEntrySchema,
   insertDailyRoutineSchema,
   insertMonthlyGoalSchema,
+  insertUserSettingsSchema,
   insertUserSchema
 } from "@shared/schema";
 import { z } from "zod";
@@ -666,6 +667,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: error.errors });
       }
       res.status(500).json({ error: "Failed to update monthly goal" });
+    }
+  });
+
+  // User settings routes
+  app.get("/api/settings", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      let settings = await storage.getUserSettings(userId);
+      
+      // Create default settings if none exist
+      if (!settings) {
+        settings = await storage.createUserSettings({
+          userId,
+          darkMode: false,
+          themeColor: 'pink',
+          pushNotifications: false
+        });
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch settings" });
+    }
+  });
+
+  app.put("/api/settings", requireAuth, async (req, res) => {
+    try {
+      const userId = req.session.userId!;
+      const validatedData = insertUserSettingsSchema.omit({ userId: true }).partial().parse(req.body);
+      
+      // Get or create settings
+      let settings = await storage.getUserSettings(userId);
+      if (!settings) {
+        settings = await storage.createUserSettings({
+          userId,
+          darkMode: validatedData.darkMode ?? false,
+          themeColor: validatedData.themeColor ?? 'pink',
+          pushNotifications: validatedData.pushNotifications ?? false
+        });
+      } else {
+        settings = await storage.updateUserSettings(userId, validatedData);
+      }
+      
+      res.json(settings);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.errors });
+      }
+      res.status(500).json({ error: "Failed to update settings" });
     }
   });
 

@@ -90,6 +90,15 @@ export const monthlyGoals = pgTable("monthly_goals", {
   uniqueUserMonth: unique().on(table.userId, table.month),
 }));
 
+export const userSettings = pgTable("user_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id).unique(),
+  darkMode: boolean("dark_mode").default(false).notNull(),
+  themeColor: varchar("theme_color").default("pink").notNull(), // pink, blue, green, purple, orange
+  pushNotifications: boolean("push_notifications").default(false).notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -136,6 +145,11 @@ export const insertMonthlyGoalSchema = createInsertSchema(monthlyGoals).omit({
   createdAt: true,
 });
 
+export const insertUserSettingsSchema = createInsertSchema(userSettings).omit({
+  id: true,
+  updatedAt: true,
+});
+
 // Types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
@@ -163,3 +177,6 @@ export type DailyRoutine = typeof dailyRoutines.$inferSelect;
 
 export type InsertMonthlyGoal = z.infer<typeof insertMonthlyGoalSchema>;
 export type MonthlyGoal = typeof monthlyGoals.$inferSelect;
+
+export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
+export type UserSettings = typeof userSettings.$inferSelect;
