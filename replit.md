@@ -15,6 +15,7 @@ Preferred communication style: Simple, everyday language.
 - **User Settings Database**: Created userSettings table to persist user preferences (dark mode, theme color, push notifications)
 - **React Hooks Fix**: Resolved React Rules of Hooks violations by moving calendar screen state (calendarMonth, calendarSelectedDay) to TaskManager component top level
 - **All features tested**: End-to-end tests confirmed calendar navigation, settings changes, and theme persistence work correctly
+- **Navigation Restructure**: Moved timer icon to home screen header (left of calendar icon), removed timer from bottom navigation bar. Bottom nav now contains only home button.
 
 # System Architecture
 

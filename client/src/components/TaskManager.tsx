@@ -792,6 +792,14 @@ const TaskManager: React.FC = () => {
         <div className="flex items-center gap-2">
           <button 
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+            onClick={() => showScreen('pomodoro-screen')}
+            data-testid="button-timer"
+            title="タイマー"
+          >
+            <Timer size={24} />
+          </button>
+          <button 
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
             onClick={() => showScreen('calendar-screen')}
             data-testid="button-calendar"
             title="カレンダー"
@@ -2881,16 +2889,6 @@ const TaskManager: React.FC = () => {
           >
             <Home size={24} className="mb-1" />
             <span className="text-xs">ホーム</span>
-          </button>
-          <button 
-            className={`nav-btn flex-1 flex flex-col items-center py-2 text-center ${
-              currentScreen === 'pomodoro-screen' ? 'nav-active' : ''
-            }`}
-            onClick={() => showScreen('pomodoro-screen')}
-            data-testid="nav-timer"
-          >
-            <Timer size={24} className="mb-1" />
-            <span className="text-xs">タイマー</span>
           </button>
         </nav>
       </div>
