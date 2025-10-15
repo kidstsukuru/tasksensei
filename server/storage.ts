@@ -432,6 +432,7 @@ export class MemStorage implements IStorage {
   private dailyRoutines: Map<string, DailyRoutine>;
   private monthlyGoals: Map<string, MonthlyGoal>;
   private userSettingsMap: Map<string, UserSettings>;
+  private links: Map<string, Link>;
 
   constructor() {
     this.users = new Map();
@@ -444,6 +445,7 @@ export class MemStorage implements IStorage {
     this.dailyRoutines = new Map();
     this.monthlyGoals = new Map();
     this.userSettingsMap = new Map();
+    this.links = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -762,6 +764,32 @@ export class MemStorage implements IStorage {
     };
     this.userSettingsMap.set(existingSettings.id, updatedSettings);
     return updatedSettings;
+  }
+
+  // Link methods
+  async getLinksByUserId(userId: string): Promise<Link[]> {
+    return Array.from(this.links.values()).filter(
+      link => link.userId === userId
+    );
+  }
+
+  async getLink(id: string): Promise<Link | undefined> {
+    return this.links.get(id);
+  }
+
+  async createLink(insertLink: InsertLink): Promise<Link> {
+    const id = randomUUID();
+    const link: Link = {
+      ...insertLink,
+      id,
+      createdAt: new Date()
+    };
+    this.links.set(id, link);
+    return link;
+  }
+
+  async deleteLink(id: string): Promise<boolean> {
+    return this.links.delete(id);
   }
 
   // Export methods

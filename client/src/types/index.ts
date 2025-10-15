@@ -8,6 +8,7 @@ import type {
   DiaryEntry,
   DailyRoutine,
   MonthlyGoal,
+  Link,
   InsertTodo,
   InsertSchedule,
   InsertSleepRecord,
@@ -15,7 +16,8 @@ import type {
   InsertMealRecord,
   InsertDiaryEntry,
   InsertDailyRoutine,
-  InsertMonthlyGoal
+  InsertMonthlyGoal,
+  InsertLink
 } from '@shared/schema';
 
 // Re-export for other components
@@ -28,6 +30,7 @@ export type {
   DiaryEntry,
   DailyRoutine,
   MonthlyGoal,
+  Link,
   InsertTodo,
   InsertSchedule,
   InsertSleepRecord,
@@ -35,7 +38,8 @@ export type {
   InsertMealRecord,
   InsertDiaryEntry,
   InsertDailyRoutine,
-  InsertMonthlyGoal
+  InsertMonthlyGoal,
+  InsertLink
 };
 
 export interface PomodoroState {

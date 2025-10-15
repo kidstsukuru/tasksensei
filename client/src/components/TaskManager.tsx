@@ -13,6 +13,7 @@ import {
   DiaryEntry,
   DailyRoutine,
   MonthlyGoal,
+  Link,
   PomodoroState,
   AppState 
 } from '../types';
@@ -37,7 +38,8 @@ import {
   Star,
   Repeat,
   Settings,
-  ListChecks
+  ListChecks,
+  Link as LinkIcon
 } from 'lucide-react';
 
 const TaskManager: React.FC = () => {
@@ -140,6 +142,15 @@ const TaskManager: React.FC = () => {
     queryKey: ['/api/settings'],
     queryFn: () => fetch('/api/settings', { credentials: 'include' }).then(res => res.json())
   });
+
+  const { data: links = [], isLoading: linksLoading } = useQuery<Link[]>({
+    queryKey: ['/api/links'],
+    queryFn: () => fetch('/api/links', { credentials: 'include' }).then(res => res.json())
+      .then((links: any[]) => links.map(link => ({
+        ...link,
+        createdAt: new Date(link.createdAt)
+      })))
+  });
   
   const [pomodoro, setPomodoro] = useState<PomodoroState>({
     minutes: 25,
@@ -168,6 +179,12 @@ const TaskManager: React.FC = () => {
   // Calendar states
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [calendarSelectedDay, setCalendarSelectedDay] = useState<Date | null>(null);
+  
+  // Link states
+  const [linkInputVisible, setLinkInputVisible] = useState(false);
+  const [linkTitle, setLinkTitle] = useState('');
+  const [linkUrl, setLinkUrl] = useState('');
+  const [linkCategory, setLinkCategory] = useState('other');
   
   // Stop all other modes when switching
   const switchTimerMode = (mode: 'pomodoro' | 'timer' | 'stopwatch') => {
@@ -278,6 +295,25 @@ const TaskManager: React.FC = () => {
       apiRequest('PUT', '/api/settings', settingsData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+    }
+  });
+
+  const createLinkMutation = useMutation({
+    mutationFn: (linkData: { title: string; url: string; category?: string }) =>
+      apiRequest('POST', '/api/links', linkData),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/links'] });
+      setLinkInputVisible(false);
+      setLinkTitle('');
+      setLinkUrl('');
+      setLinkCategory('other');
+    }
+  });
+
+  const deleteLinkMutation = useMutation({
+    mutationFn: (id: string) => apiRequest('DELETE', `/api/links/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/links'] });
     }
   });
 
@@ -960,6 +996,22 @@ const TaskManager: React.FC = () => {
               {diaryEntries.length > 0 
                 ? `${diaryEntries.length}件のメモあり` 
                 : 'メモを記録・管理...'
+              }
+            </p>
+          </div>
+          <div 
+            className="record-card" 
+            onClick={() => showScreen('links-screen')}
+            data-testid="card-links"
+          >
+            <h3 className="font-bold flex items-center">
+              <LinkIcon size={18} className="mr-1" />
+              リンク
+            </h3>
+            <p className="text-sm text-gray-500">
+              {linksLoading ? 'Loading...' : links.length > 0 
+                ? `${links.length}件のリンク` 
+                : '動画リンクを保存...'
               }
             </p>
           </div>
@@ -2463,6 +2515,140 @@ const TaskManager: React.FC = () => {
     );
   };
 
+  const renderLinksScreen = () => (
+    <div className="page p-4">
+      <header className="flex items-center mb-6">
+        <button 
+          className="p-2 rounded-full hover:bg-gray-100"
+          onClick={() => showScreen('home-screen')}
+          data-testid="button-back"
+        >
+          <ArrowLeft size={24} />
+        </button>
+        <h2 className="text-xl font-bold mx-auto pr-8">リンク集</h2>
+      </header>
+
+      <div className="space-y-4">
+        <button
+          onClick={() => setLinkInputVisible(true)}
+          className="w-full py-3 px-4 bg-theme-500 text-white rounded-lg hover:bg-theme-600 transition-colors flex items-center justify-center gap-2"
+          data-testid="button-add-link"
+        >
+          <Plus size={20} />
+          リンクを追加
+        </button>
+
+        {linksLoading ? (
+          <div className="text-center py-8 text-gray-500">読み込み中...</div>
+        ) : links.length === 0 ? (
+          <div className="text-center py-8 text-gray-500">
+            <LinkIcon size={48} className="mx-auto mb-2 opacity-50" />
+            <p>保存されたリンクはありません</p>
+            <p className="text-sm mt-1">YouTubeなどの動画リンクを保存できます</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {links.map(link => (
+              <div key={link.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow" data-testid={`link-item-${link.id}`}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-gray-900 mb-1 truncate" data-testid={`link-title-${link.id}`}>{link.title}</h3>
+                    <a 
+                      href={link.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-theme-600 hover:text-theme-700 break-all"
+                      data-testid={`link-url-${link.id}`}
+                    >
+                      {link.url}
+                    </a>
+                    {link.category && (
+                      <span className="inline-block mt-2 px-2 py-1 text-xs bg-gray-100 text-gray-600 rounded" data-testid={`link-category-${link.id}`}>
+                        {link.category === 'youtube' ? 'YouTube' : link.category === 'article' ? '記事' : 'その他'}
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => deleteLinkMutation.mutate(link.id)}
+                    className="text-red-500 hover:text-red-700 p-2"
+                    data-testid={`button-delete-link-${link.id}`}
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {linkInputVisible && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
+            <h2 className="text-xl font-bold mb-4">リンクを追加</h2>
+            <div className="space-y-3">
+              <input
+                type="text"
+                value={linkTitle}
+                onChange={(e) => setLinkTitle(e.target.value)}
+                placeholder="タイトル"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-500"
+                data-testid="input-link-title"
+              />
+              <input
+                type="url"
+                value={linkUrl}
+                onChange={(e) => setLinkUrl(e.target.value)}
+                placeholder="URL (例: https://youtube.com/...)"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-500"
+                data-testid="input-link-url"
+              />
+              <select
+                value={linkCategory}
+                onChange={(e) => setLinkCategory(e.target.value)}
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-theme-500"
+                data-testid="select-link-category"
+              >
+                <option value="youtube">YouTube</option>
+                <option value="article">記事</option>
+                <option value="other">その他</option>
+              </select>
+            </div>
+            <div className="flex gap-2 mt-6">
+              <button
+                onClick={() => {
+                  setLinkInputVisible(false);
+                  setLinkTitle('');
+                  setLinkUrl('');
+                  setLinkCategory('other');
+                }}
+                className="flex-1 py-2 px-4 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                data-testid="button-cancel-link"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={() => {
+                  if (linkTitle.trim() && linkUrl.trim()) {
+                    createLinkMutation.mutate({
+                      title: linkTitle.trim(),
+                      url: linkUrl.trim(),
+                      category: linkCategory
+                    });
+                  }
+                }}
+                className="flex-1 py-2 px-4 bg-theme-500 text-white rounded-lg hover:bg-theme-600 transition-colors"
+                data-testid="button-save-link"
+              >
+                保存
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
   const renderScreen = () => {
     switch (currentScreen) {
       case 'home-screen':
@@ -2491,6 +2677,8 @@ const TaskManager: React.FC = () => {
         return renderCalendarScreen();
       case 'settings-screen':
         return renderSettingsScreen();
+      case 'links-screen':
+        return renderLinksScreen();
       default:
         return renderHomeScreen();
     }
