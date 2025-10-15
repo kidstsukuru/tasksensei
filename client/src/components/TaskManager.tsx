@@ -882,17 +882,18 @@ const TaskManager: React.FC = () => {
                   {todo.text}
                 </span>
                 {todo.repeatType && (
-                  <Repeat 
-                    size={16} 
-                    className="text-theme-500 mr-2" 
-                    data-testid={`icon-repeat-${todo.id}`}
-                    title={
-                      todo.repeatType === 'daily' ? '毎日' :
-                      todo.repeatType === 'weekly' ? `毎週 ${todo.repeatDays?.map(d => ['日', '月', '火', '水', '木', '金', '土'][d]).join(', ')}` :
-                      todo.repeatType === 'monthly' ? `毎月 ${todo.repeatDate}日` :
-                      '繰り返し'
-                    }
-                  />
+                  <span title={
+                    todo.repeatType === 'daily' ? '毎日' :
+                    todo.repeatType === 'weekly' ? `毎週 ${todo.repeatDays?.map(d => ['日', '月', '火', '水', '木', '金', '土'][d]).join(', ')}` :
+                    todo.repeatType === 'monthly' ? `毎月 ${todo.repeatDate}日` :
+                    '繰り返し'
+                  }>
+                    <Repeat 
+                      size={16} 
+                      className="text-theme-500 mr-2" 
+                      data-testid={`icon-repeat-${todo.id}`}
+                    />
+                  </span>
                 )}
                 <button 
                   onClick={() => deleteTodo(todo.id)}
@@ -961,38 +962,6 @@ const TaskManager: React.FC = () => {
                 : 'メモを記録・管理...'
               }
             </p>
-          </div>
-          <div 
-            className="record-card"
-            onClick={() => showScreen('daily-routine-screen')}
-            data-testid="card-daily-routine"
-          >
-            <h3 className="font-bold">日課</h3>
-            <p className="text-sm text-gray-500">毎日の日記...</p>
-          </div>
-          <div 
-            className="record-card"
-            onClick={() => showScreen('monthly-goal-screen')}
-            data-testid="card-monthly-goal"
-          >
-            <h3 className="font-bold">月間目標</h3>
-            <p className="text-sm text-gray-500">今月の目標を設定...</p>
-          </div>
-          <div 
-            className="record-card"
-            onClick={() => showScreen('weekly-review-screen')}
-            data-testid="card-weekly-review"
-          >
-            <h3 className="font-bold">週次振り返り</h3>
-            <p className="text-sm text-gray-500">今週の記録を確認...</p>
-          </div>
-          <div 
-            className="record-card"
-            onClick={() => showScreen('week-tracker-screen')}
-            data-testid="card-week-tracker"
-          >
-            <h3 className="font-bold">週間トラッカー</h3>
-            <p className="text-sm text-gray-500">日ごとの進捗を確認...</p>
           </div>
         </div>
       </section>
@@ -2055,17 +2024,18 @@ const TaskManager: React.FC = () => {
                   {todo.text}
                 </span>
                 {todo.repeatType && (
-                  <Repeat 
-                    size={16} 
-                    className="text-theme-500 mr-2" 
-                    data-testid={`icon-repeat-tasks-${todo.id}`}
-                    title={
-                      todo.repeatType === 'daily' ? '毎日' :
-                      todo.repeatType === 'weekly' ? `毎週 ${todo.repeatDays?.map(d => ['日', '月', '火', '水', '木', '金', '土'][d]).join(', ')}` :
-                      todo.repeatType === 'monthly' ? `毎月 ${todo.repeatDate}日` :
-                      '繰り返し'
-                    }
-                  />
+                  <span title={
+                    todo.repeatType === 'daily' ? '毎日' :
+                    todo.repeatType === 'weekly' ? `毎週 ${todo.repeatDays?.map(d => ['日', '月', '火', '水', '木', '金', '土'][d]).join(', ')}` :
+                    todo.repeatType === 'monthly' ? `毎月 ${todo.repeatDate}日` :
+                    '繰り返し'
+                  }>
+                    <Repeat 
+                      size={16} 
+                      className="text-theme-500 mr-2" 
+                      data-testid={`icon-repeat-tasks-${todo.id}`}
+                    />
+                  </span>
                 )}
                 <button 
                   onClick={() => deleteTodo(todo.id)}
