@@ -16,6 +16,7 @@ Preferred communication style: Simple, everyday language.
 - **React Hooks Fix**: Resolved React Rules of Hooks violations by moving calendar screen state (calendarMonth, calendarSelectedDay) to TaskManager component top level
 - **All features tested**: End-to-end tests confirmed calendar navigation, settings changes, and theme persistence work correctly
 - **Navigation Restructure**: Moved timer icon to home screen header (left of calendar icon), removed timer from bottom navigation bar. Bottom nav now contains only home button.
+- **Task Management Screen**: Created dedicated task management screen with TODOs, schedules, and management cards (daily routine, monthly goals, weekly review, week tracker). Moved these features from home screen to new dedicated screen accessible via bottom navigation.
 
 # System Architecture
 
