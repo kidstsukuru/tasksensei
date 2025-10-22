@@ -21,9 +21,22 @@ import type {
 } from '../types/local';
 
 // Helper function to revive Date objects from JSON
+// Supports multiple ISO-8601 formats:
+// - YYYY-MM-DDTHH:mm:ss.fffZ (with milliseconds)
+// - YYYY-MM-DDTHH:mm:ssZ (without milliseconds)
+// - YYYY-MM-DDTHH:mm:ss.fff±HH:mm (with timezone offset)
+// - YYYY-MM-DDTHH:mm:ss±HH:mm (timezone offset, no milliseconds)
 const reviveDates = (key: string, value: any): any => {
-  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/.test(value)) {
-    return new Date(value);
+  if (typeof value === 'string') {
+    // Check if the string looks like an ISO-8601 date
+    const iso8601Regex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{1,3})?(Z|[+-]\d{2}:\d{2})?$/;
+    if (iso8601Regex.test(value)) {
+      const date = new Date(value);
+      // Verify it's a valid date
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
   }
   return value;
 };

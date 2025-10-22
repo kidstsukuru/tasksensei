@@ -1,6 +1,6 @@
 # Overview
 
-This is a Japanese task management mobile web application built as a React TypeScript single-page application with an Express.js backend. The app provides comprehensive life management features including todo lists, scheduling, Pomodoro timer, sleep tracking, weight tracking, meal logging, diary entries, weekly tracker, calendar view, and user settings (dark mode, custom themes, push notifications). It uses a mobile-first design approach with Tailwind CSS and shadcn/ui components, targeting Japanese users with a customizable theme color scheme (default: pink).
+This is a Japanese task management mobile web application built as a React TypeScript single-page application. The app is a frontend-only application that stores all data in browser localStorage, providing comprehensive life management features including todo lists, scheduling, Pomodoro timer, sleep tracking, weight tracking, meal logging, diary entries, weekly tracker, calendar view, and user settings (dark mode, custom themes, push notifications). It uses a mobile-first design approach with Tailwind CSS and shadcn/ui components, targeting Japanese users with a customizable theme color scheme (default: pink).
 
 # User Preferences
 
@@ -8,7 +8,19 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
-## October 22, 2025
+## October 22, 2025 (Latest)
+- **Complete Architecture Migration to localStorage**: Migrated the entire application from database+authentication to localStorage-only architecture
+  - Created `client/src/types/local.ts` with local type definitions (removed userId fields)
+  - Implemented `client/src/lib/localDataStore.ts` module providing CRUD operations for all data types
+  - Created `client/src/hooks/useLocalData.ts` custom hook with React Query-like interface
+  - Completely rewrote `TaskManager.tsx` (3300+ lines) to use localStorage instead of API calls
+  - Removed authentication system: deleted AuthContext, login screen, and logout functionality
+  - Simplified `App.tsx`: removed AuthProvider and QueryClientProvider, now directly renders TaskManager
+  - Fixed TypeScript type errors: unified weight/height/bodyFat as number type (not string)
+  - Updated data export functionality to work with localStorage
+  - All data now persists in browser localStorage; no server-side storage
+
+## October 22, 2025 (Earlier)
 - **Schedule Display Update**: Modified schedule display to show only today's schedules in the tasks screen. Added "Past Schedules" button that opens a modal displaying all non-today schedules grouped by month in descending order.
 - **LSP Error Fix**: Fixed TypeScript type errors in insertTodoSchema and createTodoMutation by properly defining InsertTodo type with all optional fields (repeatType, repeatDays, repeatDate, location, locationLat, locationLng, locationRadius).
 
@@ -27,49 +39,40 @@ Preferred communication style: Simple, everyday language.
 
 ## Frontend Architecture
 
-The client uses a modern React setup with TypeScript and Vite as the build tool. The application follows a component-based architecture with:
+The client uses a modern React setup with TypeScript and Vite as the build tool. The application is entirely frontend-based with:
 
-- **State Management**: React Query for server state management and React Context for authentication
+- **State Management**: localStorage-based data persistence with custom hooks mimicking React Query interface
 - **Routing**: Single-page application with screen-based navigation (no traditional routing)
 - **UI Framework**: shadcn/ui components built on Radix UI primitives with Tailwind CSS
 - **Form Handling**: React Hook Form with Zod validation
 - **Theme System**: CSS custom properties with a pink-based color scheme optimized for mobile
-
-## Backend Architecture
-
-The server follows a RESTful API design using Express.js with TypeScript:
-
-- **API Structure**: Route handlers in `/api` endpoints with Express middleware
-- **Session Management**: Express sessions with memory store for authentication
-- **Data Access Layer**: Storage abstraction pattern with Drizzle ORM
-- **Authentication**: Session-based auth with bcrypt password hashing
-- **Development**: Vite integration for hot module replacement in development
+- **Data Persistence**: All data stored in browser localStorage via LocalDataStore module
 
 ## Data Storage
 
-The application uses PostgreSQL as the primary database with Drizzle ORM for type-safe database operations:
+The application uses browser localStorage for all data persistence:
 
-- **Schema Definition**: Centralized schema in `shared/schema.ts` with Zod validation
-- **Database Client**: Neon serverless PostgreSQL driver for cloud deployment
-- **Migrations**: Drizzle Kit for database schema migrations
-- **Type Safety**: Full type safety between frontend and backend using shared types
+- **Local Type Definitions**: Types defined in `client/src/types/local.ts` without userId fields
+- **LocalDataStore Module**: Provides CRUD operations for all data types (todos, schedules, sleep records, weight records, meal records, diary entries, links, user settings)
+- **Storage Keys**: Each data type stored under a unique localStorage key (e.g., 'todos', 'schedules')
+- **Data Format**: All data stored as JSON arrays with auto-generated IDs
+- **Custom Hooks**: `useLocalData` hooks provide React Query-like interface for local data access
 
-## Authentication & Authorization
+## Backend Architecture (Legacy - Not Used)
 
-Session-based authentication system:
+Note: Backend code still exists but is not used by the application. The app is fully client-side.
 
-- **Password Security**: bcrypt hashing with salt rounds
-- **Session Storage**: Express sessions with configurable store
-- **Route Protection**: Middleware-based authentication for API endpoints
-- **Frontend Auth**: Context provider with automatic authentication status checking
+- Backend server runs but frontend does not make API calls
+- All data operations happen in the browser via localStorage
+- Backend files can be removed in future cleanup
 
 # External Dependencies
 
-- **Database**: Neon PostgreSQL serverless database
 - **UI Components**: Radix UI primitives for accessible component foundation
 - **Styling**: Tailwind CSS for utility-first styling approach
 - **Fonts**: Google Fonts integration (Inter and Noto Sans JP for Japanese support)
-- **Charts**: Chart.js for data visualization in tracking features
+- **Charts**: Chart.js for data visualization in tracking features (if implemented)
 - **Development Tools**: Replit-specific plugins for development environment integration
 - **Build Tools**: Vite for fast development and optimized production builds
 - **Validation**: Zod for runtime type checking and form validation
+- **Storage**: Browser localStorage API for all data persistence
