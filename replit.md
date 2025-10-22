@@ -8,6 +8,10 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
+## October 22, 2025
+- **Schedule Display Update**: Modified schedule display to show only today's schedules in the tasks screen. Added "Past Schedules" button that opens a modal displaying all non-today schedules grouped by month in descending order.
+- **LSP Error Fix**: Fixed TypeScript type errors in insertTodoSchema and createTodoMutation by properly defining InsertTodo type with all optional fields (repeatType, repeatDays, repeatDate, location, locationLat, locationLng, locationRadius).
+
 ## October 15, 2025
 - **Calendar View Implementation**: Added monthly calendar screen with task/schedule visualization, deadline alerts (overdue tasks shown in red), and day selection to view detailed tasks and schedules
 - **Settings Screen Implementation**: Implemented user settings with dark mode toggle, custom theme selection (5 colors: pink, blue, green, purple, orange), and push notification preferences
