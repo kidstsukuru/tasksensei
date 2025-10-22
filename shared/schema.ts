@@ -116,8 +116,16 @@ export const insertUserSchema = createInsertSchema(users).pick({
 
 export const insertTodoSchema = createInsertSchema(todos).omit({
   id: true,
+  userId: true,
 }).extend({
   createdAt: z.coerce.date().optional(),
+  repeatType: z.enum(["none", "daily", "weekly", "monthly"]).nullable().optional(),
+  repeatDays: z.array(z.number()).nullable().optional(),
+  repeatDate: z.number().nullable().optional(),
+  location: z.string().nullable().optional(),
+  locationLat: z.string().nullable().optional(),
+  locationLng: z.string().nullable().optional(),
+  locationRadius: z.number().nullable().optional(),
 });
 
 export const insertScheduleSchema = createInsertSchema(schedules).omit({

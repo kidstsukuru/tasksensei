@@ -76,6 +76,7 @@ const TaskManager: React.FC = () => {
   const [scheduleInputModalVisible, setScheduleInputModalVisible] = useState(false);
   const [scheduleInputText, setScheduleInputText] = useState('');
   const [scheduleInputDate, setScheduleInputDate] = useState<Date | null>(null);
+  const [pastSchedulesModalVisible, setPastSchedulesModalVisible] = useState(false);
   
   // Weekly review functionality state
   const [weekOffset, setWeekOffset] = useState(0); // 0 = this week, -1 = last week, 1 = next week
@@ -2105,30 +2106,38 @@ const TaskManager: React.FC = () => {
 
       {/* Schedules Section */}
       <section className="space-y-2">
-        <h2 className="text-xl font-bold">予定</h2>
+        <div className="flex justify-between items-center mb-3">
+          <h2 className="text-xl font-bold">今日の予定</h2>
+          <button
+            onClick={() => setPastSchedulesModalVisible(true)}
+            className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors"
+            data-testid="button-past-schedules"
+          >
+            過去の予定
+          </button>
+        </div>
         {schedulesLoading ? (
           <div className="text-center py-4 text-gray-500">Loading schedules...</div>
-        ) : schedules.length > 0 ? (
-          <div className="space-y-2">
-            {schedules.map(schedule => (
-              <div key={schedule.id} className="task-card" data-testid={`schedule-item-tasks-${schedule.id}`}>
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{schedule.text}</span>
-                  <span className="text-sm text-gray-500">
-                    {schedule.time ? new Date(schedule.time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : ''}
-                  </span>
-                </div>
-                {schedule.date && (
-                  <div className="text-sm text-gray-500 mt-1">
-                    {new Date(schedule.date).toLocaleDateString('ja-JP')}
+        ) : (() => {
+          const today = new Date().toLocaleDateString('sv-SE');
+          const todaySchedules = schedules.filter(s => s.date === today);
+          return todaySchedules.length > 0 ? (
+            <div className="space-y-2">
+              {todaySchedules.map(schedule => (
+                <div key={schedule.id} className="task-card" data-testid={`schedule-item-tasks-${schedule.id}`}>
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{schedule.text}</span>
+                    <span className="text-sm text-gray-500">
+                      {schedule.time ? new Date(schedule.time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : ''}
+                    </span>
                   </div>
-                )}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="text-gray-500 text-center py-4">予定がありません</p>
-        )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">今日の予定はありません</p>
+          );
+        })()}
       </section>
 
       {/* Management Cards */}
@@ -2169,6 +2178,76 @@ const TaskManager: React.FC = () => {
           </div>
         </div>
       </section>
+
+      {/* Past Schedules Modal */}
+      {pastSchedulesModalVisible && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">過去の予定</h2>
+              <button
+                onClick={() => setPastSchedulesModalVisible(false)}
+                className="p-2 hover:bg-gray-100 rounded-full"
+                data-testid="button-close-past-schedules"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            {(() => {
+              const today = new Date().toLocaleDateString('sv-SE');
+              const pastSchedules = schedules.filter(s => s.date !== today);
+              
+              if (pastSchedules.length === 0) {
+                return <p className="text-gray-500 text-center py-8">過去の予定はありません</p>;
+              }
+
+              // Group schedules by month
+              const schedulesByMonth: { [key: string]: Schedule[] } = {};
+              pastSchedules.forEach(schedule => {
+                const monthKey = schedule.date.slice(0, 7); // YYYY-MM
+                if (!schedulesByMonth[monthKey]) {
+                  schedulesByMonth[monthKey] = [];
+                }
+                schedulesByMonth[monthKey].push(schedule);
+              });
+
+              // Sort months in descending order
+              const sortedMonths = Object.keys(schedulesByMonth).sort((a, b) => b.localeCompare(a));
+
+              return (
+                <div className="space-y-6">
+                  {sortedMonths.map(monthKey => {
+                    const date = new Date(monthKey + '-01');
+                    const monthLabel = date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
+                    const monthSchedules = schedulesByMonth[monthKey].sort((a, b) => b.date.localeCompare(a.date));
+
+                    return (
+                      <div key={monthKey} data-testid={`month-group-${monthKey}`}>
+                        <h3 className="font-bold text-lg mb-3 text-theme-600">{monthLabel}</h3>
+                        <div className="space-y-2">
+                          {monthSchedules.map(schedule => (
+                            <div key={schedule.id} className="bg-gray-50 rounded-lg p-3" data-testid={`past-schedule-${schedule.id}`}>
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="flex-1">
+                                  <div className="font-medium">{schedule.text}</div>
+                                  <div className="text-sm text-gray-500 mt-1">
+                                    {new Date(schedule.date).toLocaleDateString('ja-JP', { month: 'long', day: 'numeric', weekday: 'short' })}
+                                    {schedule.time && ` ${new Date(schedule.time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })}`}
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+        </div>
+      )}
     </div>
   );
 
