@@ -1586,7 +1586,7 @@ const TaskManager: React.FC = () => {
         <header className="flex items-center mb-6">
           <button 
             className="p-2 rounded-full hover:bg-gray-100"
-            onClick={() => showScreen('home-screen')}
+            onClick={() => showScreen('tasks-screen')}
             data-testid="button-back"
           >
             <ArrowLeft size={24} />
@@ -1665,7 +1665,7 @@ const TaskManager: React.FC = () => {
         <header className="flex items-center mb-6">
           <button 
             className="p-2 rounded-full hover:bg-gray-100"
-            onClick={() => showScreen('home-screen')}
+            onClick={() => showScreen('tasks-screen')}
             data-testid="button-back"
           >
             <ArrowLeft size={24} />
@@ -1774,7 +1774,7 @@ const TaskManager: React.FC = () => {
         <header className="flex items-center mb-6">
           <button 
             className="p-2 rounded-full hover:bg-gray-100"
-            onClick={() => showScreen('home-screen')}
+            onClick={() => showScreen('tasks-screen')}
             data-testid="button-back"
           >
             <ArrowLeft size={24} />
@@ -1871,7 +1871,7 @@ const TaskManager: React.FC = () => {
         <header className="flex items-center mb-6">
           <button 
             className="p-2 rounded-full hover:bg-gray-100"
-            onClick={() => showScreen('home-screen')}
+            onClick={() => showScreen('tasks-screen')}
             data-testid="button-back"
           >
             <ArrowLeft size={24} />
