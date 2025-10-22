@@ -2150,7 +2150,7 @@ const TaskManager: React.FC = () => {
             onClick={() => showScreen('daily-routine-screen')}
             data-testid="card-daily-routine-tasks"
           >
-            <h3 className="font-bold">日課</h3>
+            <h3 className="font-bold">今日やったこと</h3>
             <p className="text-sm text-gray-500">毎日の習慣...</p>
           </div>
           <div 
