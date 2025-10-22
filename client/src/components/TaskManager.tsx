@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
-import { apiRequest, queryClient } from '@/lib/queryClient';
 import { useLocalStorage } from '../hooks/useLocalStorage';
-import { useAuth } from '@/contexts/AuthContext';
+import { useLocalData, useLocalSettings } from '../hooks/useLocalData';
 import { Switch } from '@/components/ui/switch';
 import { 
   Todo, 
@@ -16,8 +14,31 @@ import {
   Link,
   PomodoroState,
   AppState 
-} from '../types';
-import type { InsertTodo } from '@shared/schema';
+} from '../types/local';
+import {
+  todoStore,
+  scheduleStore,
+  sleepRecordStore,
+  weightRecordStore,
+  mealRecordStore,
+  diaryEntryStore,
+  dailyRoutineStore,
+  monthlyGoalStore,
+  linkStore,
+  userSettingsStore,
+} from '../lib/localDataStore';
+import type { 
+  InsertTodo,
+  InsertSchedule,
+  InsertSleepRecord,
+  InsertWeightRecord,
+  InsertMealRecord,
+  InsertDiaryEntry,
+  InsertDailyRoutine,
+  InsertMonthlyGoal,
+  InsertLink,
+  UserSettings
+} from '../types/local';
 import { 
   Bell, 
   Clock, 
@@ -44,7 +65,6 @@ import {
 } from 'lucide-react';
 
 const TaskManager: React.FC = () => {
-  const { user, logout } = useAuth();
   const [currentScreen, setCurrentScreen] = useState('home-screen');
   const [todoVisible, setTodoVisible] = useLocalStorage('todoVisible', false);
   
@@ -82,77 +102,17 @@ const TaskManager: React.FC = () => {
   // Weekly review functionality state
   const [weekOffset, setWeekOffset] = useState(0); // 0 = this week, -1 = last week, 1 = next week
 
-  // React Query hooks for data fetching
-  const { data: todos = [], isLoading: todosLoading } = useQuery<Todo[]>({
-    queryKey: ['/api/todos'],
-    queryFn: () => fetch('/api/todos', { credentials: 'include' }).then(res => res.json())
-      .then((todos: any[]) => todos.map(todo => ({
-        ...todo,
-        createdAt: new Date(todo.createdAt)
-      })))
-  });
-
-  const { data: schedules = [], isLoading: schedulesLoading } = useQuery<Schedule[]>({
-    queryKey: ['/api/schedules'],
-    queryFn: () => fetch('/api/schedules', { credentials: 'include' }).then(res => res.json())
-      .then((schedules: any[]) => schedules.map(schedule => ({
-        ...schedule,
-        time: schedule.time ? new Date(schedule.time) : null
-      })))
-  });
-
-  const { data: sleepRecords = [], isLoading: sleepRecordsLoading } = useQuery<SleepRecord[]>({
-    queryKey: ['/api/sleep-records'],
-    queryFn: () => fetch('/api/sleep-records', { credentials: 'include' }).then(res => res.json())
-      .then((records: any[]) => records.map(record => ({
-        ...record,
-        bedtime: new Date(record.bedtime),
-        wakeup: new Date(record.wakeup)
-      })))
-  });
-
-  const { data: weightRecords = [], isLoading: weightRecordsLoading } = useQuery<WeightRecord[]>({
-    queryKey: ['/api/weight-records'],
-    queryFn: () => fetch('/api/weight-records', { credentials: 'include' }).then(res => res.json())
-  });
-
-  const { data: mealRecords = [], isLoading: mealRecordsLoading } = useQuery<MealRecord[]>({
-    queryKey: ['/api/meal-records'],
-    queryFn: () => fetch('/api/meal-records', { credentials: 'include' }).then(res => res.json())
-  });
-
-  const { data: diaryEntries = [], isLoading: diaryEntriesLoading } = useQuery<DiaryEntry[]>({
-    queryKey: ['/api/diary-entries'],
-    queryFn: () => fetch('/api/diary-entries', { credentials: 'include' }).then(res => res.json())
-  });
-
-  const { data: dailyRoutines = [], isLoading: dailyRoutinesLoading } = useQuery<DailyRoutine[]>({
-    queryKey: ['/api/daily-routines'],
-    queryFn: () => fetch('/api/daily-routines', { credentials: 'include' }).then(res => res.json())
-  });
-
-  const { data: monthlyGoals = [], isLoading: monthlyGoalsLoading } = useQuery<MonthlyGoal[]>({
-    queryKey: ['/api/monthly-goals'],
-    queryFn: () => fetch('/api/monthly-goals', { credentials: 'include' }).then(res => res.json())
-      .then((goals: any[]) => goals.map(goal => ({
-        ...goal,
-        createdAt: new Date(goal.createdAt)
-      })))
-  });
-
-  const { data: userSettings, isLoading: settingsLoading } = useQuery<any>({
-    queryKey: ['/api/settings'],
-    queryFn: () => fetch('/api/settings', { credentials: 'include' }).then(res => res.json())
-  });
-
-  const { data: links = [], isLoading: linksLoading } = useQuery<Link[]>({
-    queryKey: ['/api/links'],
-    queryFn: () => fetch('/api/links', { credentials: 'include' }).then(res => res.json())
-      .then((links: any[]) => links.map(link => ({
-        ...link,
-        createdAt: new Date(link.createdAt)
-      })))
-  });
+  // Local storage hooks for data
+  const { data: todos = [], isLoading: todosLoading, refetch: refetchTodos } = useLocalData<Todo>(todoStore, 'todos');
+  const { data: schedules = [], isLoading: schedulesLoading, refetch: refetchSchedules } = useLocalData<Schedule>(scheduleStore, 'schedules');
+  const { data: sleepRecords = [], isLoading: sleepRecordsLoading, refetch: refetchSleepRecords } = useLocalData<SleepRecord>(sleepRecordStore, 'sleepRecords');
+  const { data: weightRecords = [], isLoading: weightRecordsLoading, refetch: refetchWeightRecords } = useLocalData<WeightRecord>(weightRecordStore, 'weightRecords');
+  const { data: mealRecords = [], isLoading: mealRecordsLoading, refetch: refetchMealRecords } = useLocalData<MealRecord>(mealRecordStore, 'mealRecords');
+  const { data: diaryEntries = [], isLoading: diaryEntriesLoading, refetch: refetchDiaryEntries } = useLocalData<DiaryEntry>(diaryEntryStore, 'diaryEntries');
+  const { data: dailyRoutines = [], isLoading: dailyRoutinesLoading, refetch: refetchDailyRoutines } = useLocalData<DailyRoutine>(dailyRoutineStore, 'dailyRoutines');
+  const { data: monthlyGoals = [], isLoading: monthlyGoalsLoading, refetch: refetchMonthlyGoals } = useLocalData<MonthlyGoal>(monthlyGoalStore, 'monthlyGoals');
+  const { data: userSettings, isLoading: settingsLoading, refetch: refetchSettings } = useLocalSettings(userSettingsStore);
+  const { data: links = [], isLoading: linksLoading, refetch: refetchLinks } = useLocalData<Link>(linkStore, 'links');
   
   const [pomodoro, setPomodoro] = useState<PomodoroState>({
     minutes: 25,
@@ -196,128 +156,156 @@ const TaskManager: React.FC = () => {
     setTimerScreenMode(mode);
   };
 
-  // Mutation hooks for CRUD operations
-  const createTodoMutation = useMutation({
-    mutationFn: (todoData: InsertTodo) =>
-      apiRequest('POST', '/api/todos', todoData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/todos'] });
+  // Local storage CRUD operations
+  const createTodoMutation = {
+    mutate: (todoData: InsertTodo) => {
+      todoStore.create({
+        ...todoData,
+        createdAt: new Date(),
+        completed: todoData.completed ?? false,
+      });
+      refetchTodos();
     }
-  });
+  };
 
-  const updateTodoMutation = useMutation({
-    mutationFn: ({ id, ...data }: { id: string; completed?: boolean }) =>
-      apiRequest('PUT', `/api/todos/${id}`, data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/todos'] });
+  const updateTodoMutation = {
+    mutate: ({ id, ...data }: { id: string; completed?: boolean }) => {
+      todoStore.update(id, data);
+      refetchTodos();
     }
-  });
+  };
 
-  const deleteTodoMutation = useMutation({
-    mutationFn: (id: string) => apiRequest('DELETE', `/api/todos/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/todos'] });
+  const deleteTodoMutation = {
+    mutate: (id: string) => {
+      todoStore.delete(id);
+      refetchTodos();
     }
-  });
+  };
 
-  const createScheduleMutation = useMutation({
-    mutationFn: (scheduleData: { text: string; date: string; time?: Date; completed?: boolean }) =>
-      apiRequest('POST', '/api/schedules', scheduleData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/schedules'] });
+  const createScheduleMutation = {
+    mutate: (scheduleData: InsertSchedule) => {
+      scheduleStore.create({
+        ...scheduleData,
+        completed: scheduleData.completed ?? false,
+      });
+      refetchSchedules();
     }
-  });
+  };
 
-  const createSleepRecordMutation = useMutation({
-    mutationFn: (sleepData: { date: string; bedtime: Date; wakeup: Date; duration: number }) =>
-      apiRequest('POST', '/api/sleep-records', sleepData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/sleep-records'] });
+  const createSleepRecordMutation = {
+    mutate: (sleepData: InsertSleepRecord) => {
+      sleepRecordStore.create(sleepData);
+      refetchSleepRecords();
     }
-  });
+  };
 
-  const createWeightRecordMutation = useMutation({
-    mutationFn: (weightData: { date: string; weight: string; height?: string; bodyFat?: string }) =>
-      apiRequest('POST', '/api/weight-records', weightData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/weight-records'] });
+  const createWeightRecordMutation = {
+    mutate: (weightData: InsertWeightRecord) => {
+      weightRecordStore.create(weightData);
+      refetchWeightRecords();
     }
-  });
+  };
 
-  const createDiaryEntryMutation = useMutation({
-    mutationFn: (diaryData: { date: string; content: string; mood?: string; photos?: string[] }) =>
-      apiRequest('POST', '/api/diary-entries', diaryData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/diary-entries'] });
+  const createDiaryEntryMutation = {
+    mutate: (diaryData: InsertDiaryEntry) => {
+      diaryEntryStore.create(diaryData);
+      refetchDiaryEntries();
     }
-  });
+  };
 
-  const deleteDiaryEntryMutation = useMutation({
-    mutationFn: (id: string) =>
-      apiRequest('DELETE', `/api/diary-entries/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/diary-entries'] });
+  const deleteDiaryEntryMutation = {
+    mutate: (id: string) => {
+      diaryEntryStore.delete(id);
+      refetchDiaryEntries();
     }
-  });
+  };
 
-  const createDailyRoutineMutation = useMutation({
-    mutationFn: (routineData: { date: string; content: string }) =>
-      apiRequest('POST', '/api/daily-routines', routineData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/daily-routines'] });
+  const createDailyRoutineMutation = {
+    mutate: (routineData: InsertDailyRoutine) => {
+      dailyRoutineStore.create(routineData);
+      refetchDailyRoutines();
+    },
+    mutateAsync: async (routineData: InsertDailyRoutine) => {
+      dailyRoutineStore.create(routineData);
+      refetchDailyRoutines();
+      return Promise.resolve();
     }
-  });
+  };
 
-  const updateDailyRoutineMutation = useMutation({
-    mutationFn: ({ id, content }: { id: string; content: string }) =>
-      apiRequest('PUT', `/api/daily-routines/${id}`, { content }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/daily-routines'] });
+  const updateDailyRoutineMutation = {
+    mutate: ({ id, content }: { id: string; content: string }) => {
+      dailyRoutineStore.update(id, { content });
+      refetchDailyRoutines();
+    },
+    mutateAsync: async ({ id, content }: { id: string; content: string }) => {
+      dailyRoutineStore.update(id, { content });
+      refetchDailyRoutines();
+      return Promise.resolve();
     }
-  });
+  };
 
-  const createMonthlyGoalMutation = useMutation({
-    mutationFn: (goalData: { month: string; goals: string }) =>
-      apiRequest('POST', '/api/monthly-goals', goalData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/monthly-goals'] });
+  const createMonthlyGoalMutation = {
+    mutate: (goalData: InsertMonthlyGoal) => {
+      monthlyGoalStore.create({
+        ...goalData,
+        createdAt: new Date(),
+      });
+      refetchMonthlyGoals();
+    },
+    mutateAsync: async (goalData: InsertMonthlyGoal) => {
+      monthlyGoalStore.create({
+        ...goalData,
+        createdAt: new Date(),
+      });
+      refetchMonthlyGoals();
+      return Promise.resolve();
     }
-  });
+  };
 
-  const updateMonthlyGoalMutation = useMutation({
-    mutationFn: ({ id, goals }: { id: string; goals: string }) =>
-      apiRequest('PUT', `/api/monthly-goals/${id}`, { goals }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/monthly-goals'] });
+  const updateMonthlyGoalMutation = {
+    mutate: ({ id, goals }: { id: string; goals: string }) => {
+      monthlyGoalStore.update(id, { goals });
+      refetchMonthlyGoals();
+    },
+    mutateAsync: async ({ id, goals }: { id: string; goals: string }) => {
+      monthlyGoalStore.update(id, { goals });
+      refetchMonthlyGoals();
+      return Promise.resolve();
     }
-  });
+  };
 
-  const updateSettingsMutation = useMutation({
-    mutationFn: (settingsData: { darkMode?: boolean; themeColor?: string; pushNotifications?: boolean }) =>
-      apiRequest('PUT', '/api/settings', settingsData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/settings'] });
+  const updateSettingsMutation = {
+    mutate: (settingsData: { darkMode?: boolean; themeColor?: string; pushNotifications?: boolean }) => {
+      userSettingsStore.update(settingsData);
+      refetchSettings();
+    },
+    mutateAsync: async (settingsData: { darkMode?: boolean; themeColor?: string; pushNotifications?: boolean }) => {
+      userSettingsStore.update(settingsData);
+      refetchSettings();
+      return Promise.resolve();
     }
-  });
+  };
 
-  const createLinkMutation = useMutation({
-    mutationFn: (linkData: { title: string; url: string; category?: string }) =>
-      apiRequest('POST', '/api/links', linkData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/links'] });
+  const createLinkMutation = {
+    mutate: (linkData: InsertLink) => {
+      linkStore.create({
+        ...linkData,
+        createdAt: new Date(),
+      });
+      refetchLinks();
       setLinkInputVisible(false);
       setLinkTitle('');
       setLinkUrl('');
       setLinkCategory('other');
     }
-  });
+  };
 
-  const deleteLinkMutation = useMutation({
-    mutationFn: (id: string) => apiRequest('DELETE', `/api/links/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/links'] });
+  const deleteLinkMutation = {
+    mutate: (id: string) => {
+      linkStore.delete(id);
+      refetchLinks();
     }
-  });
+  };
 
   // Export functionality
   const convertToCSV = (data: any[], type: string): string => {
@@ -355,12 +343,21 @@ const TaskManager: React.FC = () => {
   const exportData = async (format: 'json' | 'csv') => {
     setExportLoading(true);
     try {
-      const response = await fetch('/api/export', { credentials: 'include' });
-      if (!response.ok) {
-        throw new Error('エクスポートに失敗しました');
-      }
-      
-      const exportData = await response.json();
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        data: {
+          todos,
+          schedules,
+          sleepRecords,
+          weightRecords,
+          mealRecords,
+          diaryEntries,
+          dailyRoutines,
+          monthlyGoals,
+          links,
+          userSettings
+        }
+      };
       const timestamp = new Date().toISOString().split('T')[0];
       
       if (format === 'json') {
@@ -375,7 +372,10 @@ const TaskManager: React.FC = () => {
           { name: 'sleep-records', data: data.sleepRecords },
           { name: 'weight-records', data: data.weightRecords },
           { name: 'meal-records', data: data.mealRecords },
-          { name: 'diary-entries', data: data.diaryEntries }
+          { name: 'diary-entries', data: data.diaryEntries },
+          { name: 'daily-routines', data: data.dailyRoutines },
+          { name: 'monthly-goals', data: data.monthlyGoals },
+          { name: 'links', data: data.links }
         ];
         
         // Create a single CSV file with all data sections
@@ -498,8 +498,8 @@ const TaskManager: React.FC = () => {
     if (weightRecords.length === 0) return null;
     
     const latestRecord = weightRecords[weightRecords.length - 1];
-    const weight = parseFloat(latestRecord.weight);
-    const height = latestRecord.height ? parseFloat(latestRecord.height) : null;
+    const weight = latestRecord.weight;
+    const height = latestRecord.height;
     
     if (height && height > 0) {
       const heightInMeters = height / 100; // cmをmに変換
@@ -779,9 +779,9 @@ const TaskManager: React.FC = () => {
       if (!isNaN(weight)) {
         createWeightRecordMutation.mutate({
           date: new Date().toISOString().split('T')[0],
-          weight: weight.toString(),
-          height: heightInput ? parseFloat(heightInput).toString() : undefined,
-          bodyFat: bodyFatInput ? parseFloat(bodyFatInput).toString() : undefined
+          weight: weight,
+          height: heightInput ? parseFloat(heightInput) : undefined,
+          bodyFat: bodyFatInput ? parseFloat(bodyFatInput) : undefined
         });
         setWeightInput('');
         setHeightInput('');
@@ -976,7 +976,7 @@ const TaskManager: React.FC = () => {
           >
             <h3 className="font-bold">身体</h3>
             <p className="text-sm text-gray-500">
-              {weightRecordsLoading ? 'Loading...' : weightRecords.length > 0 ? `${parseFloat(weightRecords[weightRecords.length - 1].weight)} kg` : '65.2 kg'}
+              {weightRecordsLoading ? 'Loading...' : weightRecords.length > 0 ? `${weightRecords[weightRecords.length - 1].weight} kg` : '65.2 kg'}
             </p>
           </div>
           <div 
@@ -1337,14 +1337,14 @@ const TaskManager: React.FC = () => {
           <div className="grid grid-cols-3 gap-3 mb-6">
             <div className="bg-gray-50 rounded-lg p-3 text-center">
               <div className="text-xl font-bold text-theme-600" data-testid="text-current-weight">
-                {weightRecords.length > 0 ? parseFloat(weightRecords[weightRecords.length - 1].weight) : '65.2'}
+                {weightRecords.length > 0 ? weightRecords[weightRecords.length - 1].weight : '65.2'}
               </div>
               <div className="text-xs text-gray-500">体重 (kg)</div>
             </div>
             <div className="bg-gray-50 rounded-lg p-3 text-center">
               <div className="text-xl font-bold text-theme-600" data-testid="text-current-height">
                 {weightRecords.length > 0 && weightRecords[weightRecords.length - 1].height 
-                  ? parseFloat(weightRecords[weightRecords.length - 1].height!) 
+                  ? weightRecords[weightRecords.length - 1].height! 
                   : '--'}
               </div>
               <div className="text-xs text-gray-500">身長 (cm)</div>
@@ -1761,11 +1761,11 @@ const TaskManager: React.FC = () => {
       : 0;
     
     const avgWeight = weekWeightRecords.length > 0
-      ? weekWeightRecords.reduce((sum, r) => sum + parseFloat(r.weight), 0) / weekWeightRecords.length
+      ? weekWeightRecords.reduce((sum, r) => sum + r.weight, 0) / weekWeightRecords.length
       : 0;
     
     const weightChange = weekWeightRecords.length >= 2
-      ? parseFloat(weekWeightRecords[weekWeightRecords.length - 1].weight) - parseFloat(weekWeightRecords[0].weight)
+      ? weekWeightRecords[weekWeightRecords.length - 1].weight - weekWeightRecords[0].weight
       : 0;
     
     const weekLabel = weekOffset === 0 ? '今週' : weekOffset === -1 ? '先週' : '来週';
@@ -1930,7 +1930,7 @@ const TaskManager: React.FC = () => {
                     const sleepHours = daySleep 
                       ? (daySleep.duration / (1000 * 60 * 60)).toFixed(1) 
                       : '-';
-                    const weight = dayWeight ? parseFloat(dayWeight.weight).toFixed(1) : '-';
+                    const weight = dayWeight ? dayWeight.weight.toFixed(1) : '-';
                     
                     const dayLabel = ['日', '月', '火', '水', '木', '金', '土'][day.getDay()];
                     const isToday = day.toDateString() === new Date().toDateString();
@@ -2569,27 +2569,6 @@ const TaskManager: React.FC = () => {
             </div>
           </div>
 
-          {/* User Info Section */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase">アカウント</h3>
-            </div>
-            <div className="p-4">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <div className="font-medium">ユーザー名</div>
-                  <div className="text-sm text-gray-500">{user?.username}</div>
-                </div>
-              </div>
-              <button
-                onClick={logout}
-                className="w-full py-3 px-4 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                data-testid="button-logout"
-              >
-                ログアウト
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     );
@@ -3233,12 +3212,6 @@ const TaskManager: React.FC = () => {
             {getCurrentDate()}
           </div>
           <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2 mr-2">
-              <User size={16} className="text-gray-500" />
-              <span className="text-sm text-gray-600" data-testid="text-username">
-                {user?.username}
-              </span>
-            </div>
             <button 
               className={`transition-colors ${notificationsEnabled ? 'text-theme-500 hover:text-theme-600' : 'text-gray-500 hover:text-theme-500'}`}
               onClick={() => setNotificationModalVisible(true)}
@@ -3254,14 +3227,6 @@ const TaskManager: React.FC = () => {
               title="データエクスポート"
             >
               <Download size={20} />
-            </button>
-            <button 
-              className="text-gray-500 hover:text-red-500 transition-colors"
-              onClick={logout}
-              data-testid="button-logout"
-              title="ログアウト"
-            >
-              <LogOut size={20} />
             </button>
           </div>
         </header>
