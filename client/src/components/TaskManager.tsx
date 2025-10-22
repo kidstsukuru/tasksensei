@@ -17,6 +17,7 @@ import {
   PomodoroState,
   AppState 
 } from '../types';
+import type { InsertTodo } from '@shared/schema';
 import { 
   Bell, 
   Clock, 
@@ -197,7 +198,7 @@ const TaskManager: React.FC = () => {
 
   // Mutation hooks for CRUD operations
   const createTodoMutation = useMutation({
-    mutationFn: (todoData: { text: string; completed?: boolean }) =>
+    mutationFn: (todoData: InsertTodo) =>
       apiRequest('POST', '/api/todos', todoData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/todos'] });
@@ -640,8 +641,8 @@ const TaskManager: React.FC = () => {
         repeatDays: repeatType === 'weekly' && repeatDays.length > 0 ? repeatDays : null,
         repeatDate: repeatType === 'monthly' ? repeatDate : null,
         location: locationEnabled && locationName ? locationName : null,
-        locationLat: locationEnabled ? locationLat : null,
-        locationLng: locationEnabled ? locationLng : null,
+        locationLat: locationEnabled && locationLat !== null ? locationLat.toString() : null,
+        locationLng: locationEnabled && locationLng !== null ? locationLng.toString() : null,
         locationRadius: locationEnabled ? locationRadius : null
       });
       setTodoInputText('');
