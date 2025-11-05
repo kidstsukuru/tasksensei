@@ -63,7 +63,10 @@ export interface DailyRoutine {
 export interface MonthlyGoal {
   id: string;
   month: string;
-  goals: string;
+  weightGoal?: string;      // 体重目標
+  todoGoal?: string;         // やるべきこと
+  achievementGoal?: string;  // 達成したい目標
+  activityGoal?: string;     // 部活動や仕事などでの目標
   createdAt: Date;
 }
 

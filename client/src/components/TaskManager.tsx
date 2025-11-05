@@ -132,8 +132,12 @@ const TaskManager: React.FC = () => {
   const [isRoutineEditing, setIsRoutineEditing] = useState(false);
   
   // Monthly Goal states
-  const [monthlyGoalContent, setMonthlyGoalContent] = useState('');
+  const [weightGoal, setWeightGoal] = useState('');
+  const [todoGoal, setTodoGoal] = useState('');
+  const [achievementGoal, setAchievementGoal] = useState('');
+  const [activityGoal, setActivityGoal] = useState('');
   const [isMonthlyGoalEditing, setIsMonthlyGoalEditing] = useState(false);
+  const [showGoalSetupScreen, setShowGoalSetupScreen] = useState(false);
   const [stopwatchMinutes, setStopwatchMinutes] = useState(0);
   const [stopwatchSeconds, setStopwatchSeconds] = useState(0);
   const [stopwatchRunning, setStopwatchRunning] = useState(false);
@@ -263,12 +267,24 @@ const TaskManager: React.FC = () => {
   };
 
   const updateMonthlyGoalMutation = {
-    mutate: ({ id, goals }: { id: string; goals: string }) => {
-      monthlyGoalStore.update(id, { goals });
+    mutate: ({ id, weightGoal, todoGoal, achievementGoal, activityGoal }: { 
+      id: string; 
+      weightGoal?: string; 
+      todoGoal?: string; 
+      achievementGoal?: string; 
+      activityGoal?: string; 
+    }) => {
+      monthlyGoalStore.update(id, { weightGoal, todoGoal, achievementGoal, activityGoal });
       refetchMonthlyGoals();
     },
-    mutateAsync: async ({ id, goals }: { id: string; goals: string }) => {
-      monthlyGoalStore.update(id, { goals });
+    mutateAsync: async ({ id, weightGoal, todoGoal, achievementGoal, activityGoal }: { 
+      id: string; 
+      weightGoal?: string; 
+      todoGoal?: string; 
+      achievementGoal?: string; 
+      activityGoal?: string; 
+    }) => {
+      monthlyGoalStore.update(id, { weightGoal, todoGoal, achievementGoal, activityGoal });
       refetchMonthlyGoals();
       return Promise.resolve();
     }
@@ -1515,13 +1531,16 @@ const TaskManager: React.FC = () => {
 
   // Initialize monthly goal state when screen changes
   useEffect(() => {
-    if (currentScreen === 'monthly-goal-screen') {
+    if (currentScreen === 'monthly-goal-screen' || showGoalSetupScreen) {
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
       const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
-      setMonthlyGoalContent(currentMonthGoal?.goals || '');
+      setWeightGoal(currentMonthGoal?.weightGoal || '');
+      setTodoGoal(currentMonthGoal?.todoGoal || '');
+      setAchievementGoal(currentMonthGoal?.achievementGoal || '');
+      setActivityGoal(currentMonthGoal?.activityGoal || '');
       setIsMonthlyGoalEditing(!currentMonthGoal);
     }
-  }, [currentScreen, monthlyGoals]);
+  }, [currentScreen, showGoalSetupScreen, monthlyGoals]);
 
   const handleSaveDailyRoutine = async () => {
     const today = new Date().toISOString().split('T')[0];
@@ -1555,8 +1574,9 @@ const TaskManager: React.FC = () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
     
-    if (!monthlyGoalContent.trim()) {
-      alert('目標を入力してください');
+    // At least one goal should be filled
+    if (!weightGoal.trim() && !todoGoal.trim() && !achievementGoal.trim() && !activityGoal.trim()) {
+      alert('少なくとも1つの目標を入力してください');
       return;
     }
 
@@ -1564,15 +1584,24 @@ const TaskManager: React.FC = () => {
       if (currentMonthGoal) {
         await updateMonthlyGoalMutation.mutateAsync({
           id: currentMonthGoal.id,
-          goals: monthlyGoalContent
+          weightGoal: weightGoal.trim() || undefined,
+          todoGoal: todoGoal.trim() || undefined,
+          achievementGoal: achievementGoal.trim() || undefined,
+          activityGoal: activityGoal.trim() || undefined,
         });
       } else {
         await createMonthlyGoalMutation.mutateAsync({
           month: currentMonth,
-          goals: monthlyGoalContent
+          weightGoal: weightGoal.trim() || undefined,
+          todoGoal: todoGoal.trim() || undefined,
+          achievementGoal: achievementGoal.trim() || undefined,
+          activityGoal: activityGoal.trim() || undefined,
         });
       }
       setIsMonthlyGoalEditing(false);
+      setShowGoalSetupScreen(false);
+      // Save last setup month to localStorage
+      localStorage.setItem('lastGoalSetupMonth', currentMonth);
     } catch (error) {
       console.error('Failed to save monthly goal:', error);
       alert('保存に失敗しました');
@@ -1667,7 +1696,10 @@ const TaskManager: React.FC = () => {
         <header className="flex items-center mb-6">
           <button 
             className="p-2 rounded-full hover:bg-gray-100"
-            onClick={() => showScreen('tasks-screen')}
+            onClick={() => {
+              setShowGoalSetupScreen(false);
+              showScreen('tasks-screen');
+            }}
             data-testid="button-back"
           >
             <ArrowLeft size={24} />
@@ -1689,14 +1721,48 @@ const TaskManager: React.FC = () => {
               )}
             </div>
             {isMonthlyGoalEditing ? (
-              <>
-                <textarea
-                  value={monthlyGoalContent}
-                  onChange={(e) => setMonthlyGoalContent(e.target.value)}
-                  className="w-full p-3 border rounded-lg mb-4 min-h-[200px]"
-                  placeholder="今月の目標を書いてください..."
-                  data-testid="textarea-goal-content"
-                />
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">💪 体重目標</label>
+                  <input
+                    type="text"
+                    value={weightGoal}
+                    onChange={(e) => setWeightGoal(e.target.value)}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="例: 65kgを達成する"
+                    data-testid="input-weight-goal"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">📝 やるべきこと</label>
+                  <textarea
+                    value={todoGoal}
+                    onChange={(e) => setTodoGoal(e.target.value)}
+                    className="w-full p-3 border rounded-lg min-h-[80px]"
+                    placeholder="例: 毎日30分運動する、本を10冊読む"
+                    data-testid="input-todo-goal"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">🎯 達成したい目標</label>
+                  <textarea
+                    value={achievementGoal}
+                    onChange={(e) => setAchievementGoal(e.target.value)}
+                    className="w-full p-3 border rounded-lg min-h-[80px]"
+                    placeholder="例: 資格試験に合格する、プロジェクトを完成させる"
+                    data-testid="input-achievement-goal"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">⚡ 部活動や仕事などでの目標</label>
+                  <textarea
+                    value={activityGoal}
+                    onChange={(e) => setActivityGoal(e.target.value)}
+                    className="w-full p-3 border rounded-lg min-h-[80px]"
+                    placeholder="例: チームで優勝する、売上目標を達成する"
+                    data-testid="input-activity-goal"
+                  />
+                </div>
                 <button
                   onClick={handleSaveMonthlyGoal}
                   className="w-full py-3 bg-theme-500 text-white rounded-full font-semibold hover:bg-theme-600"
@@ -1704,10 +1770,41 @@ const TaskManager: React.FC = () => {
                 >
                   保存
                 </button>
-              </>
+              </div>
             ) : (
-              <div className="p-3 border rounded-lg bg-gray-50" data-testid="text-goal-content">
-                {currentMonthGoal?.goals || '今月の目標はまだ設定されていません'}
+              <div className="space-y-3" data-testid="text-goal-content">
+                {currentMonthGoal ? (
+                  <>
+                    {currentMonthGoal.weightGoal && (
+                      <div className="p-3 border rounded-lg bg-gray-50">
+                        <div className="text-sm font-medium text-gray-700 mb-1">💪 体重目標</div>
+                        <div className="text-sm">{currentMonthGoal.weightGoal}</div>
+                      </div>
+                    )}
+                    {currentMonthGoal.todoGoal && (
+                      <div className="p-3 border rounded-lg bg-gray-50">
+                        <div className="text-sm font-medium text-gray-700 mb-1">📝 やるべきこと</div>
+                        <div className="text-sm whitespace-pre-wrap">{currentMonthGoal.todoGoal}</div>
+                      </div>
+                    )}
+                    {currentMonthGoal.achievementGoal && (
+                      <div className="p-3 border rounded-lg bg-gray-50">
+                        <div className="text-sm font-medium text-gray-700 mb-1">🎯 達成したい目標</div>
+                        <div className="text-sm whitespace-pre-wrap">{currentMonthGoal.achievementGoal}</div>
+                      </div>
+                    )}
+                    {currentMonthGoal.activityGoal && (
+                      <div className="p-3 border rounded-lg bg-gray-50">
+                        <div className="text-sm font-medium text-gray-700 mb-1">⚡ 部活動や仕事などでの目標</div>
+                        <div className="text-sm whitespace-pre-wrap">{currentMonthGoal.activityGoal}</div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <div className="p-3 border rounded-lg bg-gray-50 text-center text-gray-500">
+                    今月の目標はまだ設定されていません
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1724,8 +1821,13 @@ const TaskManager: React.FC = () => {
                   const monthLabel = date.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long' });
                   return (
                     <div key={goal.id} className="p-3 border rounded-lg">
-                      <div className="text-sm text-gray-500 mb-1">{monthLabel}</div>
-                      <div className="text-sm">{goal.goals}</div>
+                      <div className="text-sm text-gray-500 mb-2">{monthLabel}</div>
+                      <div className="space-y-2 text-sm">
+                        {goal.weightGoal && <div>💪 {goal.weightGoal}</div>}
+                        {goal.todoGoal && <div>📝 {goal.todoGoal}</div>}
+                        {goal.achievementGoal && <div>🎯 {goal.achievementGoal}</div>}
+                        {goal.activityGoal && <div>⚡ {goal.activityGoal}</div>}
+                      </div>
                     </div>
                   );
                 })}
