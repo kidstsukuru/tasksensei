@@ -8,7 +8,16 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
-## October 22, 2025 (Latest)
+## November 5, 2025 (Latest)
+- **Monthly Goal Enhancement**: Extended monthly goal feature with category-based goals
+  - Updated MonthlyGoal type: added weightGoal, todoGoal, achievementGoal, activityGoal fields (replacing single 'goals' field)
+  - Implemented automatic goal setup screen display at the beginning of each month
+  - Added lastGoalSetupMonth tracking in localStorage to detect new months
+  - Improved goal setup UI with separate input fields for each category with emoji icons (💪 weight, 📝 todos, 🎯 achievements, ⚡ activities)
+  - Updated goal display to show categorized goals with visual separation
+  - E2E tests confirmed: category goal input/save/edit, automatic monthly display, localStorage persistence
+
+## October 22, 2025
 - **Complete Architecture Migration to localStorage**: Migrated the entire application from database+authentication to localStorage-only architecture
   - Created `client/src/types/local.ts` with local type definitions (removed userId fields)
   - Implemented `client/src/lib/localDataStore.ts` module providing CRUD operations for all data types
