@@ -1648,6 +1648,32 @@ const TaskManager: React.FC = () => {
     }
   };
 
+  const handleToggleGoalCompletion = (goalType: 'weight' | 'todo' | 'achievement' | 'activity') => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
+    
+    if (!currentMonthGoal) return;
+
+    const updates: any = { id: currentMonthGoal.id };
+    
+    switch (goalType) {
+      case 'weight':
+        updates.weightGoalCompleted = !currentMonthGoal.weightGoalCompleted;
+        break;
+      case 'todo':
+        updates.todoGoalCompleted = !currentMonthGoal.todoGoalCompleted;
+        break;
+      case 'achievement':
+        updates.achievementGoalCompleted = !currentMonthGoal.achievementGoalCompleted;
+        break;
+      case 'activity':
+        updates.activityGoalCompleted = !currentMonthGoal.activityGoalCompleted;
+        break;
+    }
+
+    updateMonthlyGoalMutation.mutate(updates);
+  };
+
   const renderDailyRoutineScreen = () => {
     const today = new Date().toISOString().split('T')[0];
     const todayRoutine = dailyRoutines.find(r => r.date === today);
@@ -1817,26 +1843,110 @@ const TaskManager: React.FC = () => {
                   <>
                     {currentMonthGoal.weightGoal && (
                       <div className="p-3 border rounded-lg bg-gray-50">
-                        <div className="text-sm font-medium text-gray-700 mb-1">💪 体重目標</div>
-                        <div className="text-sm">{currentMonthGoal.weightGoal}</div>
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => handleToggleGoalCompletion('weight')}
+                            className="mt-1 flex-shrink-0"
+                            data-testid="checkbox-weight-goal"
+                          >
+                            {currentMonthGoal.weightGoalCompleted ? (
+                              <div className="w-5 h-5 bg-theme-500 rounded border-2 border-theme-500 flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="w-5 h-5 bg-white rounded border-2 border-gray-300"></div>
+                            )}
+                          </button>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-700 mb-1">💪 体重目標</div>
+                            <div className={`text-sm ${currentMonthGoal.weightGoalCompleted ? 'line-through text-gray-400' : ''}`}>
+                              {currentMonthGoal.weightGoal}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                     {currentMonthGoal.todoGoal && (
                       <div className="p-3 border rounded-lg bg-gray-50">
-                        <div className="text-sm font-medium text-gray-700 mb-1">📝 やるべきこと</div>
-                        <div className="text-sm whitespace-pre-wrap">{currentMonthGoal.todoGoal}</div>
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => handleToggleGoalCompletion('todo')}
+                            className="mt-1 flex-shrink-0"
+                            data-testid="checkbox-todo-goal"
+                          >
+                            {currentMonthGoal.todoGoalCompleted ? (
+                              <div className="w-5 h-5 bg-theme-500 rounded border-2 border-theme-500 flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="w-5 h-5 bg-white rounded border-2 border-gray-300"></div>
+                            )}
+                          </button>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-700 mb-1">📝 やるべきこと</div>
+                            <div className={`text-sm whitespace-pre-wrap ${currentMonthGoal.todoGoalCompleted ? 'line-through text-gray-400' : ''}`}>
+                              {currentMonthGoal.todoGoal}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                     {currentMonthGoal.achievementGoal && (
                       <div className="p-3 border rounded-lg bg-gray-50">
-                        <div className="text-sm font-medium text-gray-700 mb-1">🎯 達成したい目標</div>
-                        <div className="text-sm whitespace-pre-wrap">{currentMonthGoal.achievementGoal}</div>
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => handleToggleGoalCompletion('achievement')}
+                            className="mt-1 flex-shrink-0"
+                            data-testid="checkbox-achievement-goal"
+                          >
+                            {currentMonthGoal.achievementGoalCompleted ? (
+                              <div className="w-5 h-5 bg-theme-500 rounded border-2 border-theme-500 flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="w-5 h-5 bg-white rounded border-2 border-gray-300"></div>
+                            )}
+                          </button>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-700 mb-1">🎯 達成したい目標</div>
+                            <div className={`text-sm whitespace-pre-wrap ${currentMonthGoal.achievementGoalCompleted ? 'line-through text-gray-400' : ''}`}>
+                              {currentMonthGoal.achievementGoal}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                     {currentMonthGoal.activityGoal && (
                       <div className="p-3 border rounded-lg bg-gray-50">
-                        <div className="text-sm font-medium text-gray-700 mb-1">⚡ 部活動や仕事などでの目標</div>
-                        <div className="text-sm whitespace-pre-wrap">{currentMonthGoal.activityGoal}</div>
+                        <div className="flex items-start gap-3">
+                          <button
+                            onClick={() => handleToggleGoalCompletion('activity')}
+                            className="mt-1 flex-shrink-0"
+                            data-testid="checkbox-activity-goal"
+                          >
+                            {currentMonthGoal.activityGoalCompleted ? (
+                              <div className="w-5 h-5 bg-theme-500 rounded border-2 border-theme-500 flex items-center justify-center">
+                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="w-5 h-5 bg-white rounded border-2 border-gray-300"></div>
+                            )}
+                          </button>
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-700 mb-1">⚡ 部活動や仕事などでの目標</div>
+                            <div className={`text-sm whitespace-pre-wrap ${currentMonthGoal.activityGoalCompleted ? 'line-through text-gray-400' : ''}`}>
+                              {currentMonthGoal.activityGoal}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>
@@ -1863,10 +1973,26 @@ const TaskManager: React.FC = () => {
                     <div key={goal.id} className="p-3 border rounded-lg">
                       <div className="text-sm text-gray-500 mb-2">{monthLabel}</div>
                       <div className="space-y-2 text-sm">
-                        {goal.weightGoal && <div>💪 {goal.weightGoal}</div>}
-                        {goal.todoGoal && <div>📝 {goal.todoGoal}</div>}
-                        {goal.achievementGoal && <div>🎯 {goal.achievementGoal}</div>}
-                        {goal.activityGoal && <div>⚡ {goal.activityGoal}</div>}
+                        {goal.weightGoal && (
+                          <div className={goal.weightGoalCompleted ? 'line-through text-gray-400' : ''}>
+                            💪 {goal.weightGoal} {goal.weightGoalCompleted && '✓'}
+                          </div>
+                        )}
+                        {goal.todoGoal && (
+                          <div className={goal.todoGoalCompleted ? 'line-through text-gray-400' : ''}>
+                            📝 {goal.todoGoal} {goal.todoGoalCompleted && '✓'}
+                          </div>
+                        )}
+                        {goal.achievementGoal && (
+                          <div className={goal.achievementGoalCompleted ? 'line-through text-gray-400' : ''}>
+                            🎯 {goal.achievementGoal} {goal.achievementGoalCompleted && '✓'}
+                          </div>
+                        )}
+                        {goal.activityGoal && (
+                          <div className={goal.activityGoalCompleted ? 'line-through text-gray-400' : ''}>
+                            ⚡ {goal.activityGoal} {goal.activityGoalCompleted && '✓'}
+                          </div>
+                        )}
                       </div>
                     </div>
                   );
