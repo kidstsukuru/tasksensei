@@ -9,6 +9,16 @@ Preferred communication style: Simple, everyday language.
 # Recent Changes
 
 ## November 5, 2025 (Latest)
+- **Monthly Goal Completion Tracking**: Added individual completion checkboxes for each goal category
+  - Extended MonthlyGoal type with completion state fields: weightGoalCompleted, todoGoalCompleted, achievementGoalCompleted, activityGoalCompleted
+  - Implemented checkbox toggle functionality with handleToggleGoalCompletion
+  - Updated UI to display interactive checkboxes next to each goal
+  - Completed goals show checked checkbox with checkmark SVG and line-through text styling
+  - Past goals display completion status with checkmark symbol (✓) and line-through
+  - Completion state persists in localStorage across page reloads
+  - Tests confirmed: checkbox toggle, visual state updates, localStorage persistence
+
+## November 5, 2025 (Earlier)
 - **Monthly Goal Enhancement**: Extended monthly goal feature with category-based goals
   - Updated MonthlyGoal type: added weightGoal, todoGoal, achievementGoal, activityGoal fields (replacing single 'goals' field)
   - Implemented automatic goal setup screen display at the beginning of each month
