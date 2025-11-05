@@ -267,24 +267,50 @@ const TaskManager: React.FC = () => {
   };
 
   const updateMonthlyGoalMutation = {
-    mutate: ({ id, weightGoal, todoGoal, achievementGoal, activityGoal }: { 
+    mutate: ({ id, weightGoal, todoGoal, achievementGoal, activityGoal, weightGoalCompleted, todoGoalCompleted, achievementGoalCompleted, activityGoalCompleted }: { 
       id: string; 
       weightGoal?: string; 
       todoGoal?: string; 
       achievementGoal?: string; 
-      activityGoal?: string; 
+      activityGoal?: string;
+      weightGoalCompleted?: boolean;
+      todoGoalCompleted?: boolean;
+      achievementGoalCompleted?: boolean;
+      activityGoalCompleted?: boolean;
     }) => {
-      monthlyGoalStore.update(id, { weightGoal, todoGoal, achievementGoal, activityGoal });
+      monthlyGoalStore.update(id, { 
+        weightGoal, 
+        todoGoal, 
+        achievementGoal, 
+        activityGoal,
+        weightGoalCompleted,
+        todoGoalCompleted,
+        achievementGoalCompleted,
+        activityGoalCompleted
+      });
       refetchMonthlyGoals();
     },
-    mutateAsync: async ({ id, weightGoal, todoGoal, achievementGoal, activityGoal }: { 
+    mutateAsync: async ({ id, weightGoal, todoGoal, achievementGoal, activityGoal, weightGoalCompleted, todoGoalCompleted, achievementGoalCompleted, activityGoalCompleted }: { 
       id: string; 
       weightGoal?: string; 
       todoGoal?: string; 
       achievementGoal?: string; 
-      activityGoal?: string; 
+      activityGoal?: string;
+      weightGoalCompleted?: boolean;
+      todoGoalCompleted?: boolean;
+      achievementGoalCompleted?: boolean;
+      activityGoalCompleted?: boolean;
     }) => {
-      monthlyGoalStore.update(id, { weightGoal, todoGoal, achievementGoal, activityGoal });
+      monthlyGoalStore.update(id, { 
+        weightGoal, 
+        todoGoal, 
+        achievementGoal, 
+        activityGoal,
+        weightGoalCompleted,
+        todoGoalCompleted,
+        achievementGoalCompleted,
+        activityGoalCompleted
+      });
       refetchMonthlyGoals();
       return Promise.resolve();
     }

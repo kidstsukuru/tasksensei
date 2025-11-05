@@ -67,6 +67,10 @@ export interface MonthlyGoal {
   todoGoal?: string;         // やるべきこと
   achievementGoal?: string;  // 達成したい目標
   activityGoal?: string;     // 部活動や仕事などでの目標
+  weightGoalCompleted?: boolean;      // 体重目標達成状態
+  todoGoalCompleted?: boolean;         // やるべきこと達成状態
+  achievementGoalCompleted?: boolean;  // 達成したい目標達成状態
+  activityGoalCompleted?: boolean;     // 部活動や仕事などでの目標達成状態
   createdAt: Date;
 }
 
