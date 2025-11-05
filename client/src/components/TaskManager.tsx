@@ -2012,6 +2012,10 @@ const TaskManager: React.FC = () => {
     const weekStartStr = weekStart.toISOString().split('T')[0];
     const weekEndStr = weekEnd.toISOString().split('T')[0];
     
+    // Get current month and goal
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
+    
     // Filter data for the current week
     const weekTodos = todos.filter(t => {
       const createdDate = new Date(t.createdAt);
@@ -2118,6 +2122,274 @@ const TaskManager: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Monthly Goals Section */}
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="font-bold text-lg">月間目標</h3>
+              {!isMonthlyGoalEditing && currentMonthGoal && (
+                <button
+                  onClick={() => {
+                    setWeightGoal(currentMonthGoal.weightGoal || '');
+                    setTodoGoal(currentMonthGoal.todoGoal || '');
+                    setAchievementGoal(currentMonthGoal.achievementGoal || '');
+                    setActivityGoal(currentMonthGoal.activityGoal || '');
+                    setIsMonthlyGoalEditing(true);
+                  }}
+                  className="text-sm text-theme-600 hover:text-theme-700"
+                  data-testid="button-edit-monthly-goal"
+                >
+                  編集
+                </button>
+              )}
+            </div>
+
+            {isMonthlyGoalEditing ? (
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    💪 体重目標
+                  </label>
+                  <input
+                    type="text"
+                    value={weightGoal}
+                    onChange={(e) => setWeightGoal(e.target.value)}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="例: 65kgを達成する"
+                    data-testid="input-weight-goal-review"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    📝 やるべきこと
+                  </label>
+                  <input
+                    type="text"
+                    value={todoGoal}
+                    onChange={(e) => setTodoGoal(e.target.value)}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="例: 毎日30分運動する"
+                    data-testid="input-todo-goal-review"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    🎯 達成したい目標
+                  </label>
+                  <input
+                    type="text"
+                    value={achievementGoal}
+                    onChange={(e) => setAchievementGoal(e.target.value)}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="例: 資格試験に合格する"
+                    data-testid="input-achievement-goal-review"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">
+                    ⚡ 部活動や仕事などでの目標
+                  </label>
+                  <input
+                    type="text"
+                    value={activityGoal}
+                    onChange={(e) => setActivityGoal(e.target.value)}
+                    className="w-full p-3 border rounded-lg"
+                    placeholder="例: チームで優勝する"
+                    data-testid="input-activity-goal-review"
+                  />
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleSaveMonthlyGoal}
+                    className="flex-1 bg-theme-500 text-white py-3 rounded-lg font-medium hover:bg-theme-600"
+                    data-testid="button-save-monthly-goal-review"
+                  >
+                    保存
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsMonthlyGoalEditing(false);
+                      setWeightGoal(currentMonthGoal?.weightGoal || '');
+                      setTodoGoal(currentMonthGoal?.todoGoal || '');
+                      setAchievementGoal(currentMonthGoal?.achievementGoal || '');
+                      setActivityGoal(currentMonthGoal?.activityGoal || '');
+                    }}
+                    className="flex-1 bg-gray-200 py-3 rounded-lg font-medium hover:bg-gray-300"
+                    data-testid="button-cancel-monthly-goal-review"
+                  >
+                    キャンセル
+                  </button>
+                </div>
+              </div>
+            ) : currentMonthGoal ? (
+              <div className="space-y-3">
+                {currentMonthGoal.weightGoal && (
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                    <button
+                      onClick={() => handleToggleGoalCompletion('weight')}
+                      className="mt-0.5 flex-shrink-0"
+                      data-testid="checkbox-weight-goal-review"
+                    >
+                      {currentMonthGoal.weightGoalCompleted ? (
+                        <svg className="w-6 h-6 text-theme-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <div className="w-6 h-6 border-2 border-gray-400 rounded"></div>
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <div className="text-sm text-gray-500 mb-1">💪 体重目標</div>
+                      <div className={`${currentMonthGoal.weightGoalCompleted ? 'line-through text-gray-400' : ''}`}>
+                        {currentMonthGoal.weightGoal}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {currentMonthGoal.todoGoal && (
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                    <button
+                      onClick={() => handleToggleGoalCompletion('todo')}
+                      className="mt-0.5 flex-shrink-0"
+                      data-testid="checkbox-todo-goal-review"
+                    >
+                      {currentMonthGoal.todoGoalCompleted ? (
+                        <svg className="w-6 h-6 text-theme-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <div className="w-6 h-6 border-2 border-gray-400 rounded"></div>
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <div className="text-sm text-gray-500 mb-1">📝 やるべきこと</div>
+                      <div className={`${currentMonthGoal.todoGoalCompleted ? 'line-through text-gray-400' : ''}`}>
+                        {currentMonthGoal.todoGoal}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {currentMonthGoal.achievementGoal && (
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                    <button
+                      onClick={() => handleToggleGoalCompletion('achievement')}
+                      className="mt-0.5 flex-shrink-0"
+                      data-testid="checkbox-achievement-goal-review"
+                    >
+                      {currentMonthGoal.achievementGoalCompleted ? (
+                        <svg className="w-6 h-6 text-theme-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <div className="w-6 h-6 border-2 border-gray-400 rounded"></div>
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <div className="text-sm text-gray-500 mb-1">🎯 達成したい目標</div>
+                      <div className={`${currentMonthGoal.achievementGoalCompleted ? 'line-through text-gray-400' : ''}`}>
+                        {currentMonthGoal.achievementGoal}
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {currentMonthGoal.activityGoal && (
+                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                    <button
+                      onClick={() => handleToggleGoalCompletion('activity')}
+                      className="mt-0.5 flex-shrink-0"
+                      data-testid="checkbox-activity-goal-review"
+                    >
+                      {currentMonthGoal.activityGoalCompleted ? (
+                        <svg className="w-6 h-6 text-theme-500" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                      ) : (
+                        <div className="w-6 h-6 border-2 border-gray-400 rounded"></div>
+                      )}
+                    </button>
+                    <div className="flex-1">
+                      <div className="text-sm text-gray-500 mb-1">⚡ 部活動や仕事などでの目標</div>
+                      <div className={`${currentMonthGoal.activityGoalCompleted ? 'line-through text-gray-400' : ''}`}>
+                        {currentMonthGoal.activityGoal}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <p className="text-gray-500 text-center py-4 mb-4">今月の目標が設定されていません</p>
+                <button
+                  onClick={() => {
+                    setWeightGoal('');
+                    setTodoGoal('');
+                    setAchievementGoal('');
+                    setActivityGoal('');
+                    setIsMonthlyGoalEditing(true);
+                  }}
+                  className="w-full bg-theme-500 text-white py-3 rounded-lg font-medium hover:bg-theme-600"
+                  data-testid="button-add-monthly-goal-review"
+                >
+                  目標を設定する
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Past Monthly Goals */}
+          {monthlyGoals.filter(g => g.month !== currentMonth).length > 0 && (
+            <div className="bg-white rounded-lg shadow p-4">
+              <h3 className="font-bold text-lg mb-4">過去の月間目標</h3>
+              <div className="space-y-3">
+                {monthlyGoals
+                  .filter(g => g.month !== currentMonth)
+                  .sort((a, b) => b.month.localeCompare(a.month))
+                  .map((goal) => (
+                    <div key={goal.id} className="border-b pb-3 last:border-b-0" data-testid={`past-goal-${goal.month}`}>
+                      <div className="font-medium text-gray-700 mb-2">{goal.month}</div>
+                      <div className="space-y-2 text-sm">
+                        {goal.weightGoal && (
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-500">💪</span>
+                            <span className={goal.weightGoalCompleted ? 'line-through text-gray-400' : ''}>
+                              {goal.weightGoalCompleted && '✓ '}
+                              {goal.weightGoal}
+                            </span>
+                          </div>
+                        )}
+                        {goal.todoGoal && (
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-500">📝</span>
+                            <span className={goal.todoGoalCompleted ? 'line-through text-gray-400' : ''}>
+                              {goal.todoGoalCompleted && '✓ '}
+                              {goal.todoGoal}
+                            </span>
+                          </div>
+                        )}
+                        {goal.achievementGoal && (
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-500">🎯</span>
+                            <span className={goal.achievementGoalCompleted ? 'line-through text-gray-400' : ''}>
+                              {goal.achievementGoalCompleted && '✓ '}
+                              {goal.achievementGoal}
+                            </span>
+                          </div>
+                        )}
+                        {goal.activityGoal && (
+                          <div className="flex items-start gap-2">
+                            <span className="text-gray-500">⚡</span>
+                            <span className={goal.activityGoalCompleted ? 'line-through text-gray-400' : ''}>
+                              {goal.activityGoalCompleted && '✓ '}
+                              {goal.activityGoal}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
