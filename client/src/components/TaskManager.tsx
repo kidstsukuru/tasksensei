@@ -278,16 +278,16 @@ const TaskManager: React.FC = () => {
       achievementGoalCompleted?: boolean;
       activityGoalCompleted?: boolean;
     }) => {
-      monthlyGoalStore.update(id, { 
-        weightGoal, 
-        todoGoal, 
-        achievementGoal, 
-        activityGoal,
-        weightGoalCompleted,
-        todoGoalCompleted,
-        achievementGoalCompleted,
-        activityGoalCompleted
-      });
+      const updateData: any = {};
+      if (weightGoal !== undefined) updateData.weightGoal = weightGoal;
+      if (todoGoal !== undefined) updateData.todoGoal = todoGoal;
+      if (achievementGoal !== undefined) updateData.achievementGoal = achievementGoal;
+      if (activityGoal !== undefined) updateData.activityGoal = activityGoal;
+      if (weightGoalCompleted !== undefined) updateData.weightGoalCompleted = weightGoalCompleted;
+      if (todoGoalCompleted !== undefined) updateData.todoGoalCompleted = todoGoalCompleted;
+      if (achievementGoalCompleted !== undefined) updateData.achievementGoalCompleted = achievementGoalCompleted;
+      if (activityGoalCompleted !== undefined) updateData.activityGoalCompleted = activityGoalCompleted;
+      monthlyGoalStore.update(id, updateData);
       refetchMonthlyGoals();
     },
     mutateAsync: async ({ id, weightGoal, todoGoal, achievementGoal, activityGoal, weightGoalCompleted, todoGoalCompleted, achievementGoalCompleted, activityGoalCompleted }: { 
@@ -301,16 +301,16 @@ const TaskManager: React.FC = () => {
       achievementGoalCompleted?: boolean;
       activityGoalCompleted?: boolean;
     }) => {
-      monthlyGoalStore.update(id, { 
-        weightGoal, 
-        todoGoal, 
-        achievementGoal, 
-        activityGoal,
-        weightGoalCompleted,
-        todoGoalCompleted,
-        achievementGoalCompleted,
-        activityGoalCompleted
-      });
+      const updateData: any = {};
+      if (weightGoal !== undefined) updateData.weightGoal = weightGoal;
+      if (todoGoal !== undefined) updateData.todoGoal = todoGoal;
+      if (achievementGoal !== undefined) updateData.achievementGoal = achievementGoal;
+      if (activityGoal !== undefined) updateData.activityGoal = activityGoal;
+      if (weightGoalCompleted !== undefined) updateData.weightGoalCompleted = weightGoalCompleted;
+      if (todoGoalCompleted !== undefined) updateData.todoGoalCompleted = todoGoalCompleted;
+      if (achievementGoalCompleted !== undefined) updateData.achievementGoalCompleted = achievementGoalCompleted;
+      if (activityGoalCompleted !== undefined) updateData.activityGoalCompleted = activityGoalCompleted;
+      monthlyGoalStore.update(id, updateData);
       refetchMonthlyGoals();
       return Promise.resolve();
     }
@@ -1628,6 +1628,10 @@ const TaskManager: React.FC = () => {
           todoGoal: todoGoal.trim() || undefined,
           achievementGoal: achievementGoal.trim() || undefined,
           activityGoal: activityGoal.trim() || undefined,
+          weightGoalCompleted: currentMonthGoal.weightGoalCompleted,
+          todoGoalCompleted: currentMonthGoal.todoGoalCompleted,
+          achievementGoalCompleted: currentMonthGoal.achievementGoalCompleted,
+          activityGoalCompleted: currentMonthGoal.activityGoalCompleted,
         });
       } else {
         await createMonthlyGoalMutation.mutateAsync({
