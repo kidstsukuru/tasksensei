@@ -9,6 +9,17 @@ Preferred communication style: Simple, everyday language.
 # Recent Changes
 
 ## November 5, 2025 (Latest)
+- **Weekly Review Integration**: Added monthly goal section to the weekly review screen
+  - Integrated monthly goal display, editing, and completion tracking into the weekly review page
+  - Users can now view and edit monthly goals directly from the weekly review screen (below weekly statistics)
+  - Current month goals displayed with checkboxes for completion tracking
+  - Edit button allows in-place modification of all four goal categories
+  - Past months' goals section shows historical goal data with completion status
+  - Fixed updateMonthlyGoalMutation to exclude undefined properties (prevents data loss during edits)
+  - Fixed handleSaveMonthlyGoal to preserve completion states when editing goal text
+  - Tests confirmed: goal display, editing, completion tracking, persistence across page reloads
+
+## November 5, 2025 (Earlier)
 - **Monthly Goal Completion Tracking**: Added individual completion checkboxes for each goal category
   - Extended MonthlyGoal type with completion state fields: weightGoalCompleted, todoGoalCompleted, achievementGoalCompleted, activityGoalCompleted
   - Implemented checkbox toggle functionality with handleToggleGoalCompletion
