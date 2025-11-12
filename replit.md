@@ -9,6 +9,18 @@ Preferred communication style: Simple, everyday language.
 # Recent Changes
 
 ## November 12, 2025 (Latest)
+- **Monthly Goal List Format Refactor**: Changed monthly goals from single-item to list-based format for each category
+  - Updated MonthlyGoal type to use arrays: weightGoals[], todoGoals[], achievementGoals[], activityGoals[]
+  - Completion state also changed to arrays: weightGoalsCompleted[], todoGoalsCompleted[], etc.
+  - Implemented MonthlyGoalDataStore class with automatic legacy data migration
+  - Legacy scalar fields (weightGoal, todoGoal, etc.) are automatically converted to single-item arrays
+  - UI updated to list format with add/remove item functionality (renderGoalListEditor function)
+  - Users can now add multiple goals per category using "+ 項目を追加" button
+  - Weekly review screen also updated to display goals in list format
+  - Data migration ensures existing users retain their previously saved goals
+  - All LSP errors resolved, application running without errors
+
+## November 12, 2025 (Earlier)
 - **Sleep Tracking Feature Removal**: Completely removed the sleep tracking feature from the application
   - Deleted SleepRecord and InsertSleepRecord type definitions from `client/src/types/local.ts`
   - Removed sleepRecordStore from `client/src/lib/localDataStore.ts`
@@ -98,8 +110,10 @@ The application uses browser localStorage for all data persistence:
 
 - **Local Type Definitions**: Types defined in `client/src/types/local.ts` without userId fields
 - **LocalDataStore Module**: Provides CRUD operations for all data types (todos, schedules, weight records, meal records, diary entries, links, user settings)
+- **MonthlyGoalDataStore**: Specialized store class that extends LocalDataStore with automatic legacy data migration
 - **Storage Keys**: Each data type stored under a unique localStorage key (e.g., 'todos', 'schedules')
 - **Data Format**: All data stored as JSON arrays with auto-generated IDs
+- **Data Migration**: Monthly goals are automatically migrated from legacy scalar format to array format on first load
 - **Custom Hooks**: `useLocalData` hooks provide React Query-like interface for local data access
 
 ## Backend Architecture (Legacy - Not Used)
