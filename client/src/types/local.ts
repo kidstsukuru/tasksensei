@@ -55,14 +55,14 @@ export interface DailyRoutine {
 export interface MonthlyGoal {
   id: string;
   month: string;
-  weightGoal?: string;      // 体重目標
-  todoGoal?: string;         // やるべきこと
-  achievementGoal?: string;  // 達成したい目標
-  activityGoal?: string;     // 部活動や仕事などでの目標
-  weightGoalCompleted?: boolean;      // 体重目標達成状態
-  todoGoalCompleted?: boolean;         // やるべきこと達成状態
-  achievementGoalCompleted?: boolean;  // 達成したい目標達成状態
-  activityGoalCompleted?: boolean;     // 部活動や仕事などでの目標達成状態
+  weightGoals?: string[];      // 体重目標リスト
+  todoGoals?: string[];         // やるべきことリスト
+  achievementGoals?: string[];  // 達成したい目標リスト
+  activityGoals?: string[];     // 部活動や仕事などでの目標リスト
+  weightGoalsCompleted?: boolean[];      // 体重目標達成状態リスト
+  todoGoalsCompleted?: boolean[];         // やるべきこと達成状態リスト
+  achievementGoalsCompleted?: boolean[];  // 達成したい目標達成状態リスト
+  activityGoalsCompleted?: boolean[];     // 部活動や仕事などでの目標達成状態リスト
   createdAt: Date;
 }
 

@@ -128,10 +128,10 @@ const TaskManager: React.FC = () => {
   const [isRoutineEditing, setIsRoutineEditing] = useState(false);
   
   // Monthly Goal states
-  const [weightGoal, setWeightGoal] = useState('');
-  const [todoGoal, setTodoGoal] = useState('');
-  const [achievementGoal, setAchievementGoal] = useState('');
-  const [activityGoal, setActivityGoal] = useState('');
+  const [weightGoals, setWeightGoals] = useState<string[]>([]);
+  const [todoGoals, setTodoGoals] = useState<string[]>([]);
+  const [achievementGoals, setAchievementGoals] = useState<string[]>([]);
+  const [activityGoals, setActivityGoals] = useState<string[]>([]);
   const [isMonthlyGoalEditing, setIsMonthlyGoalEditing] = useState(false);
   const [showGoalSetupScreen, setShowGoalSetupScreen] = useState(false);
   const [stopwatchMinutes, setStopwatchMinutes] = useState(0);
@@ -256,49 +256,49 @@ const TaskManager: React.FC = () => {
   };
 
   const updateMonthlyGoalMutation = {
-    mutate: ({ id, weightGoal, todoGoal, achievementGoal, activityGoal, weightGoalCompleted, todoGoalCompleted, achievementGoalCompleted, activityGoalCompleted }: { 
+    mutate: ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: { 
       id: string; 
-      weightGoal?: string; 
-      todoGoal?: string; 
-      achievementGoal?: string; 
-      activityGoal?: string;
-      weightGoalCompleted?: boolean;
-      todoGoalCompleted?: boolean;
-      achievementGoalCompleted?: boolean;
-      activityGoalCompleted?: boolean;
+      weightGoals?: string[]; 
+      todoGoals?: string[]; 
+      achievementGoals?: string[]; 
+      activityGoals?: string[];
+      weightGoalsCompleted?: boolean[];
+      todoGoalsCompleted?: boolean[];
+      achievementGoalsCompleted?: boolean[];
+      activityGoalsCompleted?: boolean[];
     }) => {
       const updateData: any = {};
-      if (weightGoal !== undefined) updateData.weightGoal = weightGoal;
-      if (todoGoal !== undefined) updateData.todoGoal = todoGoal;
-      if (achievementGoal !== undefined) updateData.achievementGoal = achievementGoal;
-      if (activityGoal !== undefined) updateData.activityGoal = activityGoal;
-      if (weightGoalCompleted !== undefined) updateData.weightGoalCompleted = weightGoalCompleted;
-      if (todoGoalCompleted !== undefined) updateData.todoGoalCompleted = todoGoalCompleted;
-      if (achievementGoalCompleted !== undefined) updateData.achievementGoalCompleted = achievementGoalCompleted;
-      if (activityGoalCompleted !== undefined) updateData.activityGoalCompleted = activityGoalCompleted;
+      if (weightGoals !== undefined) updateData.weightGoals = weightGoals;
+      if (todoGoals !== undefined) updateData.todoGoals = todoGoals;
+      if (achievementGoals !== undefined) updateData.achievementGoals = achievementGoals;
+      if (activityGoals !== undefined) updateData.activityGoals = activityGoals;
+      if (weightGoalsCompleted !== undefined) updateData.weightGoalsCompleted = weightGoalsCompleted;
+      if (todoGoalsCompleted !== undefined) updateData.todoGoalsCompleted = todoGoalsCompleted;
+      if (achievementGoalsCompleted !== undefined) updateData.achievementGoalsCompleted = achievementGoalsCompleted;
+      if (activityGoalsCompleted !== undefined) updateData.activityGoalsCompleted = activityGoalsCompleted;
       monthlyGoalStore.update(id, updateData);
       refetchMonthlyGoals();
     },
-    mutateAsync: async ({ id, weightGoal, todoGoal, achievementGoal, activityGoal, weightGoalCompleted, todoGoalCompleted, achievementGoalCompleted, activityGoalCompleted }: { 
+    mutateAsync: async ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: { 
       id: string; 
-      weightGoal?: string; 
-      todoGoal?: string; 
-      achievementGoal?: string; 
-      activityGoal?: string;
-      weightGoalCompleted?: boolean;
-      todoGoalCompleted?: boolean;
-      achievementGoalCompleted?: boolean;
-      activityGoalCompleted?: boolean;
+      weightGoals?: string[]; 
+      todoGoals?: string[]; 
+      achievementGoals?: string[]; 
+      activityGoals?: string[];
+      weightGoalsCompleted?: boolean[];
+      todoGoalsCompleted?: boolean[];
+      achievementGoalsCompleted?: boolean[];
+      activityGoalsCompleted?: boolean[];
     }) => {
       const updateData: any = {};
-      if (weightGoal !== undefined) updateData.weightGoal = weightGoal;
-      if (todoGoal !== undefined) updateData.todoGoal = todoGoal;
-      if (achievementGoal !== undefined) updateData.achievementGoal = achievementGoal;
-      if (activityGoal !== undefined) updateData.activityGoal = activityGoal;
-      if (weightGoalCompleted !== undefined) updateData.weightGoalCompleted = weightGoalCompleted;
-      if (todoGoalCompleted !== undefined) updateData.todoGoalCompleted = todoGoalCompleted;
-      if (achievementGoalCompleted !== undefined) updateData.achievementGoalCompleted = achievementGoalCompleted;
-      if (activityGoalCompleted !== undefined) updateData.activityGoalCompleted = activityGoalCompleted;
+      if (weightGoals !== undefined) updateData.weightGoals = weightGoals;
+      if (todoGoals !== undefined) updateData.todoGoals = todoGoals;
+      if (achievementGoals !== undefined) updateData.achievementGoals = achievementGoals;
+      if (activityGoals !== undefined) updateData.activityGoals = activityGoals;
+      if (weightGoalsCompleted !== undefined) updateData.weightGoalsCompleted = weightGoalsCompleted;
+      if (todoGoalsCompleted !== undefined) updateData.todoGoalsCompleted = todoGoalsCompleted;
+      if (achievementGoalsCompleted !== undefined) updateData.achievementGoalsCompleted = achievementGoalsCompleted;
+      if (activityGoalsCompleted !== undefined) updateData.activityGoalsCompleted = activityGoalsCompleted;
       monthlyGoalStore.update(id, updateData);
       refetchMonthlyGoals();
       return Promise.resolve();
@@ -1366,10 +1366,10 @@ const TaskManager: React.FC = () => {
     if (currentScreen === 'monthly-goal-screen' || showGoalSetupScreen) {
       const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
       const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
-      setWeightGoal(currentMonthGoal?.weightGoal || '');
-      setTodoGoal(currentMonthGoal?.todoGoal || '');
-      setAchievementGoal(currentMonthGoal?.achievementGoal || '');
-      setActivityGoal(currentMonthGoal?.activityGoal || '');
+      setWeightGoals(currentMonthGoal?.weightGoals || []);
+      setTodoGoals(currentMonthGoal?.todoGoals || []);
+      setAchievementGoals(currentMonthGoal?.achievementGoals || []);
+      setActivityGoals(currentMonthGoal?.activityGoals || []);
       setIsMonthlyGoalEditing(!currentMonthGoal);
     }
   }, [currentScreen, showGoalSetupScreen, monthlyGoals]);
@@ -1406,8 +1406,14 @@ const TaskManager: React.FC = () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
     
-    // At least one goal should be filled
-    if (!weightGoal.trim() && !todoGoal.trim() && !achievementGoal.trim() && !activityGoal.trim()) {
+    // Filter out empty strings and at least one goal should be filled
+    const filteredWeightGoals = weightGoals.filter(g => g.trim());
+    const filteredTodoGoals = todoGoals.filter(g => g.trim());
+    const filteredAchievementGoals = achievementGoals.filter(g => g.trim());
+    const filteredActivityGoals = activityGoals.filter(g => g.trim());
+    
+    if (filteredWeightGoals.length === 0 && filteredTodoGoals.length === 0 && 
+        filteredAchievementGoals.length === 0 && filteredActivityGoals.length === 0) {
       alert('少なくとも1つの目標を入力してください');
       return;
     }
@@ -1416,22 +1422,22 @@ const TaskManager: React.FC = () => {
       if (currentMonthGoal) {
         await updateMonthlyGoalMutation.mutateAsync({
           id: currentMonthGoal.id,
-          weightGoal: weightGoal.trim() || undefined,
-          todoGoal: todoGoal.trim() || undefined,
-          achievementGoal: achievementGoal.trim() || undefined,
-          activityGoal: activityGoal.trim() || undefined,
-          weightGoalCompleted: currentMonthGoal.weightGoalCompleted,
-          todoGoalCompleted: currentMonthGoal.todoGoalCompleted,
-          achievementGoalCompleted: currentMonthGoal.achievementGoalCompleted,
-          activityGoalCompleted: currentMonthGoal.activityGoalCompleted,
+          weightGoals: filteredWeightGoals.length > 0 ? filteredWeightGoals : undefined,
+          todoGoals: filteredTodoGoals.length > 0 ? filteredTodoGoals : undefined,
+          achievementGoals: filteredAchievementGoals.length > 0 ? filteredAchievementGoals : undefined,
+          activityGoals: filteredActivityGoals.length > 0 ? filteredActivityGoals : undefined,
+          weightGoalsCompleted: currentMonthGoal.weightGoalsCompleted,
+          todoGoalsCompleted: currentMonthGoal.todoGoalsCompleted,
+          achievementGoalsCompleted: currentMonthGoal.achievementGoalsCompleted,
+          activityGoalsCompleted: currentMonthGoal.activityGoalsCompleted,
         });
       } else {
         await createMonthlyGoalMutation.mutateAsync({
           month: currentMonth,
-          weightGoal: weightGoal.trim() || undefined,
-          todoGoal: todoGoal.trim() || undefined,
-          achievementGoal: achievementGoal.trim() || undefined,
-          activityGoal: activityGoal.trim() || undefined,
+          weightGoals: filteredWeightGoals.length > 0 ? filteredWeightGoals : undefined,
+          todoGoals: filteredTodoGoals.length > 0 ? filteredTodoGoals : undefined,
+          achievementGoals: filteredAchievementGoals.length > 0 ? filteredAchievementGoals : undefined,
+          activityGoals: filteredActivityGoals.length > 0 ? filteredActivityGoals : undefined,
         });
       }
       setIsMonthlyGoalEditing(false);
@@ -1444,31 +1450,6 @@ const TaskManager: React.FC = () => {
     }
   };
 
-  const handleToggleGoalCompletion = (goalType: 'weight' | 'todo' | 'achievement' | 'activity') => {
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
-    
-    if (!currentMonthGoal) return;
-
-    const updates: any = { id: currentMonthGoal.id };
-    
-    switch (goalType) {
-      case 'weight':
-        updates.weightGoalCompleted = !currentMonthGoal.weightGoalCompleted;
-        break;
-      case 'todo':
-        updates.todoGoalCompleted = !currentMonthGoal.todoGoalCompleted;
-        break;
-      case 'achievement':
-        updates.achievementGoalCompleted = !currentMonthGoal.achievementGoalCompleted;
-        break;
-      case 'activity':
-        updates.activityGoalCompleted = !currentMonthGoal.activityGoalCompleted;
-        break;
-    }
-
-    updateMonthlyGoalMutation.mutate(updates);
-  };
 
   const renderDailyRoutineScreen = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -1548,6 +1529,51 @@ const TaskManager: React.FC = () => {
     );
   };
 
+  const renderGoalListEditor = (
+    title: string,
+    emoji: string,
+    goals: string[],
+    setGoals: React.Dispatch<React.SetStateAction<string[]>>,
+    placeholder: string,
+    testId: string
+  ) => (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">{emoji} {title}</label>
+      <div className="space-y-2">
+        {goals.map((goal, index) => (
+          <div key={index} className="flex gap-2">
+            <input
+              type="text"
+              value={goal}
+              onChange={(e) => {
+                const newGoals = [...goals];
+                newGoals[index] = e.target.value;
+                setGoals(newGoals);
+              }}
+              className="flex-1 p-2 border rounded-lg text-sm"
+              placeholder={placeholder}
+              data-testid={`${testId}-${index}`}
+            />
+            <button
+              onClick={() => setGoals(goals.filter((_, i) => i !== index))}
+              className="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg"
+              data-testid={`${testId}-remove-${index}`}
+            >
+              <X size={16} />
+            </button>
+          </div>
+        ))}
+        <button
+          onClick={() => setGoals([...goals, ''])}
+          className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-sm text-gray-500 hover:border-theme-500 hover:text-theme-500"
+          data-testid={`${testId}-add`}
+        >
+          + 項目を追加
+        </button>
+      </div>
+    </div>
+  );
+
   const renderMonthlyGoalScreen = () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
@@ -1584,47 +1610,10 @@ const TaskManager: React.FC = () => {
             </div>
             {isMonthlyGoalEditing ? (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">💪 体重目標</label>
-                  <input
-                    type="text"
-                    value={weightGoal}
-                    onChange={(e) => setWeightGoal(e.target.value)}
-                    className="w-full p-3 border rounded-lg"
-                    placeholder="例: 65kgを達成する"
-                    data-testid="input-weight-goal"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">📝 やるべきこと</label>
-                  <textarea
-                    value={todoGoal}
-                    onChange={(e) => setTodoGoal(e.target.value)}
-                    className="w-full p-3 border rounded-lg min-h-[80px]"
-                    placeholder="例: 毎日30分運動する、本を10冊読む"
-                    data-testid="input-todo-goal"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">🎯 達成したい目標</label>
-                  <textarea
-                    value={achievementGoal}
-                    onChange={(e) => setAchievementGoal(e.target.value)}
-                    className="w-full p-3 border rounded-lg min-h-[80px]"
-                    placeholder="例: 資格試験に合格する、プロジェクトを完成させる"
-                    data-testid="input-achievement-goal"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">⚡ 部活動や仕事などでの目標</label>
-                  <textarea
-                    value={activityGoal}
-                    onChange={(e) => setActivityGoal(e.target.value)}
-                    className="w-full p-3 border rounded-lg min-h-[80px]"
-                    placeholder="例: チームで優勝する、売上目標を達成する"
-                    data-testid="input-activity-goal"
-                  />
-                </div>
+                {renderGoalListEditor('体重目標', '💪', weightGoals, setWeightGoals, '例: 65kgを達成する', 'input-weight-goal')}
+                {renderGoalListEditor('やるべきこと', '📝', todoGoals, setTodoGoals, '例: 毎日30分運動する', 'input-todo-goal')}
+                {renderGoalListEditor('達成したい目標', '🎯', achievementGoals, setAchievementGoals, '例: 資格試験に合格する', 'input-achievement-goal')}
+                {renderGoalListEditor('部活動や仕事などでの目標', '⚡', activityGoals, setActivityGoals, '例: チームで優勝する', 'input-activity-goal')}
                 <button
                   onClick={handleSaveMonthlyGoal}
                   className="w-full py-3 bg-theme-500 text-white rounded-full font-semibold hover:bg-theme-600"
@@ -1635,114 +1624,58 @@ const TaskManager: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-3" data-testid="text-goal-content">
-                {currentMonthGoal ? (
+                {currentMonthGoal && (currentMonthGoal.weightGoals?.length || currentMonthGoal.todoGoals?.length || currentMonthGoal.achievementGoals?.length || currentMonthGoal.activityGoals?.length) ? (
                   <>
-                    {currentMonthGoal.weightGoal && (
+                    {currentMonthGoal.weightGoals && currentMonthGoal.weightGoals.length > 0 && (
                       <div className="p-3 border rounded-lg bg-gray-50">
-                        <div className="flex items-start gap-3">
-                          <button
-                            onClick={() => handleToggleGoalCompletion('weight')}
-                            className="mt-1 flex-shrink-0"
-                            data-testid="checkbox-weight-goal"
-                          >
-                            {currentMonthGoal.weightGoalCompleted ? (
-                              <div className="w-5 h-5 bg-theme-500 rounded border-2 border-theme-500 flex items-center justify-center">
-                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </div>
-                            ) : (
-                              <div className="w-5 h-5 bg-white rounded border-2 border-gray-300"></div>
-                            )}
-                          </button>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-700 mb-1">💪 体重目標</div>
-                            <div className={`text-sm ${currentMonthGoal.weightGoalCompleted ? 'line-through text-gray-400' : ''}`}>
-                              {currentMonthGoal.weightGoal}
-                            </div>
-                          </div>
-                        </div>
+                        <div className="text-sm font-medium text-gray-700 mb-2">💪 体重目標</div>
+                        <ul className="space-y-1">
+                          {currentMonthGoal.weightGoals.map((goal, index) => (
+                            <li key={index} className={`text-sm flex items-start gap-2 ${currentMonthGoal.weightGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                              <span className="mt-1">•</span>
+                              <span className="flex-1">{goal}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
-                    {currentMonthGoal.todoGoal && (
+                    {currentMonthGoal.todoGoals && currentMonthGoal.todoGoals.length > 0 && (
                       <div className="p-3 border rounded-lg bg-gray-50">
-                        <div className="flex items-start gap-3">
-                          <button
-                            onClick={() => handleToggleGoalCompletion('todo')}
-                            className="mt-1 flex-shrink-0"
-                            data-testid="checkbox-todo-goal"
-                          >
-                            {currentMonthGoal.todoGoalCompleted ? (
-                              <div className="w-5 h-5 bg-theme-500 rounded border-2 border-theme-500 flex items-center justify-center">
-                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </div>
-                            ) : (
-                              <div className="w-5 h-5 bg-white rounded border-2 border-gray-300"></div>
-                            )}
-                          </button>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-700 mb-1">📝 やるべきこと</div>
-                            <div className={`text-sm whitespace-pre-wrap ${currentMonthGoal.todoGoalCompleted ? 'line-through text-gray-400' : ''}`}>
-                              {currentMonthGoal.todoGoal}
-                            </div>
-                          </div>
-                        </div>
+                        <div className="text-sm font-medium text-gray-700 mb-2">📝 やるべきこと</div>
+                        <ul className="space-y-1">
+                          {currentMonthGoal.todoGoals.map((goal, index) => (
+                            <li key={index} className={`text-sm flex items-start gap-2 ${currentMonthGoal.todoGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                              <span className="mt-1">•</span>
+                              <span className="flex-1">{goal}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
-                    {currentMonthGoal.achievementGoal && (
+                    {currentMonthGoal.achievementGoals && currentMonthGoal.achievementGoals.length > 0 && (
                       <div className="p-3 border rounded-lg bg-gray-50">
-                        <div className="flex items-start gap-3">
-                          <button
-                            onClick={() => handleToggleGoalCompletion('achievement')}
-                            className="mt-1 flex-shrink-0"
-                            data-testid="checkbox-achievement-goal"
-                          >
-                            {currentMonthGoal.achievementGoalCompleted ? (
-                              <div className="w-5 h-5 bg-theme-500 rounded border-2 border-theme-500 flex items-center justify-center">
-                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </div>
-                            ) : (
-                              <div className="w-5 h-5 bg-white rounded border-2 border-gray-300"></div>
-                            )}
-                          </button>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-700 mb-1">🎯 達成したい目標</div>
-                            <div className={`text-sm whitespace-pre-wrap ${currentMonthGoal.achievementGoalCompleted ? 'line-through text-gray-400' : ''}`}>
-                              {currentMonthGoal.achievementGoal}
-                            </div>
-                          </div>
-                        </div>
+                        <div className="text-sm font-medium text-gray-700 mb-2">🎯 達成したい目標</div>
+                        <ul className="space-y-1">
+                          {currentMonthGoal.achievementGoals.map((goal, index) => (
+                            <li key={index} className={`text-sm flex items-start gap-2 ${currentMonthGoal.achievementGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                              <span className="mt-1">•</span>
+                              <span className="flex-1">{goal}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
-                    {currentMonthGoal.activityGoal && (
+                    {currentMonthGoal.activityGoals && currentMonthGoal.activityGoals.length > 0 && (
                       <div className="p-3 border rounded-lg bg-gray-50">
-                        <div className="flex items-start gap-3">
-                          <button
-                            onClick={() => handleToggleGoalCompletion('activity')}
-                            className="mt-1 flex-shrink-0"
-                            data-testid="checkbox-activity-goal"
-                          >
-                            {currentMonthGoal.activityGoalCompleted ? (
-                              <div className="w-5 h-5 bg-theme-500 rounded border-2 border-theme-500 flex items-center justify-center">
-                                <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                </svg>
-                              </div>
-                            ) : (
-                              <div className="w-5 h-5 bg-white rounded border-2 border-gray-300"></div>
-                            )}
-                          </button>
-                          <div className="flex-1">
-                            <div className="text-sm font-medium text-gray-700 mb-1">⚡ 部活動や仕事などでの目標</div>
-                            <div className={`text-sm whitespace-pre-wrap ${currentMonthGoal.activityGoalCompleted ? 'line-through text-gray-400' : ''}`}>
-                              {currentMonthGoal.activityGoal}
-                            </div>
-                          </div>
-                        </div>
+                        <div className="text-sm font-medium text-gray-700 mb-2">⚡ 部活動や仕事などでの目標</div>
+                        <ul className="space-y-1">
+                          {currentMonthGoal.activityGoals.map((goal, index) => (
+                            <li key={index} className={`text-sm flex items-start gap-2 ${currentMonthGoal.activityGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                              <span className="mt-1">•</span>
+                              <span className="flex-1">{goal}</span>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     )}
                   </>
@@ -1769,24 +1702,52 @@ const TaskManager: React.FC = () => {
                     <div key={goal.id} className="p-3 border rounded-lg">
                       <div className="text-sm text-gray-500 mb-2">{monthLabel}</div>
                       <div className="space-y-2 text-sm">
-                        {goal.weightGoal && (
-                          <div className={goal.weightGoalCompleted ? 'line-through text-gray-400' : ''}>
-                            💪 {goal.weightGoal} {goal.weightGoalCompleted && '✓'}
+                        {goal.weightGoals && goal.weightGoals.length > 0 && (
+                          <div>
+                            <div className="font-medium mb-1">💪 体重目標</div>
+                            <ul className="ml-4 space-y-1">
+                              {goal.weightGoals.map((g, i) => (
+                                <li key={i} className={goal.weightGoalsCompleted?.[i] ? 'line-through text-gray-400' : ''}>
+                                  • {g} {goal.weightGoalsCompleted?.[i] && '✓'}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
-                        {goal.todoGoal && (
-                          <div className={goal.todoGoalCompleted ? 'line-through text-gray-400' : ''}>
-                            📝 {goal.todoGoal} {goal.todoGoalCompleted && '✓'}
+                        {goal.todoGoals && goal.todoGoals.length > 0 && (
+                          <div>
+                            <div className="font-medium mb-1">📝 やるべきこと</div>
+                            <ul className="ml-4 space-y-1">
+                              {goal.todoGoals.map((g, i) => (
+                                <li key={i} className={goal.todoGoalsCompleted?.[i] ? 'line-through text-gray-400' : ''}>
+                                  • {g} {goal.todoGoalsCompleted?.[i] && '✓'}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
-                        {goal.achievementGoal && (
-                          <div className={goal.achievementGoalCompleted ? 'line-through text-gray-400' : ''}>
-                            🎯 {goal.achievementGoal} {goal.achievementGoalCompleted && '✓'}
+                        {goal.achievementGoals && goal.achievementGoals.length > 0 && (
+                          <div>
+                            <div className="font-medium mb-1">🎯 達成したい目標</div>
+                            <ul className="ml-4 space-y-1">
+                              {goal.achievementGoals.map((g, i) => (
+                                <li key={i} className={goal.achievementGoalsCompleted?.[i] ? 'line-through text-gray-400' : ''}>
+                                  • {g} {goal.achievementGoalsCompleted?.[i] && '✓'}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
-                        {goal.activityGoal && (
-                          <div className={goal.activityGoalCompleted ? 'line-through text-gray-400' : ''}>
-                            ⚡ {goal.activityGoal} {goal.activityGoalCompleted && '✓'}
+                        {goal.activityGoals && goal.activityGoals.length > 0 && (
+                          <div>
+                            <div className="font-medium mb-1">⚡ 部活動や仕事などでの目標</div>
+                            <ul className="ml-4 space-y-1">
+                              {goal.activityGoals.map((g, i) => (
+                                <li key={i} className={goal.activityGoalsCompleted?.[i] ? 'line-through text-gray-400' : ''}>
+                                  • {g} {goal.activityGoalsCompleted?.[i] && '✓'}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
                       </div>
@@ -1913,10 +1874,10 @@ const TaskManager: React.FC = () => {
               {!isMonthlyGoalEditing && currentMonthGoal && (
                 <button
                   onClick={() => {
-                    setWeightGoal(currentMonthGoal.weightGoal || '');
-                    setTodoGoal(currentMonthGoal.todoGoal || '');
-                    setAchievementGoal(currentMonthGoal.achievementGoal || '');
-                    setActivityGoal(currentMonthGoal.activityGoal || '');
+                    setWeightGoals(currentMonthGoal.weightGoals || []);
+                    setTodoGoals(currentMonthGoal.todoGoals || []);
+                    setAchievementGoals(currentMonthGoal.achievementGoals || []);
+                    setActivityGoals(currentMonthGoal.activityGoals || []);
                     setIsMonthlyGoalEditing(true);
                   }}
                   className="text-sm text-theme-600 hover:text-theme-700"
@@ -1929,58 +1890,10 @@ const TaskManager: React.FC = () => {
 
             {isMonthlyGoalEditing ? (
               <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    💪 体重目標
-                  </label>
-                  <input
-                    type="text"
-                    value={weightGoal}
-                    onChange={(e) => setWeightGoal(e.target.value)}
-                    className="w-full p-3 border rounded-lg"
-                    placeholder="例: 65kgを達成する"
-                    data-testid="input-weight-goal-review"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    📝 やるべきこと
-                  </label>
-                  <input
-                    type="text"
-                    value={todoGoal}
-                    onChange={(e) => setTodoGoal(e.target.value)}
-                    className="w-full p-3 border rounded-lg"
-                    placeholder="例: 毎日30分運動する"
-                    data-testid="input-todo-goal-review"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    🎯 達成したい目標
-                  </label>
-                  <input
-                    type="text"
-                    value={achievementGoal}
-                    onChange={(e) => setAchievementGoal(e.target.value)}
-                    className="w-full p-3 border rounded-lg"
-                    placeholder="例: 資格試験に合格する"
-                    data-testid="input-achievement-goal-review"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    ⚡ 部活動や仕事などでの目標
-                  </label>
-                  <input
-                    type="text"
-                    value={activityGoal}
-                    onChange={(e) => setActivityGoal(e.target.value)}
-                    className="w-full p-3 border rounded-lg"
-                    placeholder="例: チームで優勝する"
-                    data-testid="input-activity-goal-review"
-                  />
-                </div>
+                {renderGoalListEditor('体重目標', '💪', weightGoals, setWeightGoals, '例: 65kgを達成する', 'input-weight-goal-review')}
+                {renderGoalListEditor('やるべきこと', '📝', todoGoals, setTodoGoals, '例: 毎日30分運動する', 'input-todo-goal-review')}
+                {renderGoalListEditor('達成したい目標', '🎯', achievementGoals, setAchievementGoals, '例: 資格試験に合格する', 'input-achievement-goal-review')}
+                {renderGoalListEditor('部活動や仕事などでの目標', '⚡', activityGoals, setActivityGoals, '例: チームで優勝する', 'input-activity-goal-review')}
                 <div className="flex gap-3">
                   <button
                     onClick={handleSaveMonthlyGoal}
@@ -1992,10 +1905,10 @@ const TaskManager: React.FC = () => {
                   <button
                     onClick={() => {
                       setIsMonthlyGoalEditing(false);
-                      setWeightGoal(currentMonthGoal?.weightGoal || '');
-                      setTodoGoal(currentMonthGoal?.todoGoal || '');
-                      setAchievementGoal(currentMonthGoal?.achievementGoal || '');
-                      setActivityGoal(currentMonthGoal?.activityGoal || '');
+                      setWeightGoals(currentMonthGoal?.weightGoals || []);
+                      setTodoGoals(currentMonthGoal?.todoGoals || []);
+                      setAchievementGoals(currentMonthGoal?.achievementGoals || []);
+                      setActivityGoals(currentMonthGoal?.activityGoals || []);
                     }}
                     className="flex-1 bg-gray-200 py-3 rounded-lg font-medium hover:bg-gray-300"
                     data-testid="button-cancel-monthly-goal-review"
@@ -2004,98 +1917,58 @@ const TaskManager: React.FC = () => {
                   </button>
                 </div>
               </div>
-            ) : currentMonthGoal ? (
+            ) : currentMonthGoal && (currentMonthGoal.weightGoals?.length || currentMonthGoal.todoGoals?.length || currentMonthGoal.achievementGoals?.length || currentMonthGoal.activityGoals?.length) ? (
               <div className="space-y-3">
-                {currentMonthGoal.weightGoal && (
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <button
-                      onClick={() => handleToggleGoalCompletion('weight')}
-                      className="mt-0.5 flex-shrink-0"
-                      data-testid="checkbox-weight-goal-review"
-                    >
-                      {currentMonthGoal.weightGoalCompleted ? (
-                        <svg className="w-6 h-6 text-theme-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <div className="w-6 h-6 border-2 border-gray-400 rounded"></div>
-                      )}
-                    </button>
-                    <div className="flex-1">
-                      <div className="text-sm text-gray-500 mb-1">💪 体重目標</div>
-                      <div className={`${currentMonthGoal.weightGoalCompleted ? 'line-through text-gray-400' : ''}`}>
-                        {currentMonthGoal.weightGoal}
-                      </div>
-                    </div>
+                {currentMonthGoal.weightGoals && currentMonthGoal.weightGoals.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-gray-50">
+                    <div className="text-sm font-medium text-gray-700 mb-2">💪 体重目標</div>
+                    <ul className="space-y-1">
+                      {currentMonthGoal.weightGoals.map((goal, index) => (
+                        <li key={index} className="text-sm flex items-start gap-2">
+                          <span className="mt-1">•</span>
+                          <span className="flex-1">{goal}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
-                {currentMonthGoal.todoGoal && (
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <button
-                      onClick={() => handleToggleGoalCompletion('todo')}
-                      className="mt-0.5 flex-shrink-0"
-                      data-testid="checkbox-todo-goal-review"
-                    >
-                      {currentMonthGoal.todoGoalCompleted ? (
-                        <svg className="w-6 h-6 text-theme-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <div className="w-6 h-6 border-2 border-gray-400 rounded"></div>
-                      )}
-                    </button>
-                    <div className="flex-1">
-                      <div className="text-sm text-gray-500 mb-1">📝 やるべきこと</div>
-                      <div className={`${currentMonthGoal.todoGoalCompleted ? 'line-through text-gray-400' : ''}`}>
-                        {currentMonthGoal.todoGoal}
-                      </div>
-                    </div>
+                {currentMonthGoal.todoGoals && currentMonthGoal.todoGoals.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-gray-50">
+                    <div className="text-sm font-medium text-gray-700 mb-2">📝 やるべきこと</div>
+                    <ul className="space-y-1">
+                      {currentMonthGoal.todoGoals.map((goal, index) => (
+                        <li key={index} className="text-sm flex items-start gap-2">
+                          <span className="mt-1">•</span>
+                          <span className="flex-1">{goal}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
-                {currentMonthGoal.achievementGoal && (
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <button
-                      onClick={() => handleToggleGoalCompletion('achievement')}
-                      className="mt-0.5 flex-shrink-0"
-                      data-testid="checkbox-achievement-goal-review"
-                    >
-                      {currentMonthGoal.achievementGoalCompleted ? (
-                        <svg className="w-6 h-6 text-theme-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <div className="w-6 h-6 border-2 border-gray-400 rounded"></div>
-                      )}
-                    </button>
-                    <div className="flex-1">
-                      <div className="text-sm text-gray-500 mb-1">🎯 達成したい目標</div>
-                      <div className={`${currentMonthGoal.achievementGoalCompleted ? 'line-through text-gray-400' : ''}`}>
-                        {currentMonthGoal.achievementGoal}
-                      </div>
-                    </div>
+                {currentMonthGoal.achievementGoals && currentMonthGoal.achievementGoals.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-gray-50">
+                    <div className="text-sm font-medium text-gray-700 mb-2">🎯 達成したい目標</div>
+                    <ul className="space-y-1">
+                      {currentMonthGoal.achievementGoals.map((goal, index) => (
+                        <li key={index} className="text-sm flex items-start gap-2">
+                          <span className="mt-1">•</span>
+                          <span className="flex-1">{goal}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
-                {currentMonthGoal.activityGoal && (
-                  <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
-                    <button
-                      onClick={() => handleToggleGoalCompletion('activity')}
-                      className="mt-0.5 flex-shrink-0"
-                      data-testid="checkbox-activity-goal-review"
-                    >
-                      {currentMonthGoal.activityGoalCompleted ? (
-                        <svg className="w-6 h-6 text-theme-500" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                      ) : (
-                        <div className="w-6 h-6 border-2 border-gray-400 rounded"></div>
-                      )}
-                    </button>
-                    <div className="flex-1">
-                      <div className="text-sm text-gray-500 mb-1">⚡ 部活動や仕事などでの目標</div>
-                      <div className={`${currentMonthGoal.activityGoalCompleted ? 'line-through text-gray-400' : ''}`}>
-                        {currentMonthGoal.activityGoal}
-                      </div>
-                    </div>
+                {currentMonthGoal.activityGoals && currentMonthGoal.activityGoals.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-gray-50">
+                    <div className="text-sm font-medium text-gray-700 mb-2">⚡ 部活動や仕事などでの目標</div>
+                    <ul className="space-y-1">
+                      {currentMonthGoal.activityGoals.map((goal, index) => (
+                        <li key={index} className="text-sm flex items-start gap-2">
+                          <span className="mt-1">•</span>
+                          <span className="flex-1">{goal}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
@@ -2104,10 +1977,10 @@ const TaskManager: React.FC = () => {
                 <p className="text-gray-500 text-center py-4 mb-4">今月の目標が設定されていません</p>
                 <button
                   onClick={() => {
-                    setWeightGoal('');
-                    setTodoGoal('');
-                    setAchievementGoal('');
-                    setActivityGoal('');
+                    setWeightGoals([]);
+                    setTodoGoals([]);
+                    setAchievementGoals([]);
+                    setActivityGoals([]);
                     setIsMonthlyGoalEditing(true);
                   }}
                   className="w-full bg-theme-500 text-white py-3 rounded-lg font-medium hover:bg-theme-600"
@@ -2131,40 +2004,52 @@ const TaskManager: React.FC = () => {
                     <div key={goal.id} className="border-b pb-3 last:border-b-0" data-testid={`past-goal-${goal.month}`}>
                       <div className="font-medium text-gray-700 mb-2">{goal.month}</div>
                       <div className="space-y-2 text-sm">
-                        {goal.weightGoal && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-gray-500">💪</span>
-                            <span className={goal.weightGoalCompleted ? 'line-through text-gray-400' : ''}>
-                              {goal.weightGoalCompleted && '✓ '}
-                              {goal.weightGoal}
-                            </span>
+                        {goal.weightGoals && goal.weightGoals.length > 0 && (
+                          <div>
+                            <div className="font-medium mb-1">💪 体重目標</div>
+                            <ul className="ml-4 space-y-1">
+                              {goal.weightGoals.map((g, i) => (
+                                <li key={i} className={goal.weightGoalsCompleted?.[i] ? 'line-through text-gray-400' : ''}>
+                                  • {g} {goal.weightGoalsCompleted?.[i] && '✓'}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
-                        {goal.todoGoal && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-gray-500">📝</span>
-                            <span className={goal.todoGoalCompleted ? 'line-through text-gray-400' : ''}>
-                              {goal.todoGoalCompleted && '✓ '}
-                              {goal.todoGoal}
-                            </span>
+                        {goal.todoGoals && goal.todoGoals.length > 0 && (
+                          <div>
+                            <div className="font-medium mb-1">📝 やるべきこと</div>
+                            <ul className="ml-4 space-y-1">
+                              {goal.todoGoals.map((g, i) => (
+                                <li key={i} className={goal.todoGoalsCompleted?.[i] ? 'line-through text-gray-400' : ''}>
+                                  • {g} {goal.todoGoalsCompleted?.[i] && '✓'}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
-                        {goal.achievementGoal && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-gray-500">🎯</span>
-                            <span className={goal.achievementGoalCompleted ? 'line-through text-gray-400' : ''}>
-                              {goal.achievementGoalCompleted && '✓ '}
-                              {goal.achievementGoal}
-                            </span>
+                        {goal.achievementGoals && goal.achievementGoals.length > 0 && (
+                          <div>
+                            <div className="font-medium mb-1">🎯 達成したい目標</div>
+                            <ul className="ml-4 space-y-1">
+                              {goal.achievementGoals.map((g, i) => (
+                                <li key={i} className={goal.achievementGoalsCompleted?.[i] ? 'line-through text-gray-400' : ''}>
+                                  • {g} {goal.achievementGoalsCompleted?.[i] && '✓'}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
-                        {goal.activityGoal && (
-                          <div className="flex items-start gap-2">
-                            <span className="text-gray-500">⚡</span>
-                            <span className={goal.activityGoalCompleted ? 'line-through text-gray-400' : ''}>
-                              {goal.activityGoalCompleted && '✓ '}
-                              {goal.activityGoal}
-                            </span>
+                        {goal.activityGoals && goal.activityGoals.length > 0 && (
+                          <div>
+                            <div className="font-medium mb-1">⚡ 部活動や仕事などでの目標</div>
+                            <ul className="ml-4 space-y-1">
+                              {goal.activityGoals.map((g, i) => (
+                                <li key={i} className={goal.activityGoalsCompleted?.[i] ? 'line-through text-gray-400' : ''}>
+                                  • {g} {goal.activityGoalsCompleted?.[i] && '✓'}
+                                </li>
+                              ))}
+                            </ul>
                           </div>
                         )}
                       </div>
