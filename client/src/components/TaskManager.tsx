@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useLocalData, useLocalSettings } from '../hooks/useLocalData';
 import { Switch } from '@/components/ui/switch';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Todo, 
   Schedule, 
@@ -1450,6 +1451,52 @@ const TaskManager: React.FC = () => {
     }
   };
 
+  const handleToggleGoalCompletion = async (
+    category: 'weight' | 'todo' | 'achievement' | 'activity',
+    index: number
+  ) => {
+    const currentMonth = new Date().toISOString().slice(0, 7);
+    const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
+    
+    if (!currentMonthGoal) return;
+
+    // Map category to completion field
+    const completionFieldMap = {
+      weight: 'weightGoalsCompleted',
+      todo: 'todoGoalsCompleted',
+      achievement: 'achievementGoalsCompleted',
+      activity: 'activityGoalsCompleted',
+    } as const;
+
+    // Map category to goals field to get array length
+    const goalsFieldMap = {
+      weight: 'weightGoals',
+      todo: 'todoGoals',
+      achievement: 'achievementGoals',
+      activity: 'activityGoals',
+    } as const;
+
+    const completionField = completionFieldMap[category];
+    const goalsField = goalsFieldMap[category];
+    const goalsList = currentMonthGoal[goalsField] || [];
+    
+    // Clone and normalize the completion array
+    const currentCompleted = currentMonthGoal[completionField] || [];
+    const normalizedCompleted = Array(goalsList.length).fill(false).map((_, i) => currentCompleted[i] || false);
+    
+    // Toggle the target index
+    normalizedCompleted[index] = !normalizedCompleted[index];
+
+    try {
+      await updateMonthlyGoalMutation.mutateAsync({
+        id: currentMonthGoal.id,
+        [completionField]: normalizedCompleted,
+      });
+    } catch (error) {
+      console.error('Failed to toggle goal completion:', error);
+    }
+  };
+
 
   const renderDailyRoutineScreen = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -1629,11 +1676,18 @@ const TaskManager: React.FC = () => {
                     {currentMonthGoal.weightGoals && currentMonthGoal.weightGoals.length > 0 && (
                       <div className="p-3 border rounded-lg bg-gray-50">
                         <div className="text-sm font-medium text-gray-700 mb-2">💪 体重目標</div>
-                        <ul className="space-y-1">
+                        <ul className="space-y-2">
                           {currentMonthGoal.weightGoals.map((goal, index) => (
-                            <li key={index} className={`text-sm flex items-start gap-2 ${currentMonthGoal.weightGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
-                              <span className="mt-1">•</span>
-                              <span className="flex-1">{goal}</span>
+                            <li key={index} className="flex items-start gap-2">
+                              <Checkbox
+                                checked={currentMonthGoal.weightGoalsCompleted?.[index] || false}
+                                onCheckedChange={() => handleToggleGoalCompletion('weight', index)}
+                                className="mt-0.5"
+                                data-testid={`checkbox-weight-${index}`}
+                              />
+                              <span className={`text-sm flex-1 ${currentMonthGoal.weightGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                                {goal}
+                              </span>
                             </li>
                           ))}
                         </ul>
@@ -1642,11 +1696,18 @@ const TaskManager: React.FC = () => {
                     {currentMonthGoal.todoGoals && currentMonthGoal.todoGoals.length > 0 && (
                       <div className="p-3 border rounded-lg bg-gray-50">
                         <div className="text-sm font-medium text-gray-700 mb-2">📝 やるべきこと</div>
-                        <ul className="space-y-1">
+                        <ul className="space-y-2">
                           {currentMonthGoal.todoGoals.map((goal, index) => (
-                            <li key={index} className={`text-sm flex items-start gap-2 ${currentMonthGoal.todoGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
-                              <span className="mt-1">•</span>
-                              <span className="flex-1">{goal}</span>
+                            <li key={index} className="flex items-start gap-2">
+                              <Checkbox
+                                checked={currentMonthGoal.todoGoalsCompleted?.[index] || false}
+                                onCheckedChange={() => handleToggleGoalCompletion('todo', index)}
+                                className="mt-0.5"
+                                data-testid={`checkbox-todo-${index}`}
+                              />
+                              <span className={`text-sm flex-1 ${currentMonthGoal.todoGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                                {goal}
+                              </span>
                             </li>
                           ))}
                         </ul>
@@ -1655,11 +1716,18 @@ const TaskManager: React.FC = () => {
                     {currentMonthGoal.achievementGoals && currentMonthGoal.achievementGoals.length > 0 && (
                       <div className="p-3 border rounded-lg bg-gray-50">
                         <div className="text-sm font-medium text-gray-700 mb-2">🎯 達成したい目標</div>
-                        <ul className="space-y-1">
+                        <ul className="space-y-2">
                           {currentMonthGoal.achievementGoals.map((goal, index) => (
-                            <li key={index} className={`text-sm flex items-start gap-2 ${currentMonthGoal.achievementGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
-                              <span className="mt-1">•</span>
-                              <span className="flex-1">{goal}</span>
+                            <li key={index} className="flex items-start gap-2">
+                              <Checkbox
+                                checked={currentMonthGoal.achievementGoalsCompleted?.[index] || false}
+                                onCheckedChange={() => handleToggleGoalCompletion('achievement', index)}
+                                className="mt-0.5"
+                                data-testid={`checkbox-achievement-${index}`}
+                              />
+                              <span className={`text-sm flex-1 ${currentMonthGoal.achievementGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                                {goal}
+                              </span>
                             </li>
                           ))}
                         </ul>
@@ -1668,11 +1736,18 @@ const TaskManager: React.FC = () => {
                     {currentMonthGoal.activityGoals && currentMonthGoal.activityGoals.length > 0 && (
                       <div className="p-3 border rounded-lg bg-gray-50">
                         <div className="text-sm font-medium text-gray-700 mb-2">⚡ 部活動や仕事などでの目標</div>
-                        <ul className="space-y-1">
+                        <ul className="space-y-2">
                           {currentMonthGoal.activityGoals.map((goal, index) => (
-                            <li key={index} className={`text-sm flex items-start gap-2 ${currentMonthGoal.activityGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
-                              <span className="mt-1">•</span>
-                              <span className="flex-1">{goal}</span>
+                            <li key={index} className="flex items-start gap-2">
+                              <Checkbox
+                                checked={currentMonthGoal.activityGoalsCompleted?.[index] || false}
+                                onCheckedChange={() => handleToggleGoalCompletion('activity', index)}
+                                className="mt-0.5"
+                                data-testid={`checkbox-activity-${index}`}
+                              />
+                              <span className={`text-sm flex-1 ${currentMonthGoal.activityGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                                {goal}
+                              </span>
                             </li>
                           ))}
                         </ul>
