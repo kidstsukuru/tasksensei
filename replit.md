@@ -1,6 +1,6 @@
 # Overview
 
-This is a Japanese task management mobile web application built as a React TypeScript single-page application. The app is a frontend-only application that stores all data in browser localStorage, providing comprehensive life management features including todo lists, scheduling, Pomodoro timer, sleep tracking, weight tracking, meal logging, diary entries, weekly tracker, calendar view, and user settings (dark mode, custom themes, push notifications). It uses a mobile-first design approach with Tailwind CSS and shadcn/ui components, targeting Japanese users with a customizable theme color scheme (default: pink).
+This is a Japanese task management mobile web application built as a React TypeScript single-page application. The app is a frontend-only application that stores all data in browser localStorage, providing comprehensive life management features including todo lists, scheduling, Pomodoro timer, weight tracking, meal logging, diary entries, weekly tracker, calendar view, and user settings (dark mode, custom themes, push notifications). It uses a mobile-first design approach with Tailwind CSS and shadcn/ui components, targeting Japanese users with a customizable theme color scheme (default: pink).
 
 # User Preferences
 
@@ -8,7 +8,21 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
-## November 5, 2025 (Latest)
+## November 12, 2025 (Latest)
+- **Sleep Tracking Feature Removal**: Completely removed the sleep tracking feature from the application
+  - Deleted SleepRecord and InsertSleepRecord type definitions from `client/src/types/local.ts`
+  - Removed sleepRecordStore from `client/src/lib/localDataStore.ts`
+  - Removed all sleep-related imports, state variables, functions, and mutations from `TaskManager.tsx`
+  - Deleted sleep card from home screen's "My Page" section
+  - Removed sleep detail screen (renderSleepDetailScreen function)
+  - Removed average sleep hours card from weekly review screen
+  - Removed sleep column from week tracker
+  - Cleaned up data export to exclude sleep records
+  - Preserved formatTime function (still used for schedule time display)
+  - E2E tests confirmed complete removal with no residual UI or runtime errors
+
+## November 5, 2025
+- **Weekly Review Integration**: Added monthly goal section to the weekly review screen
 - **Weekly Review Integration**: Added monthly goal section to the weekly review screen
   - Integrated monthly goal display, editing, and completion tracking into the weekly review page
   - Users can now view and edit monthly goals directly from the weekly review screen (below weekly statistics)
@@ -83,7 +97,7 @@ The client uses a modern React setup with TypeScript and Vite as the build tool.
 The application uses browser localStorage for all data persistence:
 
 - **Local Type Definitions**: Types defined in `client/src/types/local.ts` without userId fields
-- **LocalDataStore Module**: Provides CRUD operations for all data types (todos, schedules, sleep records, weight records, meal records, diary entries, links, user settings)
+- **LocalDataStore Module**: Provides CRUD operations for all data types (todos, schedules, weight records, meal records, diary entries, links, user settings)
 - **Storage Keys**: Each data type stored under a unique localStorage key (e.g., 'todos', 'schedules')
 - **Data Format**: All data stored as JSON arrays with auto-generated IDs
 - **Custom Hooks**: `useLocalData` hooks provide React Query-like interface for local data access
