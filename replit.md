@@ -9,6 +9,16 @@ Preferred communication style: Simple, everyday language.
 # Recent Changes
 
 ## November 12, 2025 (Latest)
+- **Monthly Goal Checkbox Feature**: Added interactive checkboxes to mark goal completion
+  - Each goal item now has a checkbox on the left side
+  - Tapping checkbox toggles completion state with checkmark display
+  - Completed goals show strikethrough text styling
+  - handleToggleGoalCompletion function updates completion arrays in localStorage
+  - Checkboxes implemented in both monthly goal screen and weekly review screen
+  - Completion state persists across page reloads
+  - Works for all four goal categories (weight, todo, achievement, activity)
+
+## November 12, 2025 (Earlier)
 - **Monthly Goal List Format Refactor**: Changed monthly goals from single-item to list-based format for each category
   - Updated MonthlyGoal type to use arrays: weightGoals[], todoGoals[], achievementGoals[], activityGoals[]
   - Completion state also changed to arrays: weightGoalsCompleted[], todoGoalsCompleted[], etc.
