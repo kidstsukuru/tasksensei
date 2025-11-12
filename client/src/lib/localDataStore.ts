@@ -1,7 +1,6 @@
 import type {
   Todo,
   Schedule,
-  SleepRecord,
   WeightRecord,
   MealRecord,
   DiaryEntry,
@@ -11,7 +10,6 @@ import type {
   Link,
   InsertTodo,
   InsertSchedule,
-  InsertSleepRecord,
   InsertWeightRecord,
   InsertMealRecord,
   InsertDiaryEntry,
@@ -140,7 +138,6 @@ class UserSettingsStore {
 // Export store instances
 export const todoStore = new LocalDataStore<Todo>('todos');
 export const scheduleStore = new LocalDataStore<Schedule>('schedules');
-export const sleepRecordStore = new LocalDataStore<SleepRecord>('sleepRecords');
 export const weightRecordStore = new LocalDataStore<WeightRecord>('weightRecords');
 export const mealRecordStore = new LocalDataStore<MealRecord>('mealRecords');
 export const diaryEntryStore = new LocalDataStore<DiaryEntry>('diaryEntries');
@@ -153,7 +150,6 @@ export const userSettingsStore = new UserSettingsStore();
 export type {
   Todo,
   Schedule,
-  SleepRecord,
   WeightRecord,
   MealRecord,
   DiaryEntry,
@@ -163,7 +159,6 @@ export type {
   Link,
   InsertTodo,
   InsertSchedule,
-  InsertSleepRecord,
   InsertWeightRecord,
   InsertMealRecord,
   InsertDiaryEntry,

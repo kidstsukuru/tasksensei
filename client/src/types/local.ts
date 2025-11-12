@@ -22,14 +22,6 @@ export interface Schedule {
   completed: boolean;
 }
 
-export interface SleepRecord {
-  id: string;
-  date: string;
-  bedtime: Date;
-  wakeup: Date;
-  duration: number;
-}
-
 export interface WeightRecord {
   id: string;
   date: string;
@@ -91,7 +83,6 @@ export interface Link {
 // Insert types (omit id and auto-generated fields)
 export type InsertTodo = Omit<Todo, 'id' | 'createdAt'> & { createdAt?: Date };
 export type InsertSchedule = Omit<Schedule, 'id'>;
-export type InsertSleepRecord = Omit<SleepRecord, 'id'>;
 export type InsertWeightRecord = Omit<WeightRecord, 'id'>;
 export type InsertMealRecord = Omit<MealRecord, 'id'>;
 export type InsertDiaryEntry = Omit<DiaryEntry, 'id'>;
@@ -111,11 +102,8 @@ export interface AppState {
   currentScreen: string;
   todoVisible: boolean;
   pomodoro: PomodoroState;
-  pendingBedtime: Date | null;
-  pendingWakeupTime: Date | null;
   todos: Todo[];
   schedules: Schedule[];
-  sleepRecords: SleepRecord[];
   weightRecords: WeightRecord[];
   mealRecords: MealRecord[];
   diaryEntries: DiaryEntry[];

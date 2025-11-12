@@ -5,7 +5,6 @@ import { Switch } from '@/components/ui/switch';
 import { 
   Todo, 
   Schedule, 
-  SleepRecord, 
   WeightRecord, 
   MealRecord, 
   DiaryEntry,
@@ -18,7 +17,6 @@ import {
 import {
   todoStore,
   scheduleStore,
-  sleepRecordStore,
   weightRecordStore,
   mealRecordStore,
   diaryEntryStore,
@@ -30,7 +28,6 @@ import {
 import type { 
   InsertTodo,
   InsertSchedule,
-  InsertSleepRecord,
   InsertWeightRecord,
   InsertMealRecord,
   InsertDiaryEntry,
@@ -105,7 +102,6 @@ const TaskManager: React.FC = () => {
   // Local storage hooks for data
   const { data: todos = [], isLoading: todosLoading, refetch: refetchTodos } = useLocalData<Todo>(todoStore, 'todos');
   const { data: schedules = [], isLoading: schedulesLoading, refetch: refetchSchedules } = useLocalData<Schedule>(scheduleStore, 'schedules');
-  const { data: sleepRecords = [], isLoading: sleepRecordsLoading, refetch: refetchSleepRecords } = useLocalData<SleepRecord>(sleepRecordStore, 'sleepRecords');
   const { data: weightRecords = [], isLoading: weightRecordsLoading, refetch: refetchWeightRecords } = useLocalData<WeightRecord>(weightRecordStore, 'weightRecords');
   const { data: mealRecords = [], isLoading: mealRecordsLoading, refetch: refetchMealRecords } = useLocalData<MealRecord>(mealRecordStore, 'mealRecords');
   const { data: diaryEntries = [], isLoading: diaryEntriesLoading, refetch: refetchDiaryEntries } = useLocalData<DiaryEntry>(diaryEntryStore, 'diaryEntries');
@@ -193,13 +189,6 @@ const TaskManager: React.FC = () => {
         completed: scheduleData.completed ?? false,
       });
       refetchSchedules();
-    }
-  };
-
-  const createSleepRecordMutation = {
-    mutate: (sleepData: InsertSleepRecord) => {
-      sleepRecordStore.create(sleepData);
-      refetchSleepRecords();
     }
   };
 
@@ -390,7 +379,6 @@ const TaskManager: React.FC = () => {
         data: {
           todos,
           schedules,
-          sleepRecords,
           weightRecords,
           mealRecords,
           diaryEntries,
@@ -411,7 +399,6 @@ const TaskManager: React.FC = () => {
         const csvFiles = [
           { name: 'todos', data: data.todos },
           { name: 'schedules', data: data.schedules },
-          { name: 'sleep-records', data: data.sleepRecords },
           { name: 'weight-records', data: data.weightRecords },
           { name: 'meal-records', data: data.mealRecords },
           { name: 'diary-entries', data: data.diaryEntries },
@@ -540,12 +527,6 @@ const TaskManager: React.FC = () => {
   const [weightInput, setWeightInput] = useState('');
   const [heightInput, setHeightInput] = useState('');
   const [bodyFatInput, setBodyFatInput] = useState('');
-  
-  // Sleep time input states
-  const [bedtimeHour, setBedtimeHour] = useState('');
-  const [bedtimeMinute, setBedtimeMinute] = useState('');
-  const [wakeupHour, setWakeupHour] = useState('');
-  const [wakeupMinute, setWakeupMinute] = useState('');
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -774,48 +755,6 @@ const TaskManager: React.FC = () => {
     });
   };
 
-  const saveSleepRecord = () => {
-    if (!bedtimeHour || !bedtimeMinute || !wakeupHour || !wakeupMinute) {
-      return;
-    }
-    
-    const bedHour = parseInt(bedtimeHour);
-    const bedMin = parseInt(bedtimeMinute);
-    const wakeHour = parseInt(wakeupHour);
-    const wakeMin = parseInt(wakeupMinute);
-    
-    if (isNaN(bedHour) || isNaN(bedMin) || isNaN(wakeHour) || isNaN(wakeMin)) {
-      return;
-    }
-    
-    const now = new Date();
-    const bedtime = new Date(now);
-    bedtime.setHours(bedHour, bedMin, 0, 0);
-    
-    const wakeup = new Date(now);
-    wakeup.setHours(wakeHour, wakeMin, 0, 0);
-    
-    // 起床時間が就寝時間より前の場合、翌日とみなす
-    if (wakeup <= bedtime) {
-      wakeup.setDate(wakeup.getDate() + 1);
-    }
-    
-    const duration = wakeup.getTime() - bedtime.getTime();
-    const todayDate = new Date().toISOString().split('T')[0];
-    
-    createSleepRecordMutation.mutate({
-      date: todayDate,
-      bedtime: bedtime,
-      wakeup: wakeup,
-      duration
-    });
-    
-    setBedtimeHour('');
-    setBedtimeMinute('');
-    setWakeupHour('');
-    setWakeupMinute('');
-  };
-
   const saveSchedule = () => {
     if (scheduleInput.trim()) {
       createScheduleMutation.mutate({
@@ -863,20 +802,9 @@ const TaskManager: React.FC = () => {
     return schedules.filter(schedule => schedule.date === today);
   };
 
-  const getTodaysSleep = () => {
-    const today = new Date().toISOString().split('T')[0];
-    return sleepRecords.find(record => record.date === today);
-  };
-
   const formatTime = (date: Date | null) => {
     if (!date) return '--:--';
     return date.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
-  };
-
-  const formatDuration = (milliseconds: number) => {
-    const hours = Math.floor(milliseconds / (1000 * 60 * 60));
-    const minutes = Math.floor((milliseconds % (1000 * 60 * 60)) / (1000 * 60));
-    return `${hours}h ${minutes}m`;
   };
 
   const renderHomeScreen = () => (
@@ -1007,16 +935,6 @@ const TaskManager: React.FC = () => {
       <section>
         <h2 className="text-xl font-bold mb-3">マイページ</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div 
-            className="record-card" 
-            onClick={() => showScreen('sleep-detail-screen')}
-            data-testid="card-sleep"
-          >
-            <h3 className="font-bold">睡眠</h3>
-            <p className="text-sm text-gray-500">
-              {sleepRecordsLoading ? 'Loading...' : getTodaysSleep() ? formatDuration(getTodaysSleep()!.duration) : '未記録'}
-            </p>
-          </div>
           <div 
             className="record-card" 
             onClick={() => showScreen('meal-detail-screen')}
@@ -1248,132 +1166,6 @@ const TaskManager: React.FC = () => {
     </div>
   );
 
-  const renderSleepDetailScreen = () => (
-    <div className="page p-4">
-      <header className="flex items-center mb-6">
-        <button 
-          className="p-2 rounded-full hover:bg-gray-100"
-          onClick={() => showScreen('home-screen')}
-          data-testid="button-back"
-        >
-          <ArrowLeft size={24} />
-        </button>
-        <h2 className="text-xl font-bold mx-auto pr-8">睡眠記録</h2>
-      </header>
-      <div className="px-4 space-y-6">
-        {/* Sleep Time Input */}
-        <div className="bg-white rounded-lg shadow p-4">
-          <h3 className="font-bold text-lg mb-4">睡眠時間を記録</h3>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">就寝時間</label>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="number" 
-                  min="0" 
-                  max="23"
-                  placeholder="22" 
-                  value={bedtimeHour}
-                  onChange={(e) => setBedtimeHour(e.target.value)}
-                  className="w-16 px-2 py-2 border rounded text-center"
-                  data-testid="input-bedtime-hour"
-                />
-                <span className="text-lg">時</span>
-                <input 
-                  type="number" 
-                  min="0" 
-                  max="59"
-                  placeholder="30" 
-                  value={bedtimeMinute}
-                  onChange={(e) => setBedtimeMinute(e.target.value)}
-                  className="w-16 px-2 py-2 border rounded text-center"
-                  data-testid="input-bedtime-minute"
-                />
-                <span className="text-lg">分</span>
-              </div>
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">起床時間</label>
-              <div className="flex items-center space-x-2">
-                <input 
-                  type="number" 
-                  min="0" 
-                  max="23"
-                  placeholder="6" 
-                  value={wakeupHour}
-                  onChange={(e) => setWakeupHour(e.target.value)}
-                  className="w-16 px-2 py-2 border rounded text-center"
-                  data-testid="input-wakeup-hour"
-                />
-                <span className="text-lg">時</span>
-                <input 
-                  type="number" 
-                  min="0" 
-                  max="59"
-                  placeholder="30" 
-                  value={wakeupMinute}
-                  onChange={(e) => setWakeupMinute(e.target.value)}
-                  className="w-16 px-2 py-2 border rounded text-center"
-                  data-testid="input-wakeup-minute"
-                />
-                <span className="text-lg">分</span>
-              </div>
-            </div>
-            
-            <button 
-              className="w-full px-4 py-2 bg-theme-500 text-white rounded-lg hover:bg-theme-600"
-              onClick={saveSleepRecord}
-              data-testid="button-save-sleep"
-            >
-              睡眠時間を保存
-            </button>
-          </div>
-        </div>
-
-        {/* Today's Sleep Record */}
-        {getTodaysSleep() && (
-          <div className="bg-white rounded-lg shadow p-4 space-y-4">
-            <h3 className="font-bold text-lg">今日の睡眠記録</h3>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">就寝時間:</span>
-                <span className="font-medium" data-testid="text-today-bedtime">
-                  {formatTime(getTodaysSleep()!.bedtime)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">起床時間:</span>
-                <span className="font-medium" data-testid="text-today-wakeup">
-                  {formatTime(getTodaysSleep()!.wakeup)}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-gray-500">睡眠時間:</span>
-                <span className="font-medium text-theme-600" data-testid="text-today-duration">
-                  {formatDuration(getTodaysSleep()!.duration)}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Sleep History */}
-        <div className="bg-white rounded-lg shadow p-4 space-y-4">
-          <h3 className="font-bold text-lg">睡眠履歴</h3>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {sleepRecords.slice(-10).reverse().map(record => (
-              <div key={record.id} className="flex justify-between py-2 border-b">
-                <span className="text-sm">{record.date}</span>
-                <span className="text-sm font-medium">{formatDuration(record.duration)}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
 
   const renderBodyDetailScreen = () => (
     <div className="page p-4">
@@ -2026,16 +1818,11 @@ const TaskManager: React.FC = () => {
       return createdDate >= weekStart && createdDate <= weekEnd && t.completed;
     });
     
-    const weekSleepRecords = sleepRecords.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
     const weekWeightRecords = weightRecords.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
     const weekMealRecords = mealRecords.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
     const weekDiaryEntries = diaryEntries.filter(d => d.date >= weekStartStr && d.date <= weekEndStr);
     
     // Calculate averages
-    const avgSleepHours = weekSleepRecords.length > 0
-      ? weekSleepRecords.reduce((sum, r) => sum + r.duration, 0) / weekSleepRecords.length / (1000 * 60 * 60)
-      : 0;
-    
     const avgWeight = weekWeightRecords.length > 0
       ? weekWeightRecords.reduce((sum, r) => sum + r.weight, 0) / weekWeightRecords.length
       : 0;
@@ -2089,10 +1876,6 @@ const TaskManager: React.FC = () => {
               <div className="text-3xl font-bold text-theme-500">{weekTodos.length}</div>
               <div className="text-sm text-gray-500 mt-1">達成タスク</div>
             </div>
-            <div className="bg-white rounded-lg shadow p-4 text-center" data-testid="card-avg-sleep">
-              <div className="text-3xl font-bold text-theme-500">{avgSleepHours > 0 ? avgSleepHours.toFixed(1) : '-'}</div>
-              <div className="text-sm text-gray-500 mt-1">平均睡眠時間 (h)</div>
-            </div>
             <div className="bg-white rounded-lg shadow p-4 text-center" data-testid="card-avg-weight">
               <div className="text-3xl font-bold text-theme-500">{avgWeight > 0 ? avgWeight.toFixed(1) : '-'}</div>
               <div className="text-sm text-gray-500 mt-1">平均体重 (kg)</div>
@@ -2112,10 +1895,6 @@ const TaskManager: React.FC = () => {
           <div className="bg-white rounded-lg shadow p-4">
             <h3 className="font-bold text-lg mb-4">週間記録の詳細</h3>
             <div className="space-y-3">
-              <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                <span className="text-gray-700">睡眠記録</span>
-                <span className="font-semibold">{weekSleepRecords.length}件</span>
-              </div>
               <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
                 <span className="text-gray-700">体重記録</span>
                 <span className="font-semibold">{weekWeightRecords.length}件</span>
@@ -2457,7 +2236,6 @@ const TaskManager: React.FC = () => {
                   <tr className="border-b">
                     <th className="py-2 text-left">日付</th>
                     <th className="py-2 text-center">タスク</th>
-                    <th className="py-2 text-center">睡眠</th>
                     <th className="py-2 text-center">体重</th>
                   </tr>
                 </thead>
@@ -2468,12 +2246,8 @@ const TaskManager: React.FC = () => {
                       const createdDate = new Date(t.createdAt);
                       return createdDate.toLocaleDateString('sv-SE') === dayStr && t.completed;
                     });
-                    const daySleep = sleepRecords.find(r => r.date === dayStr);
                     const dayWeight = weightRecords.find(r => r.date === dayStr);
                     
-                    const sleepHours = daySleep 
-                      ? (daySleep.duration / (1000 * 60 * 60)).toFixed(1) 
-                      : '-';
                     const weight = dayWeight ? dayWeight.weight.toFixed(1) : '-';
                     
                     const dayLabel = ['日', '月', '火', '水', '木', '金', '土'][day.getDay()];
@@ -2491,9 +2265,6 @@ const TaskManager: React.FC = () => {
                         </td>
                         <td className="py-3 text-center">
                           <div className="font-semibold text-theme-500">{dayTodos.length}</div>
-                        </td>
-                        <td className="py-3 text-center">
-                          <div className={sleepHours !== '-' ? 'font-semibold' : 'text-gray-400'}>{sleepHours}h</div>
                         </td>
                         <td className="py-3 text-center">
                           <div className={weight !== '-' ? 'font-semibold' : 'text-gray-400'}>{weight}kg</div>
@@ -3265,8 +3036,6 @@ const TaskManager: React.FC = () => {
         return renderTasksScreen();
       case 'pomodoro-screen':
         return renderPomodoroScreen();
-      case 'sleep-detail-screen':
-        return renderSleepDetailScreen();
       case 'body-detail-screen':
         return renderBodyDetailScreen();
       case 'diary-detail-screen':

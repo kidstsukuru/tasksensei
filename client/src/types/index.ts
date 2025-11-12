@@ -2,7 +2,6 @@
 import type {
   Todo,
   Schedule,
-  SleepRecord,
   WeightRecord,
   MealRecord,
   DiaryEntry,
@@ -11,7 +10,6 @@ import type {
   Link,
   InsertTodo,
   InsertSchedule,
-  InsertSleepRecord,
   InsertWeightRecord,
   InsertMealRecord,
   InsertDiaryEntry,
@@ -24,7 +22,6 @@ import type {
 export type {
   Todo,
   Schedule,
-  SleepRecord,
   WeightRecord,
   MealRecord,
   DiaryEntry,
@@ -33,7 +30,6 @@ export type {
   Link,
   InsertTodo,
   InsertSchedule,
-  InsertSleepRecord,
   InsertWeightRecord,
   InsertMealRecord,
   InsertDiaryEntry,
@@ -54,11 +50,8 @@ export interface AppState {
   currentScreen: string;
   todoVisible: boolean;
   pomodoro: PomodoroState;
-  pendingBedtime: Date | null;
-  pendingWakeupTime: Date | null;
   todos: Todo[];
   schedules: Schedule[];
-  sleepRecords: SleepRecord[];
   weightRecords: WeightRecord[];
   mealRecords: MealRecord[];
   diaryEntries: DiaryEntry[];
