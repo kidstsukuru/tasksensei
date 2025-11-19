@@ -66,6 +66,20 @@ export interface MonthlyGoal {
   createdAt: Date;
 }
 
+export interface WeeklyGoal {
+  id: string;
+  week: string;  // YYYY-WW format (e.g., "2025-47")
+  weightGoals?: string[];      // 体重目標リスト
+  todoGoals?: string[];         // やるべきことリスト
+  achievementGoals?: string[];  // 達成したい目標リスト
+  activityGoals?: string[];     // 部活動や仕事などでの目標リスト
+  weightGoalsCompleted?: boolean[];      // 体重目標達成状態リスト
+  todoGoalsCompleted?: boolean[];         // やるべきこと達成状態リスト
+  achievementGoalsCompleted?: boolean[];  // 達成したい目標達成状態リスト
+  activityGoalsCompleted?: boolean[];     // 部活動や仕事などでの目標達成状態リスト
+  createdAt: Date;
+}
+
 export interface UserSettings {
   darkMode: boolean;
   themeColor: string;
@@ -88,6 +102,7 @@ export type InsertMealRecord = Omit<MealRecord, 'id'>;
 export type InsertDiaryEntry = Omit<DiaryEntry, 'id'>;
 export type InsertDailyRoutine = Omit<DailyRoutine, 'id'>;
 export type InsertMonthlyGoal = Omit<MonthlyGoal, 'id' | 'createdAt'> & { createdAt?: Date };
+export type InsertWeeklyGoal = Omit<WeeklyGoal, 'id' | 'createdAt'> & { createdAt?: Date };
 export type InsertLink = Omit<Link, 'id' | 'createdAt'> & { createdAt?: Date };
 
 export interface PomodoroState {
