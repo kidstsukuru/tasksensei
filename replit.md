@@ -9,6 +9,20 @@ Preferred communication style: Simple, everyday language.
 # Recent Changes
 
 ## November 19, 2025 (Latest)
+- **Weekly Goal Feature Implementation**: Added comprehensive weekly goal management system
+  - Created WeeklyGoal type with same structure as MonthlyGoal (weight, todo, achievement, activity categories)
+  - Implemented WeeklyGoalDataStore class for localStorage persistence with automatic data migration
+  - Uses ISO 8601 week number format (YYYY-WW) for week identification via getWeekNumber function
+  - Added dedicated weekly goal screen accessible from task management screen
+  - Full CRUD operations: create, edit, save, and completion tracking with checkboxes
+  - Weekly goal screen displays week date range (e.g., "11/18 - 11/24")
+  - Edit button loads existing goals into form for modification
+  - "目標を設定する" button for creating new weekly goals when none exist
+  - Checkbox completion toggles with strikethrough styling for completed items
+  - Data persists across page reloads via localStorage
+  - Task management screen button layout updated: 日課 → 月間目標 → 週間目標 → 週次振り返り → 週間トラッカー
+
+## November 19, 2025 (Earlier)
 - **Monthly Goal Achievement Progress Bar**: Added horizontal progress bar to task management screen
   - Displays monthly goal achievement rate below "Today's Schedule" section
   - Automatically calculates completion percentage from all four goal categories
