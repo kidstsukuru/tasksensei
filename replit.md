@@ -8,7 +8,18 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
-## November 12, 2025 (Latest)
+## November 19, 2025 (Latest)
+- **Monthly Goal Achievement Progress Bar**: Added horizontal progress bar to task management screen
+  - Displays monthly goal achievement rate below "Today's Schedule" section
+  - Automatically calculates completion percentage from all four goal categories
+  - Shows completed count vs total count (e.g., "3 / 10 完了")
+  - Displays achievement rate percentage (e.g., "30%")
+  - Uses shadcn/ui Progress component for horizontal bar visualization
+  - Updates in real-time when goal checkboxes are toggled
+  - Shows empty state message when no monthly goals are set
+  - Positioned between "Today's Schedule" and "Management" sections in task screen
+
+## November 12, 2025
 - **Monthly Goal Checkbox Feature**: Added interactive checkboxes to mark goal completion
   - Each goal item now has a checkbox on the left side
   - Tapping checkbox toggles completion state with checkmark display
