@@ -3,6 +3,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { useLocalData, useLocalSettings } from '../hooks/useLocalData';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Progress } from '@/components/ui/progress';
 import { 
   Todo, 
   Schedule, 
@@ -2440,6 +2441,56 @@ const TaskManager: React.FC = () => {
             </div>
           ) : (
             <p className="text-gray-500 text-center py-4">今日の予定はありません</p>
+          );
+        })()}
+      </section>
+
+      {/* Monthly Goal Achievement Rate */}
+      <section className="space-y-2">
+        <h2 className="text-xl font-bold mb-3">今月の目標達成率</h2>
+        {(() => {
+          const currentMonth = new Date().toLocaleDateString('sv-SE').slice(0, 7);
+          const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
+          
+          if (!currentMonthGoal) {
+            return (
+              <div className="bg-gray-50 rounded-lg p-4" data-testid="no-monthly-goals">
+                <p className="text-gray-500 text-center">今月の目標が設定されていません</p>
+              </div>
+            );
+          }
+
+          const weightGoals = currentMonthGoal.weightGoals || [];
+          const todoGoals = currentMonthGoal.todoGoals || [];
+          const achievementGoals = currentMonthGoal.achievementGoals || [];
+          const activityGoals = currentMonthGoal.activityGoals || [];
+
+          const weightCompleted = currentMonthGoal.weightGoalsCompleted || [];
+          const todoCompleted = currentMonthGoal.todoGoalsCompleted || [];
+          const achievementCompleted = currentMonthGoal.achievementGoalsCompleted || [];
+          const activityCompleted = currentMonthGoal.activityGoalsCompleted || [];
+
+          const totalGoals = weightGoals.length + todoGoals.length + achievementGoals.length + activityGoals.length;
+          const completedGoals = 
+            weightCompleted.filter(c => c).length +
+            todoCompleted.filter(c => c).length +
+            achievementCompleted.filter(c => c).length +
+            activityCompleted.filter(c => c).length;
+
+          const achievementRate = totalGoals > 0 ? Math.round((completedGoals / totalGoals) * 100) : 0;
+
+          return (
+            <div className="bg-white rounded-lg border-2 border-theme-200 p-4" data-testid="monthly-goal-progress">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {completedGoals} / {totalGoals} 完了
+                </span>
+                <span className="text-lg font-bold text-theme-600" data-testid="achievement-rate">
+                  {achievementRate}%
+                </span>
+              </div>
+              <Progress value={achievementRate} className="h-3" data-testid="progress-bar" />
+            </div>
           );
         })()}
       </section>
