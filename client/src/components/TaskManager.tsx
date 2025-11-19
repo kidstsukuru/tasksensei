@@ -12,6 +12,7 @@ import {
   DiaryEntry,
   DailyRoutine,
   MonthlyGoal,
+  WeeklyGoal,
   Link,
   PomodoroState,
   AppState 
@@ -24,6 +25,7 @@ import {
   diaryEntryStore,
   dailyRoutineStore,
   monthlyGoalStore,
+  weeklyGoalStore,
   linkStore,
   userSettingsStore,
 } from '../lib/localDataStore';
@@ -35,6 +37,7 @@ import type {
   InsertDiaryEntry,
   InsertDailyRoutine,
   InsertMonthlyGoal,
+  InsertWeeklyGoal,
   InsertLink,
   UserSettings
 } from '../types/local';
@@ -109,6 +112,7 @@ const TaskManager: React.FC = () => {
   const { data: diaryEntries = [], isLoading: diaryEntriesLoading, refetch: refetchDiaryEntries } = useLocalData<DiaryEntry>(diaryEntryStore, 'diaryEntries');
   const { data: dailyRoutines = [], isLoading: dailyRoutinesLoading, refetch: refetchDailyRoutines } = useLocalData<DailyRoutine>(dailyRoutineStore, 'dailyRoutines');
   const { data: monthlyGoals = [], isLoading: monthlyGoalsLoading, refetch: refetchMonthlyGoals } = useLocalData<MonthlyGoal>(monthlyGoalStore, 'monthlyGoals');
+  const { data: weeklyGoals = [], isLoading: weeklyGoalsLoading, refetch: refetchWeeklyGoals } = useLocalData<WeeklyGoal>(weeklyGoalStore, 'weeklyGoals');
   const { data: userSettings, isLoading: settingsLoading, refetch: refetchSettings } = useLocalSettings(userSettingsStore);
   const { data: links = [], isLoading: linksLoading, refetch: refetchLinks } = useLocalData<Link>(linkStore, 'links');
   
@@ -135,6 +139,11 @@ const TaskManager: React.FC = () => {
   const [achievementGoals, setAchievementGoals] = useState<string[]>([]);
   const [activityGoals, setActivityGoals] = useState<string[]>([]);
   const [isMonthlyGoalEditing, setIsMonthlyGoalEditing] = useState(false);
+  const [weeklyWeightGoals, setWeeklyWeightGoals] = useState<string[]>([]);
+  const [weeklyTodoGoals, setWeeklyTodoGoals] = useState<string[]>([]);
+  const [weeklyAchievementGoals, setWeeklyAchievementGoals] = useState<string[]>([]);
+  const [weeklyActivityGoals, setWeeklyActivityGoals] = useState<string[]>([]);
+  const [isWeeklyGoalEditing, setIsWeeklyGoalEditing] = useState(false);
   const [showGoalSetupScreen, setShowGoalSetupScreen] = useState(false);
   const [stopwatchMinutes, setStopwatchMinutes] = useState(0);
   const [stopwatchSeconds, setStopwatchSeconds] = useState(0);
@@ -303,6 +312,74 @@ const TaskManager: React.FC = () => {
       if (activityGoalsCompleted !== undefined) updateData.activityGoalsCompleted = activityGoalsCompleted;
       monthlyGoalStore.update(id, updateData);
       refetchMonthlyGoals();
+      return Promise.resolve();
+    }
+  };
+
+  const createWeeklyGoalMutation = {
+    mutate: (goalData: InsertWeeklyGoal) => {
+      weeklyGoalStore.create({
+        ...goalData,
+        createdAt: new Date(),
+      });
+      refetchWeeklyGoals();
+    },
+    mutateAsync: async (goalData: InsertWeeklyGoal) => {
+      weeklyGoalStore.create({
+        ...goalData,
+        createdAt: new Date(),
+      });
+      refetchWeeklyGoals();
+      return Promise.resolve();
+    }
+  };
+
+  const updateWeeklyGoalMutation = {
+    mutate: ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: { 
+      id: string; 
+      weightGoals?: string[]; 
+      todoGoals?: string[]; 
+      achievementGoals?: string[]; 
+      activityGoals?: string[];
+      weightGoalsCompleted?: boolean[];
+      todoGoalsCompleted?: boolean[];
+      achievementGoalsCompleted?: boolean[];
+      activityGoalsCompleted?: boolean[];
+    }) => {
+      const updateData: any = {};
+      if (weightGoals !== undefined) updateData.weightGoals = weightGoals;
+      if (todoGoals !== undefined) updateData.todoGoals = todoGoals;
+      if (achievementGoals !== undefined) updateData.achievementGoals = achievementGoals;
+      if (activityGoals !== undefined) updateData.activityGoals = activityGoals;
+      if (weightGoalsCompleted !== undefined) updateData.weightGoalsCompleted = weightGoalsCompleted;
+      if (todoGoalsCompleted !== undefined) updateData.todoGoalsCompleted = todoGoalsCompleted;
+      if (achievementGoalsCompleted !== undefined) updateData.achievementGoalsCompleted = achievementGoalsCompleted;
+      if (activityGoalsCompleted !== undefined) updateData.activityGoalsCompleted = activityGoalsCompleted;
+      weeklyGoalStore.update(id, updateData);
+      refetchWeeklyGoals();
+    },
+    mutateAsync: async ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: { 
+      id: string; 
+      weightGoals?: string[]; 
+      todoGoals?: string[]; 
+      achievementGoals?: string[]; 
+      activityGoals?: string[];
+      weightGoalsCompleted?: boolean[];
+      todoGoalsCompleted?: boolean[];
+      achievementGoalsCompleted?: boolean[];
+      activityGoalsCompleted?: boolean[];
+    }) => {
+      const updateData: any = {};
+      if (weightGoals !== undefined) updateData.weightGoals = weightGoals;
+      if (todoGoals !== undefined) updateData.todoGoals = todoGoals;
+      if (achievementGoals !== undefined) updateData.achievementGoals = achievementGoals;
+      if (activityGoals !== undefined) updateData.activityGoals = activityGoals;
+      if (weightGoalsCompleted !== undefined) updateData.weightGoalsCompleted = weightGoalsCompleted;
+      if (todoGoalsCompleted !== undefined) updateData.todoGoalsCompleted = todoGoalsCompleted;
+      if (achievementGoalsCompleted !== undefined) updateData.achievementGoalsCompleted = achievementGoalsCompleted;
+      if (activityGoalsCompleted !== undefined) updateData.activityGoalsCompleted = activityGoalsCompleted;
+      weeklyGoalStore.update(id, updateData);
+      refetchWeeklyGoals();
       return Promise.resolve();
     }
   };
@@ -1498,6 +1575,111 @@ const TaskManager: React.FC = () => {
     }
   };
 
+  // Get ISO week number (YYYY-WW format)
+  const getWeekNumber = (date: Date): string => {
+    const target = new Date(date.valueOf());
+    const dayNr = (date.getDay() + 6) % 7;
+    target.setDate(target.getDate() - dayNr + 3);
+    const firstThursday = target.valueOf();
+    target.setMonth(0, 1);
+    if (target.getDay() !== 4) {
+      target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+    }
+    const weekNumber = 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+    const year = new Date(firstThursday).getFullYear();
+    return `${year}-${String(weekNumber).padStart(2, '0')}`;
+  };
+
+  const handleSaveWeeklyGoal = async () => {
+    const currentWeek = getWeekNumber(new Date());
+    const currentWeekGoal = weeklyGoals.find(g => g.week === currentWeek);
+    
+    // Filter out empty strings
+    const filteredWeeklyWeightGoals = weeklyWeightGoals.filter(g => g.trim());
+    const filteredWeeklyTodoGoals = weeklyTodoGoals.filter(g => g.trim());
+    const filteredWeeklyAchievementGoals = weeklyAchievementGoals.filter(g => g.trim());
+    const filteredWeeklyActivityGoals = weeklyActivityGoals.filter(g => g.trim());
+    
+    if (filteredWeeklyWeightGoals.length === 0 && filteredWeeklyTodoGoals.length === 0 && 
+        filteredWeeklyAchievementGoals.length === 0 && filteredWeeklyActivityGoals.length === 0) {
+      alert('少なくとも1つの目標を入力してください');
+      return;
+    }
+
+    try {
+      if (currentWeekGoal) {
+        await updateWeeklyGoalMutation.mutateAsync({
+          id: currentWeekGoal.id,
+          weightGoals: filteredWeeklyWeightGoals.length > 0 ? filteredWeeklyWeightGoals : undefined,
+          todoGoals: filteredWeeklyTodoGoals.length > 0 ? filteredWeeklyTodoGoals : undefined,
+          achievementGoals: filteredWeeklyAchievementGoals.length > 0 ? filteredWeeklyAchievementGoals : undefined,
+          activityGoals: filteredWeeklyActivityGoals.length > 0 ? filteredWeeklyActivityGoals : undefined,
+          weightGoalsCompleted: currentWeekGoal.weightGoalsCompleted,
+          todoGoalsCompleted: currentWeekGoal.todoGoalsCompleted,
+          achievementGoalsCompleted: currentWeekGoal.achievementGoalsCompleted,
+          activityGoalsCompleted: currentWeekGoal.activityGoalsCompleted,
+        });
+      } else {
+        await createWeeklyGoalMutation.mutateAsync({
+          week: currentWeek,
+          weightGoals: filteredWeeklyWeightGoals.length > 0 ? filteredWeeklyWeightGoals : undefined,
+          todoGoals: filteredWeeklyTodoGoals.length > 0 ? filteredWeeklyTodoGoals : undefined,
+          achievementGoals: filteredWeeklyAchievementGoals.length > 0 ? filteredWeeklyAchievementGoals : undefined,
+          activityGoals: filteredWeeklyActivityGoals.length > 0 ? filteredWeeklyActivityGoals : undefined,
+        });
+      }
+      setIsWeeklyGoalEditing(false);
+    } catch (error) {
+      console.error('Failed to save weekly goal:', error);
+      alert('保存に失敗しました');
+    }
+  };
+
+  const handleToggleWeeklyGoalCompletion = async (
+    category: 'weight' | 'todo' | 'achievement' | 'activity',
+    index: number
+  ) => {
+    const currentWeek = getWeekNumber(new Date());
+    const currentWeekGoal = weeklyGoals.find(g => g.week === currentWeek);
+    
+    if (!currentWeekGoal) return;
+
+    // Map category to completion field
+    const completionFieldMap = {
+      weight: 'weightGoalsCompleted',
+      todo: 'todoGoalsCompleted',
+      achievement: 'achievementGoalsCompleted',
+      activity: 'activityGoalsCompleted',
+    } as const;
+
+    // Map category to goals field to get array length
+    const goalsFieldMap = {
+      weight: 'weightGoals',
+      todo: 'todoGoals',
+      achievement: 'achievementGoals',
+      activity: 'activityGoals',
+    } as const;
+
+    const completionField = completionFieldMap[category];
+    const goalsField = goalsFieldMap[category];
+    const goalsList = currentWeekGoal[goalsField] || [];
+    
+    // Clone and normalize the completion array
+    const currentCompleted = currentWeekGoal[completionField] || [];
+    const normalizedCompleted = Array(goalsList.length).fill(false).map((_, i) => currentCompleted[i] || false);
+    
+    // Toggle the target index
+    normalizedCompleted[index] = !normalizedCompleted[index];
+
+    try {
+      await updateWeeklyGoalMutation.mutateAsync({
+        id: currentWeekGoal.id,
+        [completionField]: normalizedCompleted,
+      });
+    } catch (error) {
+      console.error('Failed to toggle weekly goal completion:', error);
+    }
+  };
 
   const renderDailyRoutineScreen = () => {
     const today = new Date().toISOString().split('T')[0];
@@ -1834,6 +2016,174 @@ const TaskManager: React.FC = () => {
                 <div className="text-center text-gray-500 py-4">過去の記録はありません</div>
               )}
             </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const renderWeeklyGoalScreen = () => {
+    const currentWeek = getWeekNumber(new Date());
+    const currentWeekGoal = weeklyGoals.find(g => g.week === currentWeek);
+    
+    // Calculate week date range for display
+    const today = new Date();
+    const dayOfWeek = (today.getDay() + 6) % 7; // Monday = 0
+    const monday = new Date(today);
+    monday.setDate(today.getDate() - dayOfWeek);
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    const weekLabel = `${monday.getMonth() + 1}/${monday.getDate()} - ${sunday.getMonth() + 1}/${sunday.getDate()}`;
+
+    return (
+      <div className="page p-4">
+        <header className="flex items-center mb-6">
+          <button 
+            className="p-2 rounded-full hover:bg-gray-100"
+            onClick={() => showScreen('tasks-screen')}
+            data-testid="button-back"
+          >
+            <ArrowLeft size={24} />
+          </button>
+          <h2 className="text-xl font-bold mx-auto pr-8">週間目標</h2>
+        </header>
+        <div className="px-4 space-y-6">
+          <div className="bg-white rounded-lg shadow p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-bold text-lg">今週の目標 ({weekLabel})</h3>
+              {!isWeeklyGoalEditing && currentWeekGoal && (
+                <button
+                  onClick={() => {
+                    setWeeklyWeightGoals(currentWeekGoal.weightGoals || []);
+                    setWeeklyTodoGoals(currentWeekGoal.todoGoals || []);
+                    setWeeklyAchievementGoals(currentWeekGoal.achievementGoals || []);
+                    setWeeklyActivityGoals(currentWeekGoal.activityGoals || []);
+                    setIsWeeklyGoalEditing(true);
+                  }}
+                  className="px-3 py-1 text-sm bg-theme-500 text-white rounded-full hover:bg-theme-600"
+                  data-testid="button-edit-weekly-goal"
+                >
+                  編集
+                </button>
+              )}
+            </div>
+            {isWeeklyGoalEditing ? (
+              <div className="space-y-4">
+                {renderGoalListEditor('体重目標', '💪', weeklyWeightGoals, setWeeklyWeightGoals, '例: 今週1kg減量', 'input-weekly-weight-goal')}
+                {renderGoalListEditor('やるべきこと', '📝', weeklyTodoGoals, setWeeklyTodoGoals, '例: 毎日運動する', 'input-weekly-todo-goal')}
+                {renderGoalListEditor('達成したい目標', '🎯', weeklyAchievementGoals, setWeeklyAchievementGoals, '例: プロジェクトを完成させる', 'input-weekly-achievement-goal')}
+                {renderGoalListEditor('部活動や仕事などでの目標', '⚡', weeklyActivityGoals, setWeeklyActivityGoals, '例: 練習に全力で取り組む', 'input-weekly-activity-goal')}
+                <button
+                  onClick={handleSaveWeeklyGoal}
+                  className="w-full py-3 bg-theme-500 text-white rounded-full font-semibold hover:bg-theme-600"
+                  data-testid="button-save-weekly-goal"
+                >
+                  保存
+                </button>
+              </div>
+            ) : currentWeekGoal && (currentWeekGoal.weightGoals?.length || currentWeekGoal.todoGoals?.length || currentWeekGoal.achievementGoals?.length || currentWeekGoal.activityGoals?.length) ? (
+              <div className="space-y-3" data-testid="text-weekly-goal-content">
+                {currentWeekGoal.weightGoals && currentWeekGoal.weightGoals.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-gray-50">
+                    <div className="text-sm font-medium text-gray-700 mb-2">💪 体重目標</div>
+                    <ul className="space-y-2">
+                      {currentWeekGoal.weightGoals.map((goal, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <Checkbox
+                            checked={currentWeekGoal.weightGoalsCompleted?.[index] || false}
+                            onCheckedChange={() => handleToggleWeeklyGoalCompletion('weight', index)}
+                            className="mt-0.5"
+                            data-testid={`checkbox-weekly-weight-${index}`}
+                          />
+                          <span className={`text-sm flex-1 ${currentWeekGoal.weightGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                            {goal}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {currentWeekGoal.todoGoals && currentWeekGoal.todoGoals.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-gray-50">
+                    <div className="text-sm font-medium text-gray-700 mb-2">📝 やるべきこと</div>
+                    <ul className="space-y-2">
+                      {currentWeekGoal.todoGoals.map((goal, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <Checkbox
+                            checked={currentWeekGoal.todoGoalsCompleted?.[index] || false}
+                            onCheckedChange={() => handleToggleWeeklyGoalCompletion('todo', index)}
+                            className="mt-0.5"
+                            data-testid={`checkbox-weekly-todo-${index}`}
+                          />
+                          <span className={`text-sm flex-1 ${currentWeekGoal.todoGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                            {goal}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {currentWeekGoal.achievementGoals && currentWeekGoal.achievementGoals.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-gray-50">
+                    <div className="text-sm font-medium text-gray-700 mb-2">🎯 達成したい目標</div>
+                    <ul className="space-y-2">
+                      {currentWeekGoal.achievementGoals.map((goal, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <Checkbox
+                            checked={currentWeekGoal.achievementGoalsCompleted?.[index] || false}
+                            onCheckedChange={() => handleToggleWeeklyGoalCompletion('achievement', index)}
+                            className="mt-0.5"
+                            data-testid={`checkbox-weekly-achievement-${index}`}
+                          />
+                          <span className={`text-sm flex-1 ${currentWeekGoal.achievementGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                            {goal}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {currentWeekGoal.activityGoals && currentWeekGoal.activityGoals.length > 0 && (
+                  <div className="p-3 border rounded-lg bg-gray-50">
+                    <div className="text-sm font-medium text-gray-700 mb-2">⚡ 部活動や仕事などでの目標</div>
+                    <ul className="space-y-2">
+                      {currentWeekGoal.activityGoals.map((goal, index) => (
+                        <li key={index} className="flex items-start gap-2">
+                          <Checkbox
+                            checked={currentWeekGoal.activityGoalsCompleted?.[index] || false}
+                            onCheckedChange={() => handleToggleWeeklyGoalCompletion('activity', index)}
+                            className="mt-0.5"
+                            data-testid={`checkbox-weekly-activity-${index}`}
+                          />
+                          <span className={`text-sm flex-1 ${currentWeekGoal.activityGoalsCompleted?.[index] ? 'line-through text-gray-400' : ''}`}>
+                            {goal}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <div className="p-3 border rounded-lg bg-gray-50 text-center text-gray-500 mb-4">
+                  今週の目標はまだ設定されていません
+                </div>
+                <button
+                  onClick={() => {
+                    setWeeklyWeightGoals([]);
+                    setWeeklyTodoGoals([]);
+                    setWeeklyAchievementGoals([]);
+                    setWeeklyActivityGoals([]);
+                    setIsWeeklyGoalEditing(true);
+                  }}
+                  className="w-full bg-theme-500 text-white py-3 rounded-lg font-medium hover:bg-theme-600"
+                  data-testid="button-add-weekly-goal"
+                >
+                  目標を設定する
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -2517,6 +2867,14 @@ const TaskManager: React.FC = () => {
           </div>
           <div 
             className="record-card"
+            onClick={() => showScreen('weekly-goal-screen')}
+            data-testid="card-weekly-goal-tasks"
+          >
+            <h3 className="font-bold">週間目標</h3>
+            <p className="text-sm text-gray-500">今週の目標を設定...</p>
+          </div>
+          <div 
+            className="record-card"
             onClick={() => showScreen('weekly-review-screen')}
             data-testid="card-weekly-review-tasks"
           >
@@ -3083,6 +3441,8 @@ const TaskManager: React.FC = () => {
         return renderDailyRoutineScreen();
       case 'monthly-goal-screen':
         return renderMonthlyGoalScreen();
+      case 'weekly-goal-screen':
+        return renderWeeklyGoalScreen();
       case 'weekly-review-screen':
         return renderWeeklyReviewScreen();
       case 'week-tracker-screen':
