@@ -806,8 +806,8 @@ const TaskManager: React.FC = () => {
         completed: false
       });
       setScheduleInputText('');
+      setScheduleInputDate(null);
       setScheduleInputModalVisible(false);
-      setCalendarModalVisible(true);
     }
   };
 
@@ -935,11 +935,23 @@ const TaskManager: React.FC = () => {
 
       {/* Scheduled Today Section */}
       <section className="space-y-2 mb-6">
+        <div className="flex items-center">
+          <h2 className="text-xl font-bold">今日の予定</h2>
+          <button
+            className="ml-2 bg-theme-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-theme-600 transition-colors focus:outline-none focus:ring-2 focus:ring-theme-500 focus:ring-opacity-75"
+            onClick={() => {
+              setScheduleInputDate(new Date());
+              setScheduleInputModalVisible(true);
+            }}
+            data-testid="button-add-schedule-home"
+          >
+            <Plus size={20} strokeWidth={2.5} />
+          </button>
+        </div>
         {schedulesLoading ? (
           <div className="text-center py-4 text-gray-500">Loading schedules...</div>
         ) : getTodaysSchedules().length > 0 && (
           <>
-            <h2 className="text-xl font-bold">今日の予定</h2>
             {getTodaysSchedules().map(schedule => (
               <div key={schedule.id} className="task-card">
                 <div className="flex items-center justify-between">
@@ -2776,7 +2788,19 @@ const TaskManager: React.FC = () => {
       {/* Schedules Section */}
       <section className="space-y-2">
         <div className="flex justify-between items-center mb-3">
-          <h2 className="text-xl font-bold">今日の予定</h2>
+          <div className="flex items-center">
+            <h2 className="text-xl font-bold">今日の予定</h2>
+            <button
+              className="ml-2 bg-theme-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-theme-600 transition-colors focus:outline-none focus:ring-2 focus:ring-theme-500 focus:ring-opacity-75"
+              onClick={() => {
+                setScheduleInputDate(new Date());
+                setScheduleInputModalVisible(true);
+              }}
+              data-testid="button-add-schedule"
+            >
+              <Plus size={20} strokeWidth={2.5} />
+            </button>
+          </div>
           <button
             onClick={() => setPastSchedulesModalVisible(true)}
             className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded-full hover:bg-gray-300 transition-colors"
