@@ -8,7 +8,17 @@ Preferred communication style: Simple, everyday language.
 
 # Recent Changes
 
-## November 19, 2025 (Latest)
+## November 26, 2025 (Latest)
+- **Server-Side Code Simplification**: Removed unused backend code to reduce complexity
+  - Simplified server/routes.ts to minimal HTTP server creation (no API routes)
+  - Emptied server/storage.ts (no server-side storage needed)
+  - Simplified server/index.ts by removing session management
+  - Emptied shared/schema.ts (types now fully in client/src/types/local.ts)
+  - Added localStorage persistence for todoVisible and notificationsEnabled states
+  - Backend now only serves as Vite dev server for frontend delivery
+  - E2E tests confirmed all features working correctly
+
+## November 19, 2025
 - **Weekly Goal Feature Implementation**: Added comprehensive weekly goal management system
   - Created WeeklyGoal type with same structure as MonthlyGoal (weight, todo, achievement, activity categories)
   - Implemented WeeklyGoalDataStore class for localStorage persistence with automatic data migration
