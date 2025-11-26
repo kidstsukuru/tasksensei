@@ -1,5 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocalStorage } from '../hooks/useLocalStorage';
+import { useState, useEffect, useRef } from 'react';
 import { useLocalData, useLocalSettings } from '../hooks/useLocalData';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -68,7 +67,10 @@ import {
 
 const TaskManager: React.FC = () => {
   const [currentScreen, setCurrentScreen] = useState('home-screen');
-  const [todoVisible, setTodoVisible] = useLocalStorage('todoVisible', false);
+  const [todoVisible, setTodoVisible] = useState(() => {
+    const saved = localStorage.getItem('todoVisible');
+    return saved ? JSON.parse(saved) : false;
+  });
   
   // Export functionality state
   const [exportModalVisible, setExportModalVisible] = useState(false);
@@ -76,7 +78,10 @@ const TaskManager: React.FC = () => {
   
   // Notification functionality state
   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useLocalStorage('notificationsEnabled', false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
+    const saved = localStorage.getItem('notificationsEnabled');
+    return saved ? JSON.parse(saved) : false;
+  });
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
   
   // Calendar functionality state
@@ -582,9 +587,18 @@ const TaskManager: React.FC = () => {
   useEffect(() => {
     if ('Notification' in window) {
       setNotificationPermission(Notification.permission);
-      // Don't automatically enable notifications - respect user's saved preference
     }
   }, []);
+
+  // Save todoVisible to localStorage
+  useEffect(() => {
+    localStorage.setItem('todoVisible', JSON.stringify(todoVisible));
+  }, [todoVisible]);
+
+  // Save notificationsEnabled to localStorage
+  useEffect(() => {
+    localStorage.setItem('notificationsEnabled', JSON.stringify(notificationsEnabled));
+  }, [notificationsEnabled]);
 
   // Check if goal setup screen should be shown (first time in the month)
   useEffect(() => {
