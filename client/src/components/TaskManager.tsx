@@ -103,6 +103,7 @@ const TaskManager: React.FC = () => {
   // Schedule input functionality state
   const [scheduleInputModalVisible, setScheduleInputModalVisible] = useState(false);
   const [scheduleInputText, setScheduleInputText] = useState('');
+  const [scheduleInputTime, setScheduleInputTime] = useState('');
   const [scheduleInputDate, setScheduleInputDate] = useState<Date | null>(null);
   const [pastSchedulesModalVisible, setPastSchedulesModalVisible] = useState(false);
   
@@ -786,13 +787,20 @@ const TaskManager: React.FC = () => {
   
   const saveScheduleInput = () => {
     if (scheduleInputText.trim() && scheduleInputDate) {
+      let timeValue: Date | null = null;
+      if (scheduleInputTime) {
+        const [hours, minutes] = scheduleInputTime.split(':').map(Number);
+        timeValue = new Date(scheduleInputDate);
+        timeValue.setHours(hours, minutes, 0, 0);
+      }
       createScheduleMutation.mutate({
         text: scheduleInputText.trim(),
         date: scheduleInputDate.toLocaleDateString('sv-SE'),
-        time: new Date(),
+        time: timeValue,
         completed: false
       });
       setScheduleInputText('');
+      setScheduleInputTime('');
       setScheduleInputDate(null);
       setScheduleInputModalVisible(false);
     }
@@ -3854,7 +3862,7 @@ const TaskManager: React.FC = () => {
                 placeholder="予定を入力してください"
                 value={scheduleInputText}
                 onChange={(e) => setScheduleInputText(e.target.value)}
-                className="form-input mb-4 w-full"
+                className="form-input mb-3 w-full"
                 data-testid="input-schedule-text"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
@@ -3863,13 +3871,23 @@ const TaskManager: React.FC = () => {
                 }}
                 autoFocus
               />
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">開始時間（任意）</label>
+                <input
+                  type="time"
+                  value={scheduleInputTime}
+                  onChange={(e) => setScheduleInputTime(e.target.value)}
+                  className="form-input w-full"
+                  data-testid="input-schedule-time"
+                />
+              </div>
               <div className="flex justify-end space-x-3">
                 <button 
                   className="btn-secondary"
                   onClick={() => {
                     setScheduleInputModalVisible(false);
                     setScheduleInputText('');
-                    setCalendarModalVisible(true);
+                    setScheduleInputTime('');
                   }}
                   data-testid="button-cancel-schedule-input"
                 >
