@@ -608,6 +608,32 @@ const TaskManager: React.FC = () => {
     localStorage.setItem('notificationsEnabled', JSON.stringify(notificationsEnabled));
   }, [notificationsEnabled]);
 
+  // Apply theme color to CSS custom properties
+  useEffect(() => {
+    const themeColorMap: Record<string, { h: number; s: number; l: number }> = {
+      pink: { h: 330, s: 81, l: 56 },
+      blue: { h: 217, s: 91, l: 60 },
+      green: { h: 142, s: 71, l: 45 },
+      purple: { h: 271, s: 81, l: 56 },
+      orange: { h: 25, s: 95, l: 53 }
+    };
+    
+    const color = userSettings?.themeColor || 'pink';
+    const theme = themeColorMap[color] || themeColorMap.pink;
+    
+    const root = document.documentElement;
+    root.style.setProperty('--theme-50', `hsl(${theme.h}, ${theme.s}%, 96%)`);
+    root.style.setProperty('--theme-100', `hsl(${theme.h}, ${theme.s}%, 95%)`);
+    root.style.setProperty('--theme-200', `hsl(${theme.h}, ${theme.s}%, 90%)`);
+    root.style.setProperty('--theme-400', `hsl(${theme.h}, ${theme.s}%, 60%)`);
+    root.style.setProperty('--theme-500', `hsl(${theme.h}, ${theme.s}%, ${theme.l}%)`);
+    root.style.setProperty('--theme-600', `hsl(${theme.h}, ${theme.s}%, ${theme.l - 6}%)`);
+    root.style.setProperty('--theme-900', `hsl(${theme.h}, ${theme.s - 14}%, 25%)`);
+    root.style.setProperty('--primary', `hsl(${theme.h}, ${theme.s}%, ${theme.l}%)`);
+    root.style.setProperty('--ring', `hsl(${theme.h}, ${theme.s}%, ${theme.l}%)`);
+    root.style.setProperty('--accent', `hsl(${theme.h}, ${theme.s}%, 90%)`);
+    root.style.setProperty('--accent-foreground', `hsl(${theme.h}, ${theme.s}%, ${theme.l}%)`);
+  }, [userSettings?.themeColor]);
 
   const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
   const [scheduleInput, setScheduleInput] = useState('');
