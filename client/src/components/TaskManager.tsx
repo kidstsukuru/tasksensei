@@ -209,6 +209,13 @@ const TaskManager: React.FC = () => {
     }
   };
 
+  const deleteScheduleMutation = {
+    mutate: (id: string) => {
+      scheduleStore.delete(id);
+      refetchSchedules();
+    }
+  };
+
   const createWeightRecordMutation = {
     mutate: (weightData: InsertWeightRecord) => {
       weightRecordStore.create(weightData);
@@ -950,10 +957,17 @@ const TaskManager: React.FC = () => {
             {getTodaysSchedules().map(schedule => (
               <div key={schedule.id} className="task-card">
                 <div className="flex items-center justify-between">
-                  <span className="font-medium">{schedule.text}</span>
-                  <span className="text-sm text-gray-500">
+                  <span className="font-medium flex-grow">{schedule.text}</span>
+                  <span className="text-sm text-gray-500 mr-2">
                     {schedule.time ? formatTime(schedule.time) : ''}
                   </span>
+                  <button
+                    onClick={() => deleteScheduleMutation.mutate(schedule.id)}
+                    className="text-red-500 hover:text-red-700 flex-shrink-0"
+                    data-testid={`button-delete-schedule-home-${schedule.id}`}
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
               </div>
             ))}
@@ -2814,10 +2828,17 @@ const TaskManager: React.FC = () => {
               {todaySchedules.map(schedule => (
                 <div key={schedule.id} className="task-card" data-testid={`schedule-item-tasks-${schedule.id}`}>
                   <div className="flex items-center justify-between">
-                    <span className="font-medium">{schedule.text}</span>
-                    <span className="text-sm text-gray-500">
+                    <span className="font-medium flex-grow">{schedule.text}</span>
+                    <span className="text-sm text-gray-500 mr-2">
                       {schedule.time ? new Date(schedule.time).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' }) : ''}
                     </span>
+                    <button
+                      onClick={() => deleteScheduleMutation.mutate(schedule.id)}
+                      className="text-red-500 hover:text-red-700 flex-shrink-0"
+                      data-testid={`button-delete-schedule-tasks-${schedule.id}`}
+                    >
+                      <X size={16} />
+                    </button>
                   </div>
                 </div>
               ))}
