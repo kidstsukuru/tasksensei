@@ -1,181 +1,49 @@
 # Overview
 
-This is a Japanese task management mobile web application built as a React TypeScript single-page application. The app is a frontend-only application that stores all data in browser localStorage, providing comprehensive life management features including todo lists, scheduling, Pomodoro timer, weight tracking, meal logging, diary entries, weekly tracker, calendar view, and user settings (dark mode, custom themes, push notifications). It uses a mobile-first design approach with Tailwind CSS and shadcn/ui components, targeting Japanese users with a customizable theme color scheme (default: pink).
+This is a Japanese task management mobile web application built as a React TypeScript single-page application with PWA support. It provides comprehensive life management features including todo lists, scheduling, Pomodoro timer, weight tracking, meal logging, diary entries, weekly tracker, calendar view, and user settings. The app is frontend-only, storing all data in browser localStorage, and utilizes a mobile-first design with Tailwind CSS and shadcn/ui components, targeting Japanese users with a customizable theme (default: pink).
 
 # User Preferences
 
 Preferred communication style: Simple, everyday language.
 
-# Recent Changes
-
-## November 26, 2025 (Latest)
-- **Server-Side Code Simplification**: Removed unused backend code to reduce complexity
-  - Simplified server/routes.ts to minimal HTTP server creation (no API routes)
-  - Emptied server/storage.ts (no server-side storage needed)
-  - Simplified server/index.ts by removing session management
-  - Emptied shared/schema.ts (types now fully in client/src/types/local.ts)
-  - Added localStorage persistence for todoVisible and notificationsEnabled states
-  - Backend now only serves as Vite dev server for frontend delivery
-  - E2E tests confirmed all features working correctly
-
-## November 19, 2025
-- **Weekly Goal Feature Implementation**: Added comprehensive weekly goal management system
-  - Created WeeklyGoal type with same structure as MonthlyGoal (weight, todo, achievement, activity categories)
-  - Implemented WeeklyGoalDataStore class for localStorage persistence with automatic data migration
-  - Uses ISO 8601 week number format (YYYY-WW) for week identification via getWeekNumber function
-  - Added dedicated weekly goal screen accessible from task management screen
-  - Full CRUD operations: create, edit, save, and completion tracking with checkboxes
-  - Weekly goal screen displays week date range (e.g., "11/18 - 11/24")
-  - Edit button loads existing goals into form for modification
-  - "目標を設定する" button for creating new weekly goals when none exist
-  - Checkbox completion toggles with strikethrough styling for completed items
-  - Data persists across page reloads via localStorage
-  - Task management screen button layout updated: 日課 → 月間目標 → 週間目標 → 週次振り返り → 週間トラッカー
-
-## November 19, 2025 (Earlier)
-- **Monthly Goal Achievement Progress Bar**: Added horizontal progress bar to task management screen
-  - Displays monthly goal achievement rate below "Today's Schedule" section
-  - Automatically calculates completion percentage from all four goal categories
-  - Shows completed count vs total count (e.g., "3 / 10 完了")
-  - Displays achievement rate percentage (e.g., "30%")
-  - Uses shadcn/ui Progress component for horizontal bar visualization
-  - Updates in real-time when goal checkboxes are toggled
-  - Shows empty state message when no monthly goals are set
-  - Positioned between "Today's Schedule" and "Management" sections in task screen
-
-## November 12, 2025
-- **Monthly Goal Checkbox Feature**: Added interactive checkboxes to mark goal completion
-  - Each goal item now has a checkbox on the left side
-  - Tapping checkbox toggles completion state with checkmark display
-  - Completed goals show strikethrough text styling
-  - handleToggleGoalCompletion function updates completion arrays in localStorage
-  - Checkboxes implemented in both monthly goal screen and weekly review screen
-  - Completion state persists across page reloads
-  - Works for all four goal categories (weight, todo, achievement, activity)
-
-## November 12, 2025 (Earlier)
-- **Monthly Goal List Format Refactor**: Changed monthly goals from single-item to list-based format for each category
-  - Updated MonthlyGoal type to use arrays: weightGoals[], todoGoals[], achievementGoals[], activityGoals[]
-  - Completion state also changed to arrays: weightGoalsCompleted[], todoGoalsCompleted[], etc.
-  - Implemented MonthlyGoalDataStore class with automatic legacy data migration
-  - Legacy scalar fields (weightGoal, todoGoal, etc.) are automatically converted to single-item arrays
-  - UI updated to list format with add/remove item functionality (renderGoalListEditor function)
-  - Users can now add multiple goals per category using "+ 項目を追加" button
-  - Weekly review screen also updated to display goals in list format
-  - Data migration ensures existing users retain their previously saved goals
-  - All LSP errors resolved, application running without errors
-
-## November 12, 2025 (Earlier)
-- **Sleep Tracking Feature Removal**: Completely removed the sleep tracking feature from the application
-  - Deleted SleepRecord and InsertSleepRecord type definitions from `client/src/types/local.ts`
-  - Removed sleepRecordStore from `client/src/lib/localDataStore.ts`
-  - Removed all sleep-related imports, state variables, functions, and mutations from `TaskManager.tsx`
-  - Deleted sleep card from home screen's "My Page" section
-  - Removed sleep detail screen (renderSleepDetailScreen function)
-  - Removed average sleep hours card from weekly review screen
-  - Removed sleep column from week tracker
-  - Cleaned up data export to exclude sleep records
-  - Preserved formatTime function (still used for schedule time display)
-  - E2E tests confirmed complete removal with no residual UI or runtime errors
-
-## November 5, 2025
-- **Weekly Review Integration**: Added monthly goal section to the weekly review screen
-- **Weekly Review Integration**: Added monthly goal section to the weekly review screen
-  - Integrated monthly goal display, editing, and completion tracking into the weekly review page
-  - Users can now view and edit monthly goals directly from the weekly review screen (below weekly statistics)
-  - Current month goals displayed with checkboxes for completion tracking
-  - Edit button allows in-place modification of all four goal categories
-  - Past months' goals section shows historical goal data with completion status
-  - Fixed updateMonthlyGoalMutation to exclude undefined properties (prevents data loss during edits)
-  - Fixed handleSaveMonthlyGoal to preserve completion states when editing goal text
-  - Tests confirmed: goal display, editing, completion tracking, persistence across page reloads
-
-## November 5, 2025 (Earlier)
-- **Monthly Goal Completion Tracking**: Added individual completion checkboxes for each goal category
-  - Extended MonthlyGoal type with completion state fields: weightGoalCompleted, todoGoalCompleted, achievementGoalCompleted, activityGoalCompleted
-  - Implemented checkbox toggle functionality with handleToggleGoalCompletion
-  - Updated UI to display interactive checkboxes next to each goal
-  - Completed goals show checked checkbox with checkmark SVG and line-through text styling
-  - Past goals display completion status with checkmark symbol (✓) and line-through
-  - Completion state persists in localStorage across page reloads
-  - Tests confirmed: checkbox toggle, visual state updates, localStorage persistence
-
-## November 5, 2025 (Earlier)
-- **Monthly Goal Enhancement**: Extended monthly goal feature with category-based goals
-  - Updated MonthlyGoal type: added weightGoal, todoGoal, achievementGoal, activityGoal fields (replacing single 'goals' field)
-  - Implemented automatic goal setup screen display at the beginning of each month
-  - Added lastGoalSetupMonth tracking in localStorage to detect new months
-  - Improved goal setup UI with separate input fields for each category with emoji icons (💪 weight, 📝 todos, 🎯 achievements, ⚡ activities)
-  - Updated goal display to show categorized goals with visual separation
-  - E2E tests confirmed: category goal input/save/edit, automatic monthly display, localStorage persistence
-
-## October 22, 2025
-- **Complete Architecture Migration to localStorage**: Migrated the entire application from database+authentication to localStorage-only architecture
-  - Created `client/src/types/local.ts` with local type definitions (removed userId fields)
-  - Implemented `client/src/lib/localDataStore.ts` module providing CRUD operations for all data types
-  - Created `client/src/hooks/useLocalData.ts` custom hook with React Query-like interface
-  - Completely rewrote `TaskManager.tsx` (3300+ lines) to use localStorage instead of API calls
-  - Removed authentication system: deleted AuthContext, login screen, and logout functionality
-  - Simplified `App.tsx`: removed AuthProvider and QueryClientProvider, now directly renders TaskManager
-  - Fixed TypeScript type errors: unified weight/height/bodyFat as number type (not string)
-  - Updated data export functionality to work with localStorage
-  - All data now persists in browser localStorage; no server-side storage
-
-## October 22, 2025 (Earlier)
-- **Schedule Display Update**: Modified schedule display to show only today's schedules in the tasks screen. Added "Past Schedules" button that opens a modal displaying all non-today schedules grouped by month in descending order.
-- **LSP Error Fix**: Fixed TypeScript type errors in insertTodoSchema and createTodoMutation by properly defining InsertTodo type with all optional fields (repeatType, repeatDays, repeatDate, location, locationLat, locationLng, locationRadius).
-
-## October 15, 2025
-- **Calendar View Implementation**: Added monthly calendar screen with task/schedule visualization, deadline alerts (overdue tasks shown in red), and day selection to view detailed tasks and schedules
-- **Settings Screen Implementation**: Implemented user settings with dark mode toggle, custom theme selection (5 colors: pink, blue, green, purple, orange), and push notification preferences
-- **Header Navigation**: Added calendar and settings icons to home screen header for easy access
-- **User Settings Database**: Created userSettings table to persist user preferences (dark mode, theme color, push notifications)
-- **React Hooks Fix**: Resolved React Rules of Hooks violations by moving calendar screen state (calendarMonth, calendarSelectedDay) to TaskManager component top level
-- **All features tested**: End-to-end tests confirmed calendar navigation, settings changes, and theme persistence work correctly
-- **Navigation Restructure**: Moved timer icon to home screen header (left of calendar icon), removed timer from bottom navigation bar. Bottom nav now contains only home button.
-- **Task Management Screen**: Created dedicated task management screen with TODOs, schedules, and management cards (daily routine, monthly goals, weekly review, week tracker). Moved these features from home screen to new dedicated screen accessible via bottom navigation.
-- **Link Collection Feature**: Implemented link management system to save and organize video links (YouTube, articles, etc.). Added links table to database, created API endpoints (GET, POST, DELETE), and built dedicated links screen with add/delete functionality. Link card added to home screen's "My Page" section.
-
 # System Architecture
 
 ## Frontend Architecture
 
-The client uses a modern React setup with TypeScript and Vite as the build tool. The application is entirely frontend-based with:
+The client uses a modern React setup with TypeScript and Vite. It is a frontend-only application with:
 
-- **State Management**: localStorage-based data persistence with custom hooks mimicking React Query interface
-- **Routing**: Single-page application with screen-based navigation (no traditional routing)
-- **UI Framework**: shadcn/ui components built on Radix UI primitives with Tailwind CSS
-- **Form Handling**: React Hook Form with Zod validation
-- **Theme System**: CSS custom properties with a pink-based color scheme optimized for mobile
-- **Data Persistence**: All data stored in browser localStorage via LocalDataStore module
+-   **State Management**: localStorage-based data persistence with custom hooks mimicking React Query.
+-   **Routing**: Single-page application with screen-based navigation.
+-   **UI Framework**: shadcn/ui components built on Radix UI primitives with Tailwind CSS.
+-   **Form Handling**: React Hook Form with Zod validation.
+-   **Theme System**: CSS custom properties with a pink-based color scheme optimized for mobile.
+-   **PWA Support**: Implemented with `manifest.json` and a Service Worker for offline capabilities.
 
 ## Data Storage
 
 The application uses browser localStorage for all data persistence:
 
-- **Local Type Definitions**: Types defined in `client/src/types/local.ts` without userId fields
-- **LocalDataStore Module**: Provides CRUD operations for all data types (todos, schedules, weight records, meal records, diary entries, links, user settings)
-- **MonthlyGoalDataStore**: Specialized store class that extends LocalDataStore with automatic legacy data migration
-- **Storage Keys**: Each data type stored under a unique localStorage key (e.g., 'todos', 'schedules')
-- **Data Format**: All data stored as JSON arrays with auto-generated IDs
-- **Data Migration**: Monthly goals are automatically migrated from legacy scalar format to array format on first load
-- **Custom Hooks**: `useLocalData` hooks provide React Query-like interface for local data access
+-   **Local Type Definitions**: Types defined in `client/src/types/local.ts`.
+-   **LocalDataStore Module**: Provides CRUD operations for all data types (todos, schedules, weight records, meal records, diary entries, links, user settings).
+-   **MonthlyGoalDataStore**: Specialized store class for monthly goals with automatic legacy data migration.
+-   **Storage Keys**: Each data type stored under a unique localStorage key.
+-   **Data Format**: All data stored as JSON arrays with auto-generated IDs.
+-   **Data Migration**: Monthly goals are automatically migrated from legacy scalar format to array format.
+-   **Custom Hooks**: `useLocalData` hooks provide a React Query-like interface for local data access.
 
-## Backend Architecture (Legacy - Not Used)
+## System Design Choices
 
-Note: Backend code still exists but is not used by the application. The app is fully client-side.
-
-- Backend server runs but frontend does not make API calls
-- All data operations happen in the browser via localStorage
-- Backend files can be removed in future cleanup
+-   **Mobile-First Design**: Optimized for mobile devices.
+-   **Feature Set**: Includes todo lists, scheduling, Pomodoro timer, weight tracking, meal logging, diary entries, weekly tracker, calendar, and user settings (dark mode, custom themes, push notifications).
+-   **Goal Management**: Comprehensive weekly and monthly goal systems with progress tracking and interactive completion checkboxes.
+-   **Data Export**: Functionality to export user data.
 
 # External Dependencies
 
-- **UI Components**: Radix UI primitives for accessible component foundation
-- **Styling**: Tailwind CSS for utility-first styling approach
-- **Fonts**: Google Fonts integration (Inter and Noto Sans JP for Japanese support)
-- **Charts**: Chart.js for data visualization in tracking features (if implemented)
-- **Development Tools**: Replit-specific plugins for development environment integration
-- **Build Tools**: Vite for fast development and optimized production builds
-- **Validation**: Zod for runtime type checking and form validation
-- **Storage**: Browser localStorage API for all data persistence
+-   **UI Components**: Radix UI primitives
+-   **Styling**: Tailwind CSS
+-   **Fonts**: Google Fonts (Inter, Noto Sans JP)
+-   **Charts**: Chart.js (for data visualization)
+-   **Build Tools**: Vite
+-   **Validation**: Zod
+-   **Storage**: Browser localStorage API
