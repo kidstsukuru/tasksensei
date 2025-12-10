@@ -600,19 +600,6 @@ const TaskManager: React.FC = () => {
     localStorage.setItem('notificationsEnabled', JSON.stringify(notificationsEnabled));
   }, [notificationsEnabled]);
 
-  // Check if goal setup screen should be shown (first time in the month)
-  useEffect(() => {
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
-    const lastSetupMonth = localStorage.getItem('lastGoalSetupMonth');
-    const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
-    
-    // Show goal setup screen if:
-    // 1. It's a new month (different from lastSetupMonth)
-    // 2. AND there's no goal set for current month
-    if (lastSetupMonth !== currentMonth && !currentMonthGoal) {
-      setShowGoalSetupScreen(true);
-    }
-  }, [monthlyGoals]);
 
   const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
   const [scheduleInput, setScheduleInput] = useState('');
