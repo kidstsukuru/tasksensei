@@ -3,18 +3,18 @@ import { useLocalData, useLocalSettings } from '../hooks/useLocalData';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Todo, 
-  Schedule, 
-  WeightRecord, 
-  MealRecord, 
+import {
+  Todo,
+  Schedule,
+  WeightRecord,
+  MealRecord,
   DiaryEntry,
   DailyRoutine,
   MonthlyGoal,
   WeeklyGoal,
   Link,
   PomodoroState,
-  AppState 
+  AppState
 } from '../types/local';
 import {
   todoStore,
@@ -28,7 +28,7 @@ import {
   linkStore,
   userSettingsStore,
 } from '../lib/localDataStore';
-import type { 
+import type {
   InsertTodo,
   InsertSchedule,
   InsertWeightRecord,
@@ -40,18 +40,18 @@ import type {
   InsertLink,
   UserSettings
 } from '../types/local';
-import { 
-  Bell, 
-  Clock, 
-  Home, 
-  Timer, 
-  Calendar, 
-  Plus, 
-  ChevronDown, 
-  ArrowLeft, 
-  Play, 
-  Pause, 
-  RotateCcw, 
+import {
+  Bell,
+  Clock,
+  Home,
+  Timer,
+  Calendar,
+  Plus,
+  ChevronDown,
+  ArrowLeft,
+  Play,
+  Pause,
+  RotateCcw,
   X,
   Camera,
   Smile,
@@ -71,11 +71,11 @@ const TaskManager: React.FC = () => {
     const saved = localStorage.getItem('todoVisible');
     return saved ? JSON.parse(saved) : false;
   });
-  
+
   // Export functionality state
   const [exportModalVisible, setExportModalVisible] = useState(false);
   const [exportLoading, setExportLoading] = useState(false);
-  
+
   // Notification functionality state
   const [notificationModalVisible, setNotificationModalVisible] = useState(false);
   const [notificationsEnabled, setNotificationsEnabled] = useState(() => {
@@ -83,11 +83,11 @@ const TaskManager: React.FC = () => {
     return saved ? JSON.parse(saved) : false;
   });
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
-  
+
   // Calendar functionality state
   const [calendarModalVisible, setCalendarModalVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
-  
+
   // TODO input functionality state
   const [todoInputModalVisible, setTodoInputModalVisible] = useState(false);
   const [todoInputText, setTodoInputText] = useState('');
@@ -99,14 +99,14 @@ const TaskManager: React.FC = () => {
   const [locationLat, setLocationLat] = useState<number | null>(null);
   const [locationLng, setLocationLng] = useState<number | null>(null);
   const [locationRadius, setLocationRadius] = useState(100);
-  
+
   // Schedule input functionality state
   const [scheduleInputModalVisible, setScheduleInputModalVisible] = useState(false);
   const [scheduleInputText, setScheduleInputText] = useState('');
   const [scheduleInputTime, setScheduleInputTime] = useState('');
   const [scheduleInputDate, setScheduleInputDate] = useState<Date | null>(null);
   const [pastSchedulesModalVisible, setPastSchedulesModalVisible] = useState(false);
-  
+
   // Weekly review functionality state
   const [weekOffset, setWeekOffset] = useState(0); // 0 = this week, -1 = last week, 1 = next week
 
@@ -121,24 +121,24 @@ const TaskManager: React.FC = () => {
   const { data: weeklyGoals = [], isLoading: weeklyGoalsLoading, refetch: refetchWeeklyGoals } = useLocalData<WeeklyGoal>(weeklyGoalStore, 'weeklyGoals');
   const { data: userSettings, isLoading: settingsLoading, refetch: refetchSettings } = useLocalSettings(userSettingsStore);
   const { data: links = [], isLoading: linksLoading, refetch: refetchLinks } = useLocalData<Link>(linkStore, 'links');
-  
+
   const [pomodoro, setPomodoro] = useState<PomodoroState>({
     minutes: 25,
     seconds: 0,
     isRunning: false,
     mode: 'pomodoro'
   });
-  
+
   // Timer and Stopwatch states
   const [timerScreenMode, setTimerScreenMode] = useState<'pomodoro' | 'timer' | 'stopwatch'>('pomodoro');
   const [timerMinutes, setTimerMinutes] = useState(0);
   const [timerSeconds, setTimerSeconds] = useState(0);
   const [timerRunning, setTimerRunning] = useState(false);
-  
+
   // Daily Routine states
   const [routineContent, setRoutineContent] = useState('');
   const [isRoutineEditing, setIsRoutineEditing] = useState(false);
-  
+
   // Monthly Goal states
   const [weightGoals, setWeightGoals] = useState<string[]>([]);
   const [todoGoals, setTodoGoals] = useState<string[]>([]);
@@ -158,13 +158,13 @@ const TaskManager: React.FC = () => {
   // Calendar states
   const [calendarMonth, setCalendarMonth] = useState(new Date());
   const [calendarSelectedDay, setCalendarSelectedDay] = useState<Date | null>(null);
-  
+
   // Link states
   const [linkInputVisible, setLinkInputVisible] = useState(false);
   const [linkTitle, setLinkTitle] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [linkCategory, setLinkCategory] = useState('other');
-  
+
   // Stop all other modes when switching
   const switchTimerMode = (mode: 'pomodoro' | 'timer' | 'stopwatch') => {
     setPomodoro(prev => ({ ...prev, isRunning: false }));
@@ -280,11 +280,11 @@ const TaskManager: React.FC = () => {
   };
 
   const updateMonthlyGoalMutation = {
-    mutate: ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: { 
-      id: string; 
-      weightGoals?: string[]; 
-      todoGoals?: string[]; 
-      achievementGoals?: string[]; 
+    mutate: ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: {
+      id: string;
+      weightGoals?: string[];
+      todoGoals?: string[];
+      achievementGoals?: string[];
       activityGoals?: string[];
       weightGoalsCompleted?: boolean[];
       todoGoalsCompleted?: boolean[];
@@ -303,11 +303,11 @@ const TaskManager: React.FC = () => {
       monthlyGoalStore.update(id, updateData);
       refetchMonthlyGoals();
     },
-    mutateAsync: async ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: { 
-      id: string; 
-      weightGoals?: string[]; 
-      todoGoals?: string[]; 
-      achievementGoals?: string[]; 
+    mutateAsync: async ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: {
+      id: string;
+      weightGoals?: string[];
+      todoGoals?: string[];
+      achievementGoals?: string[];
       activityGoals?: string[];
       weightGoalsCompleted?: boolean[];
       todoGoalsCompleted?: boolean[];
@@ -348,11 +348,11 @@ const TaskManager: React.FC = () => {
   };
 
   const updateWeeklyGoalMutation = {
-    mutate: ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: { 
-      id: string; 
-      weightGoals?: string[]; 
-      todoGoals?: string[]; 
-      achievementGoals?: string[]; 
+    mutate: ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: {
+      id: string;
+      weightGoals?: string[];
+      todoGoals?: string[];
+      achievementGoals?: string[];
       activityGoals?: string[];
       weightGoalsCompleted?: boolean[];
       todoGoalsCompleted?: boolean[];
@@ -371,11 +371,11 @@ const TaskManager: React.FC = () => {
       weeklyGoalStore.update(id, updateData);
       refetchWeeklyGoals();
     },
-    mutateAsync: async ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: { 
-      id: string; 
-      weightGoals?: string[]; 
-      todoGoals?: string[]; 
-      achievementGoals?: string[]; 
+    mutateAsync: async ({ id, weightGoals, todoGoals, achievementGoals, activityGoals, weightGoalsCompleted, todoGoalsCompleted, achievementGoalsCompleted, activityGoalsCompleted }: {
+      id: string;
+      weightGoals?: string[];
+      todoGoals?: string[];
+      achievementGoals?: string[];
       activityGoals?: string[];
       weightGoalsCompleted?: boolean[];
       todoGoalsCompleted?: boolean[];
@@ -433,11 +433,11 @@ const TaskManager: React.FC = () => {
   // Export functionality
   const convertToCSV = (data: any[], type: string): string => {
     if (data.length === 0) return '';
-    
+
     const headers = Object.keys(data[0]);
     const csvContent = [
       headers.join(','),
-      ...data.map(row => 
+      ...data.map(row =>
         headers.map(header => {
           const value = row[header];
           if (value === null || value === undefined) return '';
@@ -447,7 +447,7 @@ const TaskManager: React.FC = () => {
         }).join(',')
       )
     ].join('\n');
-    
+
     return csvContent;
   };
 
@@ -481,7 +481,7 @@ const TaskManager: React.FC = () => {
         }
       };
       const timestamp = new Date().toISOString().split('T')[0];
-      
+
       if (format === 'json') {
         const content = JSON.stringify(exportData, null, 2);
         downloadFile(content, `task-manager-export-${timestamp}.json`, 'application/json');
@@ -498,7 +498,7 @@ const TaskManager: React.FC = () => {
           { name: 'monthly-goals', data: data.monthlyGoals },
           { name: 'links', data: data.links }
         ];
-        
+
         // Create a single CSV file with all data sections
         let allCsvContent = '';
         csvFiles.forEach((file, index) => {
@@ -508,10 +508,10 @@ const TaskManager: React.FC = () => {
             allCsvContent += convertToCSV(file.data, file.name);
           }
         });
-        
+
         downloadFile(allCsvContent, `task-manager-export-${timestamp}.csv`, 'text/csv');
       }
-      
+
       setExportModalVisible(false);
     } catch (error) {
       alert('エクスポートに失敗しました: ' + error);
@@ -548,7 +548,7 @@ const TaskManager: React.FC = () => {
   const checkTaskReminders = () => {
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes();
-    
+
     // Check for incomplete todos and schedules
     const incompleteTodos = todos.filter(todo => !todo.completed);
     const todaySchedules = schedules.filter(schedule => {
@@ -617,10 +617,10 @@ const TaskManager: React.FC = () => {
       purple: { h: 271, s: 81, l: 56 },
       orange: { h: 25, s: 95, l: 53 }
     };
-    
+
     const color = userSettings?.themeColor || 'pink';
     const theme = themeColorMap[color] || themeColorMap.pink;
-    
+
     const root = document.documentElement;
     root.style.setProperty('--theme-50', `hsl(${theme.h}, ${theme.s}%, 96%)`);
     root.style.setProperty('--theme-100', `hsl(${theme.h}, ${theme.s}%, 95%)`);
@@ -647,17 +647,17 @@ const TaskManager: React.FC = () => {
   // BMI計算関数
   const calculateBMI = () => {
     if (weightRecords.length === 0) return null;
-    
+
     const latestRecord = weightRecords[weightRecords.length - 1];
     const weight = latestRecord.weight;
     const height = latestRecord.height;
-    
+
     if (height && height > 0) {
       const heightInMeters = height / 100; // cmをmに変換
       const bmi = weight / (heightInMeters * heightInMeters);
       return bmi.toFixed(1);
     }
-    
+
     return null;
   };
 
@@ -734,6 +734,25 @@ const TaskManager: React.FC = () => {
     };
   }, [stopwatchRunning]);
 
+  // Check if monthly goal exists for current month on app load (only once)
+  useEffect(() => {
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
+    const lastCheckedMonth = localStorage.getItem('lastCheckedGoalMonth');
+
+    // Only check if we haven't checked this month yet
+    if (lastCheckedMonth !== currentMonth) {
+      const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
+
+      // If no goal exists for current month, show the goal setup screen
+      if (!currentMonthGoal) {
+        setShowGoalSetupScreen(true);
+      }
+
+      // Mark this month as checked
+      localStorage.setItem('lastCheckedGoalMonth', currentMonth);
+    }
+  }, [monthlyGoals]);
+
   const getCurrentDate = () => {
     return new Date().toLocaleDateString('ja-JP', {
       month: 'short',
@@ -748,11 +767,11 @@ const TaskManager: React.FC = () => {
     const weekStart = new Date(now);
     weekStart.setDate(now.getDate() - dayOfWeek + (offset * 7));
     weekStart.setHours(0, 0, 0, 0);
-    
+
     const weekEnd = new Date(weekStart);
     weekEnd.setDate(weekStart.getDate() + 6);
     weekEnd.setHours(23, 59, 59, 999);
-    
+
     return { weekStart, weekEnd };
   };
 
@@ -782,7 +801,7 @@ const TaskManager: React.FC = () => {
       alert('このブラウザは位置情報をサポートしていません。');
     }
   };
-  
+
   const saveTodoInput = () => {
     if (todoInputText.trim()) {
       createTodoMutation.mutate({
@@ -808,16 +827,18 @@ const TaskManager: React.FC = () => {
       if (!todoVisible) {
         setTodoVisible(true);
       }
-      // Keep modal open for continuous input
+      // Close modal and return to home screen
+      setTodoInputModalVisible(false);
+      showScreen('home-screen');
     }
   };
-  
+
   const addScheduleForDate = (date: Date) => {
     setScheduleInputDate(date);
     setScheduleInputModalVisible(true);
     setCalendarModalVisible(false);
   };
-  
+
   const saveScheduleInput = () => {
     if (scheduleInputText.trim() && scheduleInputDate) {
       let timeValue: Date | null = null;
@@ -934,7 +955,7 @@ const TaskManager: React.FC = () => {
       <header className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">タスク管理</h1>
         <div className="flex items-center gap-2">
-          <button 
+          <button
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
             onClick={() => showScreen('pomodoro-screen')}
             data-testid="button-timer"
@@ -942,7 +963,7 @@ const TaskManager: React.FC = () => {
           >
             <Timer size={24} />
           </button>
-          <button 
+          <button
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
             onClick={() => showScreen('calendar-screen')}
             data-testid="button-calendar"
@@ -950,7 +971,7 @@ const TaskManager: React.FC = () => {
           >
             <Calendar size={24} />
           </button>
-          <button 
+          <button
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
             onClick={() => showScreen('settings-screen')}
             data-testid="button-settings"
@@ -1004,13 +1025,13 @@ const TaskManager: React.FC = () => {
       {/* TODO List Section */}
       <section>
         <div className="flex justify-between items-center mb-3">
-          <div 
+          <div
             className="flex items-center cursor-pointer flex-grow"
             onClick={() => setTodoVisible(!todoVisible)}
             data-testid="toggle-todo-visibility"
           >
             <h2 className="text-xl font-bold">TODOリスト</h2>
-            <button 
+            <button
               className="ml-2 bg-theme-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-theme-600 transition-colors focus:outline-none focus:ring-2 focus:ring-theme-500 focus:ring-opacity-75"
               onClick={(e) => {
                 e.stopPropagation();
@@ -1020,7 +1041,7 @@ const TaskManager: React.FC = () => {
             >
               <Plus size={20} strokeWidth={2.5} />
             </button>
-            <ChevronDown 
+            <ChevronDown
               className={`transition-transform ml-auto ${todoVisible ? 'rotate-180' : ''}`}
               size={24}
             />
@@ -1030,43 +1051,43 @@ const TaskManager: React.FC = () => {
           {todosLoading ? (
             <div className="text-center py-4 text-gray-500">Loading todos...</div>
           ) : (
-          <div className="space-y-2">
-            {todos.map(todo => (
-              <div key={todo.id} className="task-item" data-testid={`todo-item-${todo.id}`}>
-                <input
-                  type="checkbox"
-                  checked={todo.completed}
-                  onChange={() => toggleTodo(todo.id)}
-                  className="h-5 w-5 rounded border-gray-300 text-theme-600 focus:ring-theme-500"
-                  data-testid={`checkbox-todo-${todo.id}`}
-                />
-                <span className={`flex-grow ${todo.completed ? 'line-through text-gray-400' : ''}`}>
-                  {todo.text}
-                </span>
-                {todo.repeatType && (
-                  <span title={
-                    todo.repeatType === 'daily' ? '毎日' :
-                    todo.repeatType === 'weekly' ? `毎週 ${todo.repeatDays?.map(d => ['日', '月', '火', '水', '木', '金', '土'][d]).join(', ')}` :
-                    todo.repeatType === 'monthly' ? `毎月 ${todo.repeatDate}日` :
-                    '繰り返し'
-                  }>
-                    <Repeat 
-                      size={16} 
-                      className="text-theme-500 mr-2" 
-                      data-testid={`icon-repeat-${todo.id}`}
-                    />
+            <div className="space-y-2">
+              {todos.map(todo => (
+                <div key={todo.id} className="task-item" data-testid={`todo-item-${todo.id}`}>
+                  <input
+                    type="checkbox"
+                    checked={todo.completed}
+                    onChange={() => toggleTodo(todo.id)}
+                    className="h-5 w-5 rounded border-gray-300 text-theme-600 focus:ring-theme-500"
+                    data-testid={`checkbox-todo-${todo.id}`}
+                  />
+                  <span className={`flex-grow ${todo.completed ? 'line-through text-gray-400' : ''}`}>
+                    {todo.text}
                   </span>
-                )}
-                <button 
-                  onClick={() => deleteTodo(todo.id)}
-                  className="text-red-500 hover:text-red-700"
-                  data-testid={`button-delete-todo-${todo.id}`}
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
+                  {todo.repeatType && (
+                    <span title={
+                      todo.repeatType === 'daily' ? '毎日' :
+                        todo.repeatType === 'weekly' ? `毎週 ${todo.repeatDays?.map(d => ['日', '月', '火', '水', '木', '金', '土'][d]).join(', ')}` :
+                          todo.repeatType === 'monthly' ? `毎月 ${todo.repeatDate}日` :
+                            '繰り返し'
+                    }>
+                      <Repeat
+                        size={16}
+                        className="text-theme-500 mr-2"
+                        data-testid={`icon-repeat-${todo.id}`}
+                      />
+                    </span>
+                  )}
+                  <button
+                    onClick={() => deleteTodo(todo.id)}
+                    className="text-red-500 hover:text-red-700"
+                    data-testid={`button-delete-todo-${todo.id}`}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </section>
@@ -1075,16 +1096,8 @@ const TaskManager: React.FC = () => {
       <section>
         <h2 className="text-xl font-bold mb-3">マイページ</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div 
-            className="record-card" 
-            onClick={() => showScreen('meal-detail-screen')}
-            data-testid="card-meal"
-          >
-            <h3 className="font-bold">食事</h3>
-            <p className="text-sm text-gray-500">1800 kcal</p>
-          </div>
-          <div 
-            className="record-card" 
+          <div
+            className="record-card"
             onClick={() => showScreen('body-detail-screen')}
             data-testid="card-body"
           >
@@ -1093,30 +1106,30 @@ const TaskManager: React.FC = () => {
               {weightRecordsLoading ? 'Loading...' : weightRecords.length > 0 ? `${weightRecords[weightRecords.length - 1].weight} kg` : '65.2 kg'}
             </p>
           </div>
-          <div 
-            className="record-card relative" 
+          <div
+            className="record-card relative"
             onClick={() => showScreen('diary-detail-screen')}
             data-testid="card-diary"
           >
             <h3 className="font-bold flex items-center">
               メモ
               {diaryEntries.length > 0 && (
-                <Star 
-                  size={16} 
-                  className="ml-2 text-yellow-500 fill-yellow-500" 
+                <Star
+                  size={16}
+                  className="ml-2 text-yellow-500 fill-yellow-500"
                   data-testid="memo-star-indicator"
                 />
               )}
             </h3>
             <p className="text-sm text-gray-500">
-              {diaryEntries.length > 0 
-                ? `${diaryEntries.length}件のメモあり` 
+              {diaryEntries.length > 0
+                ? `${diaryEntries.length}件のメモあり`
                 : 'メモを記録・管理...'
               }
             </p>
           </div>
-          <div 
-            className="record-card" 
+          <div
+            className="record-card"
             onClick={() => showScreen('links-screen')}
             data-testid="card-links"
           >
@@ -1125,8 +1138,8 @@ const TaskManager: React.FC = () => {
               リンク
             </h3>
             <p className="text-sm text-gray-500">
-              {linksLoading ? 'Loading...' : links.length > 0 
-                ? `${links.length}件のリンク` 
+              {linksLoading ? 'Loading...' : links.length > 0
+                ? `${links.length}件のリンク`
                 : '動画リンクを保存...'
               }
             </p>
@@ -1139,7 +1152,7 @@ const TaskManager: React.FC = () => {
   const renderPomodoroScreen = () => (
     <div className="page p-4 text-center">
       <header className="flex items-center mb-6">
-        <button 
+        <button
           className="p-2 rounded-full hover:bg-gray-100"
           onClick={() => showScreen('home-screen')}
           data-testid="button-back"
@@ -1148,7 +1161,7 @@ const TaskManager: React.FC = () => {
         </button>
         <h2 className="text-xl font-bold mx-auto pr-8">タイマー</h2>
       </header>
-      
+
       {/* Mode Selection Tabs */}
       <div className="flex justify-center space-x-2 mb-6">
         {[
@@ -1158,11 +1171,10 @@ const TaskManager: React.FC = () => {
         ].map(({ mode, label }) => (
           <button
             key={mode}
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-              timerScreenMode === mode 
-                ? 'bg-theme-500 text-white' 
-                : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-            }`}
+            className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${timerScreenMode === mode
+              ? 'bg-theme-500 text-white'
+              : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
             onClick={() => switchTimerMode(mode)}
             data-testid={`button-mode-${mode}`}
           >
@@ -1183,9 +1195,8 @@ const TaskManager: React.FC = () => {
               ].map(({ mode, label }) => (
                 <button
                   key={mode}
-                  className={`pomodoro-btn px-4 py-1 rounded-full text-sm font-medium ${
-                    pomodoro.mode === mode ? 'active' : ''
-                  }`}
+                  className={`pomodoro-btn px-4 py-1 rounded-full text-sm font-medium ${pomodoro.mode === mode ? 'active' : ''
+                    }`}
                   onClick={() => setPomodoroMode(mode as any)}
                   data-testid={`button-pomodoro-${mode}`}
                 >
@@ -1221,11 +1232,11 @@ const TaskManager: React.FC = () => {
             <div className="mb-6">
               <label className="block text-sm font-medium text-gray-700 mb-2">時間を設定</label>
               <div className="flex justify-center items-center space-x-2">
-                <input 
-                  type="number" 
-                  min="0" 
+                <input
+                  type="number"
+                  min="0"
                   max="99"
-                  placeholder="0" 
+                  placeholder="0"
                   value={timerMinutes || ''}
                   onChange={(e) => setTimerMinutes(parseInt(e.target.value) || 0)}
                   className="w-20 px-2 py-2 border rounded text-center text-2xl"
@@ -1233,11 +1244,11 @@ const TaskManager: React.FC = () => {
                   data-testid="input-timer-minutes"
                 />
                 <span className="text-2xl font-medium">分</span>
-                <input 
-                  type="number" 
-                  min="0" 
+                <input
+                  type="number"
+                  min="0"
                   max="59"
-                  placeholder="0" 
+                  placeholder="0"
                   value={timerSeconds || ''}
                   onChange={(e) => setTimerSeconds(parseInt(e.target.value) || 0)}
                   className="w-20 px-2 py-2 border rounded text-center text-2xl"
@@ -1310,7 +1321,7 @@ const TaskManager: React.FC = () => {
   const renderBodyDetailScreen = () => (
     <div className="page p-4">
       <header className="flex items-center mb-6">
-        <button 
+        <button
           className="p-2 rounded-full hover:bg-gray-100"
           onClick={() => showScreen('home-screen')}
           data-testid="button-back"
@@ -1331,8 +1342,8 @@ const TaskManager: React.FC = () => {
             </div>
             <div className="bg-gray-50 rounded-lg p-3 text-center">
               <div className="text-xl font-bold text-theme-600" data-testid="text-current-height">
-                {weightRecords.length > 0 && weightRecords[weightRecords.length - 1].height 
-                  ? weightRecords[weightRecords.length - 1].height! 
+                {weightRecords.length > 0 && weightRecords[weightRecords.length - 1].height
+                  ? weightRecords[weightRecords.length - 1].height!
                   : '--'}
               </div>
               <div className="text-xs text-gray-500">身長 (cm)</div>
@@ -1344,21 +1355,21 @@ const TaskManager: React.FC = () => {
               <div className="text-xs text-gray-500">BMI</div>
             </div>
           </div>
-          
+
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="font-medium">体重 (kg)</label>
               <div className="flex items-center space-x-2">
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  placeholder="65.2" 
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="65.2"
                   value={weightInput}
                   onChange={(e) => setWeightInput(e.target.value)}
                   className="w-20 px-2 py-1 border rounded text-center"
                   data-testid="input-weight"
                 />
-                <button 
+                <button
                   className="px-3 py-1 bg-theme-500 text-white text-sm rounded hover:bg-theme-600"
                   onClick={saveWeight}
                   data-testid="button-save-weight"
@@ -1367,20 +1378,20 @@ const TaskManager: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <label className="font-medium">身長 (cm)</label>
               <div className="flex items-center space-x-2">
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  placeholder="170.0" 
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="170.0"
                   value={heightInput}
                   onChange={(e) => setHeightInput(e.target.value)}
                   className="w-20 px-2 py-1 border rounded text-center"
                   data-testid="input-height"
                 />
-                <button 
+                <button
                   className="px-3 py-1 bg-theme-500 text-white text-sm rounded hover:bg-theme-600"
                   onClick={saveWeight}
                   data-testid="button-save-height"
@@ -1389,20 +1400,20 @@ const TaskManager: React.FC = () => {
                 </button>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-between">
               <label className="font-medium">体脂肪率 (%)</label>
               <div className="flex items-center space-x-2">
-                <input 
-                  type="number" 
-                  step="0.1" 
-                  placeholder="15.0" 
+                <input
+                  type="number"
+                  step="0.1"
+                  placeholder="15.0"
                   value={bodyFatInput}
                   onChange={(e) => setBodyFatInput(e.target.value)}
                   className="w-20 px-2 py-1 border rounded text-center"
                   data-testid="input-body-fat"
                 />
-                <button 
+                <button
                   className="px-3 py-1 bg-theme-500 text-white text-sm rounded hover:bg-theme-600"
                   onClick={saveWeight}
                   data-testid="button-save-body-fat"
@@ -1413,7 +1424,7 @@ const TaskManager: React.FC = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="font-bold text-lg mb-4">体重推移</h3>
           <div className="h-64 flex items-center justify-center bg-gray-50 rounded">
@@ -1427,7 +1438,7 @@ const TaskManager: React.FC = () => {
   const renderDiaryDetailScreen = () => (
     <div className="page p-4">
       <header className="flex items-center mb-6">
-        <button 
+        <button
           className="p-2 rounded-full hover:bg-gray-100"
           onClick={() => showScreen('home-screen')}
           data-testid="button-back"
@@ -1439,8 +1450,8 @@ const TaskManager: React.FC = () => {
       <div className="px-4 space-y-6">
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="font-bold text-lg mb-4">新しいメモ</h3>
-          <textarea 
-            placeholder="メモを入力してください" 
+          <textarea
+            placeholder="メモを入力してください"
             rows={8}
             value={diaryText}
             onChange={(e) => setDiaryText(e.target.value)}
@@ -1458,7 +1469,7 @@ const TaskManager: React.FC = () => {
                 <span className="text-sm">気分</span>
               </button>
             </div>
-            <button 
+            <button
               className="px-6 py-2 bg-theme-500 text-white rounded-lg hover:bg-theme-600"
               onClick={saveDiary}
               data-testid="button-save-diary"
@@ -1467,7 +1478,7 @@ const TaskManager: React.FC = () => {
             </button>
           </div>
         </div>
-        
+
         <div className="bg-white rounded-lg shadow p-4">
           <h3 className="font-bold text-lg mb-4">過去のメモ</h3>
           <div className="space-y-3">
@@ -1517,7 +1528,7 @@ const TaskManager: React.FC = () => {
   const handleSaveDailyRoutine = async () => {
     const today = new Date().toISOString().split('T')[0];
     const todayRoutine = dailyRoutines.find(r => r.date === today);
-    
+
     if (!routineContent.trim()) {
       alert('内容を入力してください');
       return;
@@ -1545,15 +1556,15 @@ const TaskManager: React.FC = () => {
   const handleSaveMonthlyGoal = async () => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
-    
+
     // Filter out empty strings and at least one goal should be filled
     const filteredWeightGoals = weightGoals.filter(g => g.trim());
     const filteredTodoGoals = todoGoals.filter(g => g.trim());
     const filteredAchievementGoals = achievementGoals.filter(g => g.trim());
     const filteredActivityGoals = activityGoals.filter(g => g.trim());
-    
-    if (filteredWeightGoals.length === 0 && filteredTodoGoals.length === 0 && 
-        filteredAchievementGoals.length === 0 && filteredActivityGoals.length === 0) {
+
+    if (filteredWeightGoals.length === 0 && filteredTodoGoals.length === 0 &&
+      filteredAchievementGoals.length === 0 && filteredActivityGoals.length === 0) {
       alert('少なくとも1つの目標を入力してください');
       return;
     }
@@ -1596,7 +1607,7 @@ const TaskManager: React.FC = () => {
   ) => {
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
-    
+
     if (!currentMonthGoal) return;
 
     // Map category to completion field
@@ -1618,11 +1629,11 @@ const TaskManager: React.FC = () => {
     const completionField = completionFieldMap[category];
     const goalsField = goalsFieldMap[category];
     const goalsList = currentMonthGoal[goalsField] || [];
-    
+
     // Clone and normalize the completion array
     const currentCompleted = currentMonthGoal[completionField] || [];
     const normalizedCompleted = Array(goalsList.length).fill(false).map((_, i) => currentCompleted[i] || false);
-    
+
     // Toggle the target index
     normalizedCompleted[index] = !normalizedCompleted[index];
 
@@ -1654,15 +1665,15 @@ const TaskManager: React.FC = () => {
   const handleSaveWeeklyGoal = async () => {
     const currentWeek = getWeekNumber(new Date());
     const currentWeekGoal = weeklyGoals.find(g => g.week === currentWeek);
-    
+
     // Filter out empty strings
     const filteredWeeklyWeightGoals = weeklyWeightGoals.filter(g => g.trim());
     const filteredWeeklyTodoGoals = weeklyTodoGoals.filter(g => g.trim());
     const filteredWeeklyAchievementGoals = weeklyAchievementGoals.filter(g => g.trim());
     const filteredWeeklyActivityGoals = weeklyActivityGoals.filter(g => g.trim());
-    
-    if (filteredWeeklyWeightGoals.length === 0 && filteredWeeklyTodoGoals.length === 0 && 
-        filteredWeeklyAchievementGoals.length === 0 && filteredWeeklyActivityGoals.length === 0) {
+
+    if (filteredWeeklyWeightGoals.length === 0 && filteredWeeklyTodoGoals.length === 0 &&
+      filteredWeeklyAchievementGoals.length === 0 && filteredWeeklyActivityGoals.length === 0) {
       alert('少なくとも1つの目標を入力してください');
       return;
     }
@@ -1702,7 +1713,7 @@ const TaskManager: React.FC = () => {
   ) => {
     const currentWeek = getWeekNumber(new Date());
     const currentWeekGoal = weeklyGoals.find(g => g.week === currentWeek);
-    
+
     if (!currentWeekGoal) return;
 
     // Map category to completion field
@@ -1724,11 +1735,11 @@ const TaskManager: React.FC = () => {
     const completionField = completionFieldMap[category];
     const goalsField = goalsFieldMap[category];
     const goalsList = currentWeekGoal[goalsField] || [];
-    
+
     // Clone and normalize the completion array
     const currentCompleted = currentWeekGoal[completionField] || [];
     const normalizedCompleted = Array(goalsList.length).fill(false).map((_, i) => currentCompleted[i] || false);
-    
+
     // Toggle the target index
     normalizedCompleted[index] = !normalizedCompleted[index];
 
@@ -1749,7 +1760,7 @@ const TaskManager: React.FC = () => {
     return (
       <div className="page p-4">
         <header className="flex items-center mb-6">
-          <button 
+          <button
             className="p-2 rounded-full hover:bg-gray-100"
             onClick={() => showScreen('tasks-screen')}
             data-testid="button-back"
@@ -1873,7 +1884,7 @@ const TaskManager: React.FC = () => {
     return (
       <div className="page p-4">
         <header className="flex items-center mb-6">
-          <button 
+          <button
             className="p-2 rounded-full hover:bg-gray-100"
             onClick={() => {
               setShowGoalSetupScreen(false);
@@ -2086,7 +2097,7 @@ const TaskManager: React.FC = () => {
   const renderWeeklyGoalScreen = () => {
     const currentWeek = getWeekNumber(new Date());
     const currentWeekGoal = weeklyGoals.find(g => g.week === currentWeek);
-    
+
     // Calculate week date range for display
     const today = new Date();
     const dayOfWeek = (today.getDay() + 6) % 7; // Monday = 0
@@ -2099,7 +2110,7 @@ const TaskManager: React.FC = () => {
     return (
       <div className="page p-4">
         <header className="flex items-center mb-6">
-          <button 
+          <button
             className="p-2 rounded-full hover:bg-gray-100"
             onClick={() => showScreen('tasks-screen')}
             data-testid="button-back"
@@ -2255,37 +2266,37 @@ const TaskManager: React.FC = () => {
     const { weekStart, weekEnd } = getWeekStartEnd(weekOffset);
     const weekStartStr = weekStart.toISOString().split('T')[0];
     const weekEndStr = weekEnd.toISOString().split('T')[0];
-    
+
     // Get current month and goal
     const currentMonth = new Date().toISOString().slice(0, 7);
     const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
-    
+
     // Filter data for the current week
     const weekTodos = todos.filter(t => {
       const createdDate = new Date(t.createdAt);
       return createdDate >= weekStart && createdDate <= weekEnd && t.completed;
     });
-    
+
     const weekWeightRecords = weightRecords.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
     const weekMealRecords = mealRecords.filter(r => r.date >= weekStartStr && r.date <= weekEndStr);
     const weekDiaryEntries = diaryEntries.filter(d => d.date >= weekStartStr && d.date <= weekEndStr);
-    
+
     // Calculate averages
     const avgWeight = weekWeightRecords.length > 0
       ? weekWeightRecords.reduce((sum, r) => sum + r.weight, 0) / weekWeightRecords.length
       : 0;
-    
+
     const weightChange = weekWeightRecords.length >= 2
       ? weekWeightRecords[weekWeightRecords.length - 1].weight - weekWeightRecords[0].weight
       : 0;
-    
+
     const weekLabel = weekOffset === 0 ? '今週' : weekOffset === -1 ? '先週' : '来週';
     const weekDateRange = `${weekStart.getMonth() + 1}/${weekStart.getDate()} - ${weekEnd.getMonth() + 1}/${weekEnd.getDate()}`;
 
     return (
       <div className="page p-4">
         <header className="flex items-center mb-6">
-          <button 
+          <button
             className="p-2 rounded-full hover:bg-gray-100"
             onClick={() => showScreen('tasks-screen')}
             data-testid="button-back"
@@ -2294,7 +2305,7 @@ const TaskManager: React.FC = () => {
           </button>
           <h2 className="text-xl font-bold mx-auto pr-8">週次振り返り</h2>
         </header>
-        
+
         <div className="px-4 space-y-6">
           {/* Week Navigation */}
           <div className="flex items-center justify-between bg-white rounded-lg shadow p-4">
@@ -2594,7 +2605,7 @@ const TaskManager: React.FC = () => {
     return (
       <div className="page p-4">
         <header className="flex items-center mb-6">
-          <button 
+          <button
             className="p-2 rounded-full hover:bg-gray-100"
             onClick={() => showScreen('tasks-screen')}
             data-testid="button-back"
@@ -2603,7 +2614,7 @@ const TaskManager: React.FC = () => {
           </button>
           <h2 className="text-xl font-bold mx-auto pr-8">週間トラッカー</h2>
         </header>
-        
+
         <div className="px-4 space-y-6">
           {/* Week Navigation */}
           <div className="flex items-center justify-between bg-white rounded-lg shadow p-4">
@@ -2647,15 +2658,15 @@ const TaskManager: React.FC = () => {
                       return createdDate.toLocaleDateString('sv-SE') === dayStr && t.completed;
                     });
                     const dayWeight = weightRecords.find(r => r.date === dayStr);
-                    
+
                     const weight = dayWeight ? dayWeight.weight.toFixed(1) : '-';
-                    
+
                     const dayLabel = ['日', '月', '火', '水', '木', '金', '土'][day.getDay()];
                     const isToday = day.toDateString() === new Date().toDateString();
-                    
+
                     return (
-                      <tr 
-                        key={index} 
+                      <tr
+                        key={index}
                         className={`border-b ${isToday ? 'bg-theme-50' : ''}`}
                         data-testid={`row-day-${index}`}
                       >
@@ -2684,7 +2695,7 @@ const TaskManager: React.FC = () => {
   const renderMealDetailScreen = () => (
     <div className="page p-4">
       <header className="flex items-center mb-6">
-        <button 
+        <button
           className="p-2 rounded-full hover:bg-gray-100"
           onClick={() => showScreen('home-screen')}
           data-testid="button-back"
@@ -2722,7 +2733,7 @@ const TaskManager: React.FC = () => {
                     </div>
                   ))}
                 </div>
-                <button 
+                <button
                   className="w-full py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-theme-400 hover:text-theme-500"
                   data-testid={`button-add-${meal}`}
                 >
@@ -2740,7 +2751,7 @@ const TaskManager: React.FC = () => {
     <div className="page p-4 space-y-6">
       {/* Header */}
       <header className="flex items-center mb-4">
-        <button 
+        <button
           className="p-2 rounded-full hover:bg-gray-100"
           onClick={() => showScreen('home-screen')}
           data-testid="button-back"
@@ -2753,13 +2764,13 @@ const TaskManager: React.FC = () => {
       {/* TODO List Section */}
       <section>
         <div className="flex justify-between items-center mb-3">
-          <div 
+          <div
             className="flex items-center cursor-pointer flex-grow"
             onClick={() => setTodoVisible(!todoVisible)}
             data-testid="toggle-todo-visibility"
           >
             <h2 className="text-xl font-bold">TODOリスト</h2>
-            <button 
+            <button
               className="ml-2 bg-theme-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-theme-600 transition-colors focus:outline-none focus:ring-2 focus:ring-theme-500 focus:ring-opacity-75"
               onClick={(e) => {
                 e.stopPropagation();
@@ -2769,7 +2780,7 @@ const TaskManager: React.FC = () => {
             >
               <Plus size={20} strokeWidth={2.5} />
             </button>
-            <ChevronDown 
+            <ChevronDown
               className={`transition-transform ml-auto ${todoVisible ? 'rotate-180' : ''}`}
               size={24}
             />
@@ -2779,43 +2790,43 @@ const TaskManager: React.FC = () => {
           {todosLoading ? (
             <div className="text-center py-4 text-gray-500">Loading todos...</div>
           ) : (
-          <div className="space-y-2">
-            {todos.map(todo => (
-              <div key={todo.id} className="task-item" data-testid={`todo-item-tasks-${todo.id}`}>
-                <input
-                  type="checkbox"
-                  checked={todo.completed}
-                  onChange={() => toggleTodo(todo.id)}
-                  className="h-5 w-5 rounded border-gray-300 text-theme-600 focus:ring-theme-500"
-                  data-testid={`checkbox-todo-tasks-${todo.id}`}
-                />
-                <span className={`flex-grow ${todo.completed ? 'line-through text-gray-400' : ''}`}>
-                  {todo.text}
-                </span>
-                {todo.repeatType && (
-                  <span title={
-                    todo.repeatType === 'daily' ? '毎日' :
-                    todo.repeatType === 'weekly' ? `毎週 ${todo.repeatDays?.map(d => ['日', '月', '火', '水', '木', '金', '土'][d]).join(', ')}` :
-                    todo.repeatType === 'monthly' ? `毎月 ${todo.repeatDate}日` :
-                    '繰り返し'
-                  }>
-                    <Repeat 
-                      size={16} 
-                      className="text-theme-500 mr-2" 
-                      data-testid={`icon-repeat-tasks-${todo.id}`}
-                    />
+            <div className="space-y-2">
+              {todos.map(todo => (
+                <div key={todo.id} className="task-item" data-testid={`todo-item-tasks-${todo.id}`}>
+                  <input
+                    type="checkbox"
+                    checked={todo.completed}
+                    onChange={() => toggleTodo(todo.id)}
+                    className="h-5 w-5 rounded border-gray-300 text-theme-600 focus:ring-theme-500"
+                    data-testid={`checkbox-todo-tasks-${todo.id}`}
+                  />
+                  <span className={`flex-grow ${todo.completed ? 'line-through text-gray-400' : ''}`}>
+                    {todo.text}
                   </span>
-                )}
-                <button 
-                  onClick={() => deleteTodo(todo.id)}
-                  className="text-red-500 hover:text-red-700"
-                  data-testid={`button-delete-todo-tasks-${todo.id}`}
-                >
-                  <X size={16} />
-                </button>
-              </div>
-            ))}
-          </div>
+                  {todo.repeatType && (
+                    <span title={
+                      todo.repeatType === 'daily' ? '毎日' :
+                        todo.repeatType === 'weekly' ? `毎週 ${todo.repeatDays?.map(d => ['日', '月', '火', '水', '木', '金', '土'][d]).join(', ')}` :
+                          todo.repeatType === 'monthly' ? `毎月 ${todo.repeatDate}日` :
+                            '繰り返し'
+                    }>
+                      <Repeat
+                        size={16}
+                        className="text-theme-500 mr-2"
+                        data-testid={`icon-repeat-tasks-${todo.id}`}
+                      />
+                    </span>
+                  )}
+                  <button
+                    onClick={() => deleteTodo(todo.id)}
+                    className="text-red-500 hover:text-red-700"
+                    data-testid={`button-delete-todo-tasks-${todo.id}`}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ))}
+            </div>
           )}
         </div>
       </section>
@@ -2881,7 +2892,7 @@ const TaskManager: React.FC = () => {
         {(() => {
           const currentMonth = new Date().toLocaleDateString('sv-SE').slice(0, 7);
           const currentMonthGoal = monthlyGoals.find(g => g.month === currentMonth);
-          
+
           if (!currentMonthGoal) {
             return (
               <div className="bg-gray-50 rounded-lg p-4" data-testid="no-monthly-goals">
@@ -2901,7 +2912,7 @@ const TaskManager: React.FC = () => {
           const activityCompleted = currentMonthGoal.activityGoalsCompleted || [];
 
           const totalGoals = weightGoals.length + todoGoals.length + achievementGoals.length + activityGoals.length;
-          const completedGoals = 
+          const completedGoals =
             weightCompleted.filter(c => c).length +
             todoCompleted.filter(c => c).length +
             achievementCompleted.filter(c => c).length +
@@ -2929,15 +2940,7 @@ const TaskManager: React.FC = () => {
       <section>
         <h2 className="text-xl font-bold mb-3">管理</h2>
         <div className="grid grid-cols-2 gap-4">
-          <div 
-            className="record-card"
-            onClick={() => showScreen('daily-routine-screen')}
-            data-testid="card-daily-routine-tasks"
-          >
-            <h3 className="font-bold">今日やったこと</h3>
-            <p className="text-sm text-gray-500">毎日の習慣...</p>
-          </div>
-          <div 
+          <div
             className="record-card"
             onClick={() => showScreen('monthly-goal-screen')}
             data-testid="card-monthly-goal-tasks"
@@ -2945,7 +2948,7 @@ const TaskManager: React.FC = () => {
             <h3 className="font-bold">月間目標</h3>
             <p className="text-sm text-gray-500">今月の目標を設定...</p>
           </div>
-          <div 
+          <div
             className="record-card"
             onClick={() => showScreen('weekly-goal-screen')}
             data-testid="card-weekly-goal-tasks"
@@ -2953,7 +2956,7 @@ const TaskManager: React.FC = () => {
             <h3 className="font-bold">週間目標</h3>
             <p className="text-sm text-gray-500">今週の目標を設定...</p>
           </div>
-          <div 
+          <div
             className="record-card"
             onClick={() => showScreen('weekly-review-screen')}
             data-testid="card-weekly-review-tasks"
@@ -2961,7 +2964,7 @@ const TaskManager: React.FC = () => {
             <h3 className="font-bold">週次振り返り</h3>
             <p className="text-sm text-gray-500">今週の記録を確認...</p>
           </div>
-          <div 
+          <div
             className="record-card"
             onClick={() => showScreen('week-tracker-screen')}
             data-testid="card-week-tracker-tasks"
@@ -2989,7 +2992,7 @@ const TaskManager: React.FC = () => {
             {(() => {
               const today = new Date().toLocaleDateString('sv-SE');
               const pastSchedules = schedules.filter(s => s.date !== today);
-              
+
               if (pastSchedules.length === 0) {
                 return <p className="text-gray-500 text-center py-8">過去の予定はありません</p>;
               }
@@ -3055,17 +3058,17 @@ const TaskManager: React.FC = () => {
       const startingDayOfWeek = firstDay.getDay();
 
       const days: (Date | null)[] = [];
-      
+
       // Add empty cells for days before the first day of the month
       for (let i = 0; i < startingDayOfWeek; i++) {
         days.push(null);
       }
-      
+
       // Add all days of the month
       for (let day = 1; day <= daysInMonth; day++) {
         days.push(new Date(year, month, day));
       }
-      
+
       return days;
     };
 
@@ -3086,7 +3089,7 @@ const TaskManager: React.FC = () => {
       const dateStr = date.toLocaleDateString('sv-SE');
       const today = new Date().toLocaleDateString('sv-SE');
       if (dateStr >= today) return false;
-      
+
       const dayTasks = getDayTasks(date);
       return dayTasks.some(task => !task.completed);
     };
@@ -3110,7 +3113,7 @@ const TaskManager: React.FC = () => {
     return (
       <div className="page p-4">
         <header className="flex items-center mb-6">
-          <button 
+          <button
             className="p-2 rounded-full hover:bg-gray-100"
             onClick={() => showScreen('home-screen')}
             data-testid="button-back"
@@ -3119,7 +3122,7 @@ const TaskManager: React.FC = () => {
           </button>
           <h2 className="text-xl font-bold mx-auto pr-8">カレンダー</h2>
         </header>
-        
+
         <div className="px-4 space-y-6">
           {/* Month Navigation */}
           <div className="flex items-center justify-between bg-white rounded-lg shadow p-4">
@@ -3154,30 +3157,29 @@ const TaskManager: React.FC = () => {
                 </div>
               ))}
             </div>
-            
+
             {/* Calendar Days */}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((date, index) => {
                 if (!date) {
                   return <div key={`empty-${index}`} className="h-12" />;
                 }
-                
+
                 const dayTasks = getDayTasks(date);
                 const daySchedules = getDaySchedules(date);
                 const hasOverdue = hasOverdueTasks(date);
                 const isSelected = calendarSelectedDay?.toDateString() === date.toDateString();
-                
+
                 return (
                   <button
                     key={index}
                     onClick={() => setCalendarSelectedDay(date)}
-                    className={`h-12 rounded-lg flex flex-col items-center justify-center relative transition-colors ${
-                      isToday(date)
-                        ? 'border-2 border-theme-500 text-theme-600 font-bold'
-                        : isSelected
+                    className={`h-12 rounded-lg flex flex-col items-center justify-center relative transition-colors ${isToday(date)
+                      ? 'border-2 border-theme-500 text-theme-600 font-bold'
+                      : isSelected
                         ? 'bg-theme-100 text-theme-700'
                         : 'hover:bg-gray-100'
-                    }`}
+                      }`}
                     data-testid={`calendar-day-${date.getDate()}`}
                   >
                     <span className="text-sm">{date.getDate()}</span>
@@ -3204,7 +3206,7 @@ const TaskManager: React.FC = () => {
               <h3 className="font-bold text-lg mb-4">
                 {calendarSelectedDay.getMonth() + 1}月{calendarSelectedDay.getDate()}日の予定・タスク
               </h3>
-              
+
               {/* Schedules */}
               {getDaySchedules(calendarSelectedDay).length > 0 && (
                 <div className="mb-4">
@@ -3224,7 +3226,7 @@ const TaskManager: React.FC = () => {
                   </div>
                 </div>
               )}
-              
+
               {/* Tasks */}
               {getDayTasks(calendarSelectedDay).length > 0 && (
                 <div>
@@ -3246,7 +3248,7 @@ const TaskManager: React.FC = () => {
                   </div>
                 </div>
               )}
-              
+
               {getDaySchedules(calendarSelectedDay).length === 0 && getDayTasks(calendarSelectedDay).length === 0 && (
                 <p className="text-gray-500 text-center py-4">この日の予定・タスクはありません</p>
               )}
@@ -3285,7 +3287,7 @@ const TaskManager: React.FC = () => {
     return (
       <div className="page p-4">
         <header className="flex items-center mb-6">
-          <button 
+          <button
             className="p-2 rounded-full hover:bg-gray-100"
             onClick={() => showScreen('home-screen')}
             data-testid="button-back"
@@ -3294,7 +3296,7 @@ const TaskManager: React.FC = () => {
           </button>
           <h2 className="text-xl font-bold mx-auto pr-8">設定</h2>
         </header>
-        
+
         <div className="px-4 space-y-6">
           {/* Dark Mode Section */}
           <div className="bg-white rounded-lg shadow">
@@ -3323,11 +3325,10 @@ const TaskManager: React.FC = () => {
               {themeColors.map((theme) => (
                 <button
                   key={theme.value}
-                  className={`w-full p-3 rounded-lg border-2 transition-all ${
-                    userSettings?.themeColor === theme.value
-                      ? 'border-theme-500 bg-theme-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
+                  className={`w-full p-3 rounded-lg border-2 transition-all ${userSettings?.themeColor === theme.value
+                    ? 'border-theme-500 bg-theme-50'
+                    : 'border-gray-200 hover:border-gray-300'
+                    }`}
                   onClick={() => handleSettingChange('themeColor', theme.value)}
                   data-testid={`button-theme-${theme.value}`}
                 >
@@ -3369,7 +3370,7 @@ const TaskManager: React.FC = () => {
   const renderLinksScreen = () => (
     <div className="page p-4">
       <header className="flex items-center mb-6">
-        <button 
+        <button
           className="p-2 rounded-full hover:bg-gray-100"
           onClick={() => showScreen('home-screen')}
           data-testid="button-back"
@@ -3404,9 +3405,9 @@ const TaskManager: React.FC = () => {
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex-1 min-w-0">
                     <h3 className="font-medium text-gray-900 mb-1 truncate" data-testid={`link-title-${link.id}`}>{link.title}</h3>
-                    <a 
-                      href={link.url} 
-                      target="_blank" 
+                    <a
+                      href={link.url}
+                      target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-theme-600 hover:text-theme-700 break-all"
                       data-testid={`link-url-${link.id}`}
@@ -3548,23 +3549,23 @@ const TaskManager: React.FC = () => {
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
             <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
               <h2 className="text-xl font-bold mb-4">予定を追加</h2>
-              <input 
-                type="text" 
-                placeholder="予定を入力" 
+              <input
+                type="text"
+                placeholder="予定を入力"
                 value={scheduleInput}
                 onChange={(e) => setScheduleInput(e.target.value)}
                 className="form-input mb-4"
                 data-testid="input-schedule"
               />
               <div className="flex justify-end space-x-3">
-                <button 
+                <button
                   className="btn-secondary"
                   onClick={() => setScheduleModalVisible(false)}
                   data-testid="button-cancel-schedule"
                 >
                   キャンセル
                 </button>
-                <button 
+                <button
                   className="btn-primary"
                   onClick={saveSchedule}
                   data-testid="button-save-schedule"
@@ -3585,7 +3586,7 @@ const TaskManager: React.FC = () => {
                 すべてのデータをエクスポートします。形式を選択してください。
               </p>
               <div className="space-y-3">
-                <button 
+                <button
                   className="w-full btn-primary"
                   onClick={() => exportData('json')}
                   disabled={exportLoading}
@@ -3593,7 +3594,7 @@ const TaskManager: React.FC = () => {
                 >
                   {exportLoading ? '処理中...' : 'JSON形式でエクスポート'}
                 </button>
-                <button 
+                <button
                   className="w-full btn-secondary"
                   onClick={() => exportData('csv')}
                   disabled={exportLoading}
@@ -3603,7 +3604,7 @@ const TaskManager: React.FC = () => {
                 </button>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
-                <button 
+                <button
                   className="btn-secondary"
                   onClick={() => setExportModalVisible(false)}
                   disabled={exportLoading}
@@ -3622,7 +3623,7 @@ const TaskManager: React.FC = () => {
             <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">カレンダー</h2>
-                <button 
+                <button
                   className="text-gray-500 hover:text-gray-700"
                   onClick={() => setCalendarModalVisible(false)}
                   data-testid="button-close-calendar"
@@ -3630,10 +3631,10 @@ const TaskManager: React.FC = () => {
                   ✕
                 </button>
               </div>
-              
+
               {/* Calendar Navigation */}
               <div className="flex justify-between items-center mb-4">
-                <button 
+                <button
                   className="btn-secondary"
                   onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() - 1, 1))}
                   data-testid="button-prev-month"
@@ -3643,7 +3644,7 @@ const TaskManager: React.FC = () => {
                 <span className="font-medium" data-testid="text-current-month">
                   {selectedDate.getFullYear()}年{selectedDate.getMonth() + 1}月
                 </span>
-                <button 
+                <button
                   className="btn-secondary"
                   onClick={() => setSelectedDate(new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 1))}
                   data-testid="button-next-month"
@@ -3666,23 +3667,22 @@ const TaskManager: React.FC = () => {
                   const lastDay = new Date(year, month + 1, 0);
                   const startDate = new Date(firstDay);
                   startDate.setDate(startDate.getDate() - firstDay.getDay());
-                  
+
                   const days = [];
                   for (let i = 0; i < 42; i++) {
                     const currentDate = new Date(startDate);
                     currentDate.setDate(startDate.getDate() + i);
                     const isCurrentMonth = currentDate.getMonth() === month;
                     const isToday = currentDate.toDateString() === new Date().toDateString();
-                    const hasSchedule = schedules.some(schedule => 
+                    const hasSchedule = schedules.some(schedule =>
                       schedule.date === currentDate.toLocaleDateString('sv-SE')
                     );
-                    
+
                     days.push(
                       <button
                         key={i}
-                        className={`p-2 text-sm rounded hover:bg-theme-100 relative ${
-                          isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-                        } ${isToday ? 'bg-theme-500 text-white hover:bg-theme-600' : ''}`}
+                        className={`p-2 text-sm rounded hover:bg-theme-100 relative ${isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                          } ${isToday ? 'bg-theme-500 text-white hover:bg-theme-600' : ''}`}
                         onClick={() => {
                           if (isCurrentMonth) {
                             setSelectedDate(new Date(currentDate));
@@ -3729,7 +3729,27 @@ const TaskManager: React.FC = () => {
         {todoInputModalVisible && (
           <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center p-4">
             <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm">
-              <h2 className="text-xl font-bold mb-4">TODO追加</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">TODO追加</h2>
+                <button
+                  onClick={() => {
+                    setTodoInputModalVisible(false);
+                    setTodoInputText('');
+                    setRepeatType('none');
+                    setRepeatDays([]);
+                    setRepeatDate(null);
+                    setLocationEnabled(false);
+                    setLocationName('');
+                    setLocationLat(null);
+                    setLocationLng(null);
+                    setLocationRadius(100);
+                  }}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                  data-testid="button-close-todo-modal"
+                >
+                  <X size={24} />
+                </button>
+              </div>
               <input
                 type="text"
                 placeholder="TODOを入力してください"
@@ -3744,7 +3764,7 @@ const TaskManager: React.FC = () => {
                 }}
                 autoFocus
               />
-              
+
               {/* 繰り返し設定 */}
               <div className="mb-4">
                 <label className="block text-sm font-medium mb-2">繰り返し設定</label>
@@ -3777,11 +3797,10 @@ const TaskManager: React.FC = () => {
                             setRepeatDays([...repeatDays, index]);
                           }
                         }}
-                        className={`px-3 py-1 rounded-full text-sm ${
-                          repeatDays.includes(index)
-                            ? 'bg-theme-500 text-white'
-                            : 'bg-gray-200 text-gray-700'
-                        }`}
+                        className={`px-3 py-1 rounded-full text-sm ${repeatDays.includes(index)
+                          ? 'bg-theme-500 text-white'
+                          : 'bg-gray-200 text-gray-700'
+                          }`}
                         data-testid={`button-weekday-${index}`}
                       >
                         {day}
@@ -3861,27 +3880,9 @@ const TaskManager: React.FC = () => {
                   )}
                 </div>
               )}
-              
+
               <div className="flex justify-end space-x-3">
-                <button 
-                  className="btn-secondary"
-                  onClick={() => {
-                    setTodoInputModalVisible(false);
-                    setTodoInputText('');
-                    setRepeatType('none');
-                    setRepeatDays([]);
-                    setRepeatDate(null);
-                    setLocationEnabled(false);
-                    setLocationName('');
-                    setLocationLat(null);
-                    setLocationLng(null);
-                    setLocationRadius(100);
-                  }}
-                  data-testid="button-close-todo-input"
-                >
-                  完了
-                </button>
-                <button 
+                <button
                   className="btn-primary"
                   onClick={saveTodoInput}
                   disabled={!todoInputText.trim()}
@@ -3891,7 +3892,7 @@ const TaskManager: React.FC = () => {
                 </button>
               </div>
               <div className="mt-3 text-sm text-gray-600">
-                Enterキーでも追加できます。「完了」を押すまで続けて追加できます。
+                Enterキーでも追加できます。続けて追加できます。
               </div>
             </div>
           </div>
@@ -3929,7 +3930,7 @@ const TaskManager: React.FC = () => {
                 />
               </div>
               <div className="flex justify-end space-x-3">
-                <button 
+                <button
                   className="btn-secondary"
                   onClick={() => {
                     setScheduleInputModalVisible(false);
@@ -3940,7 +3941,7 @@ const TaskManager: React.FC = () => {
                 >
                   キャンセル
                 </button>
-                <button 
+                <button
                   className="btn-primary"
                   onClick={saveScheduleInput}
                   disabled={!scheduleInputText.trim()}
@@ -3962,16 +3963,14 @@ const TaskManager: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium">通知を有効にする</span>
                   <button
-                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                      notificationsEnabled ? 'bg-theme-500' : 'bg-gray-200'
-                    }`}
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${notificationsEnabled ? 'bg-theme-500' : 'bg-gray-200'
+                      }`}
                     onClick={toggleNotifications}
                     data-testid="toggle-notifications"
                   >
                     <span
-                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                        notificationsEnabled ? 'translate-x-5' : 'translate-x-0'
-                      }`}
+                      className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${notificationsEnabled ? 'translate-x-5' : 'translate-x-0'
+                        }`}
                     />
                   </button>
                 </div>
@@ -3990,7 +3989,7 @@ const TaskManager: React.FC = () => {
                   )}
                 </div>
                 {notificationsEnabled && (
-                  <button 
+                  <button
                     className="w-full btn-secondary"
                     onClick={checkTaskReminders}
                     data-testid="button-test-notification"
@@ -4000,7 +3999,7 @@ const TaskManager: React.FC = () => {
                 )}
               </div>
               <div className="flex justify-end space-x-3 mt-6">
-                <button 
+                <button
                   className="btn-secondary"
                   onClick={() => setNotificationModalVisible(false)}
                   data-testid="button-close-notification"
@@ -4019,7 +4018,7 @@ const TaskManager: React.FC = () => {
             {getCurrentDate()}
           </div>
           <div className="flex items-center space-x-3">
-            <button 
+            <button
               className={`transition-colors ${notificationsEnabled ? 'text-theme-500 hover:text-theme-600' : 'text-gray-500 hover:text-theme-500'}`}
               onClick={() => setNotificationModalVisible(true)}
               data-testid="button-notification"
@@ -4027,7 +4026,7 @@ const TaskManager: React.FC = () => {
             >
               <Bell size={24} />
             </button>
-            <button 
+            <button
               className="text-gray-500 hover:text-theme-500 transition-colors"
               onClick={() => setExportModalVisible(true)}
               data-testid="button-export"
@@ -4045,20 +4044,18 @@ const TaskManager: React.FC = () => {
 
         {/* Bottom Navigation */}
         <nav className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-theme-200 flex">
-          <button 
-            className={`nav-btn flex-1 flex flex-col items-center py-2 text-center ${
-              currentScreen === 'home-screen' ? 'nav-active' : ''
-            }`}
+          <button
+            className={`nav-btn flex-1 flex flex-col items-center py-2 text-center ${currentScreen === 'home-screen' ? 'nav-active' : ''
+              }`}
             onClick={() => showScreen('home-screen')}
             data-testid="nav-home"
           >
             <Home size={24} className="mb-1" />
             <span className="text-xs">ホーム</span>
           </button>
-          <button 
-            className={`nav-btn flex-1 flex flex-col items-center py-2 text-center ${
-              currentScreen === 'tasks-screen' ? 'nav-active' : ''
-            }`}
+          <button
+            className={`nav-btn flex-1 flex flex-col items-center py-2 text-center ${currentScreen === 'tasks-screen' ? 'nav-active' : ''
+              }`}
             onClick={() => showScreen('tasks-screen')}
             data-testid="nav-tasks"
           >
