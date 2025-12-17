@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import confetti from 'canvas-confetti';
 import { useLocalData, useLocalSettings } from '../hooks/useLocalData';
 import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -867,6 +868,15 @@ const TaskManager: React.FC = () => {
         id,
         completed: !todo.completed
       });
+
+      if (!todo.completed) {
+        confetti({
+          particleCount: 100,
+          spread: 70,
+          origin: { y: 0.6 },
+          colors: ['#ff69b4', '#ffb6c1', '#ffc0cb', '#87ceeb', '#e0ffff']
+        });
+      }
     }
   };
 
@@ -1095,7 +1105,7 @@ const TaskManager: React.FC = () => {
       {/* My Page Section */}
       <section>
         <h2 className="text-xl font-bold mb-3">マイページ</h2>
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-6">
           <div
             className="record-card"
             onClick={() => showScreen('body-detail-screen')}
@@ -2330,7 +2340,7 @@ const TaskManager: React.FC = () => {
           </div>
 
           {/* Weekly Summary Cards */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-2 gap-6">
             <div className="bg-white rounded-lg shadow p-4 text-center" data-testid="card-completed-tasks">
               <div className="text-3xl font-bold text-theme-500">{weekTodos.length}</div>
               <div className="text-sm text-gray-500 mt-1">達成タスク</div>

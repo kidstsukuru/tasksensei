@@ -1,76 +1,36 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Mochiy+Pop+One&family=Zen+Maru+Gothic:wght@400;500;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --theme-50: hsl(325, 77%, 96%);
-  --theme-100: hsl(326, 78%, 95%);
-  --theme-200: hsl(326, 85%, 90%);
-  --theme-400: hsl(330, 81%, 60%);
-  --theme-500: hsl(330, 81%, 56%);
-  --theme-600: hsl(334, 82%, 50%);
-  --theme-900: hsl(337, 67%, 25%);
-  
-  --background: hsl(0, 0%, 100%);
-  --foreground: hsl(337, 67%, 25%);
-  --card: hsl(0, 0%, 100%);
-  --card-foreground: hsl(337, 67%, 25%);
-  --popover: hsl(0, 0%, 100%);
-  --popover-foreground: hsl(337, 67%, 25%);
-  --primary: hsl(330, 81%, 56%);
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(210, 25%, 7.8431%);
-  --secondary-foreground: hsl(0, 0%, 100%);
-  --muted: hsl(240, 1.9608%, 90%);
-  --muted-foreground: hsl(210, 25%, 7.8431%);
-  --accent: hsl(326, 85%, 90%);
-  --accent-foreground: hsl(330, 81%, 56%);
-  --destructive: hsl(356.3033, 90.5579%, 54.3137%);
-  --destructive-foreground: hsl(0, 0%, 100%);
-  --border: hsl(326, 85%, 90%);
-  --input: hsl(325, 77%, 96%);
-  --ring: hsl(330, 81%, 56%);
-  --chart-1: hsl(330, 81%, 56%);
-  --chart-2: hsl(159.7826, 100%, 36.0784%);
-  --chart-3: hsl(42.0290, 92.8251%, 56.2745%);
-  --chart-4: hsl(147.1429, 78.5047%, 41.9608%);
-  --chart-5: hsl(341.4894, 75.2000%, 50.9804%);
-  --sidebar: hsl(0, 0%, 100%);
-  --sidebar-foreground: hsl(337, 67%, 25%);
-  --sidebar-primary: hsl(330, 81%, 56%);
-  --sidebar-primary-foreground: hsl(0, 0%, 100%);
-  --sidebar-accent: hsl(326, 85%, 90%);
-  --sidebar-accent-foreground: hsl(330, 81%, 56%);
-  --sidebar-border: hsl(326, 85%, 90%);
-  --sidebar-ring: hsl(330, 81%, 56%);
-  --font-sans: 'Noto Sans JP', 'Inter', sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: Menlo, monospace;
-  --radius: 0.5rem;
-}
+  /* Pop & Candy Palette */
+  --theme-50: #fff0f5;
+  --theme-100: #ffe4e1;
+  --theme-200: #ffb6c1;
+  --theme-300: #ff69b4;
+  --theme-400: #ff1493;
+  --theme-500: #ff007f;
+  /* Hot Pink */
+  --theme-600: #c71585;
+  --theme-900: #8b008b;
 
-.dark {
-  --background: hsl(0, 0%, 0%);
-  --foreground: hsl(0, 0%, 95%);
-  --card: hsl(0, 0%, 3.9%);
-  --card-foreground: hsl(0, 0%, 95%);
-  --popover: hsl(0, 0%, 3.9%);
-  --popover-foreground: hsl(0, 0%, 95%);
-  --primary: hsl(330, 81%, 56%);
-  --primary-foreground: hsl(0, 0%, 100%);
-  --secondary: hsl(0, 0%, 14.9%);
-  --secondary-foreground: hsl(0, 0%, 98%);
-  --muted: hsl(0, 0%, 14.9%);
-  --muted-foreground: hsl(0, 0%, 63.9%);
-  --accent: hsl(0, 0%, 14.9%);
-  --accent-foreground: hsl(0, 0%, 98%);
-  --destructive: hsl(0, 84.2%, 60.2%);
-  --destructive-foreground: hsl(0, 0%, 98%);
-  --border: hsl(0, 0%, 14.9%);
-  --input: hsl(0, 0%, 14.9%);
-  --ring: hsl(330, 81%, 56%);
+  --pop-yellow: #fff700;
+  --pop-blue: #00bfff;
+  --pop-green: #7fff00;
+  --pop-purple: #9400d3;
+
+  --background: #fffdf5;
+  --foreground: #4a0e2e;
+  /* Dark chocolate text */
+
+  --border-width: 3px;
+  --shadow-offset: 4px;
+
+  --radius: 1.5rem;
+  --font-heading: 'Mochiy Pop One', sans-serif;
+  --font-body: 'Zen Maru Gothic', sans-serif;
 }
 
 @layer base {
@@ -79,69 +39,152 @@
   }
 
   body {
-    @apply font-sans antialiased bg-background text-foreground;
-    font-family: 'Noto Sans JP', 'Inter', sans-serif;
-    -webkit-tap-highlight-color: transparent;
+    @apply font-sans antialiased text-foreground;
+    font-family: var(--font-body);
+    background-color: var(--background);
+    background-image:
+      radial-gradient(var(--theme-200) 20%, transparent 20%),
+      radial-gradient(var(--pop-blue) 20%, transparent 20%);
+    background-size: 40px 40px;
+    background-position: 0 0, 20px 20px;
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  button,
+  .font-heading {
+    font-family: var(--font-heading);
   }
 }
 
 @layer utilities {
-  ::-webkit-scrollbar { 
-    width: 6px; 
-  }
-  ::-webkit-scrollbar-track { 
-    background: var(--theme-50); 
-  }
-  ::-webkit-scrollbar-thumb { 
-    background: var(--theme-400); 
-    border-radius: 3px; 
-  }
-  ::-webkit-scrollbar-thumb:hover { 
-    background: var(--theme-500); 
+
+  /* Pop Sticker Utilities */
+  .sticker-panel {
+    background: white;
+    border: var(--border-width) solid var(--foreground);
+    box-shadow: var(--shadow-offset) var(--shadow-offset) 0px var(--foreground);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
-  .nav-active svg, .nav-active span { 
-    color: var(--theme-500); 
+  .sticker-panel:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: calc(var(--shadow-offset) + 2px) calc(var(--shadow-offset) + 2px) 0px var(--foreground);
   }
 
-  .pomodoro-btn.active { 
-    background-color: var(--theme-500); 
-    color: white; 
+  .sticker-panel:active {
+    transform: translate(2px, 2px);
+    box-shadow: 0px 0px 0px var(--foreground);
+  }
+
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--theme-50);
+    border-left: var(--border-width) solid var(--foreground);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: var(--theme-300);
+    border: var(--border-width) solid var(--foreground);
+    border-radius: 99px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--theme-500);
+  }
+
+  ::selection {
+    background: var(--pop-yellow);
+    color: var(--foreground);
+  }
+
+  .nav-active svg,
+  .nav-active span {
+    color: var(--theme-500);
+    filter: drop-shadow(2px 2px 0px var(--foreground));
+    transform: scale(1.1) rotate(-5deg);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 
   .form-input {
-    @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[var(--theme-500)] focus:border-[var(--theme-500)];
+    @apply w-full px-5 py-3 border-[3px] border-[var(--foreground)] bg-white rounded-2xl focus:ring-0 focus:border-[var(--theme-500)] focus:shadow-[4px_4px_0px_var(--theme-500)] transition-all duration-200 text-base font-bold text-[var(--foreground)];
   }
 
   .btn-primary {
-    @apply px-4 py-2 bg-[var(--theme-500)] text-white rounded-lg hover:bg-[var(--theme-600)] transition-colors;
+    @apply px-6 py-3 bg-[var(--theme-400)] text-white font-black rounded-2xl border-[3px] border-[var(--foreground)] shadow-[4px_4px_0px_var(--foreground)] hover:bg-[var(--theme-500)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_var(--foreground)] active:translate-y-1 active:shadow-none transition-all duration-200 flex items-center justify-center gap-2 tracking-wide;
   }
 
   .btn-secondary {
-    @apply px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 transition-colors;
+    @apply px-6 py-3 bg-white text-[var(--foreground)] font-black border-[3px] border-[var(--foreground)] rounded-2xl shadow-[4px_4px_0px_var(--theme-200)] hover:bg-[var(--theme-50)] hover:-translate-y-1 hover:shadow-[6px_6px_0px_var(--theme-300)] active:translate-y-1 active:shadow-none transition-all duration-200 flex items-center justify-center gap-2;
   }
 
   .record-card {
-    @apply bg-white p-4 rounded-lg shadow cursor-pointer hover:shadow-md transition-shadow;
+    @apply sticker-panel p-6 rounded-[2rem] cursor-pointer relative overflow-hidden;
+  }
+
+  .record-card::after {
+    content: '';
+    @apply absolute top-2 right-2 w-4 h-4 rounded-full bg-[var(--pop-yellow)] border-2 border-[var(--foreground)];
   }
 
   .nav-btn {
-    @apply text-gray-500 hover:text-[var(--theme-500)] transition-colors;
+    @apply text-[var(--foreground)] opacity-60 hover:opacity-100 hover:scale-110 transition-all duration-200 font-bold;
   }
 
   .pomodoro-btn {
-    @apply bg-gray-100 text-gray-600 hover:bg-gray-200 transition-colors;
+    @apply bg-white border-[3px] border-[var(--foreground)] text-[var(--foreground)] font-bold hover:bg-[var(--theme-100)] hover:-translate-y-1 hover:shadow-[3px_3px_0px_var(--foreground)] transition-all duration-200 rounded-xl;
+  }
+
+  .pomodoro-btn.active {
+    background-color: var(--theme-400);
+    color: white;
+    transform: rotate(-2deg) scale(1.05);
+    box-shadow: 4px 4px 0px var(--foreground);
   }
 
   .task-item {
-    @apply bg-white p-3 rounded-lg shadow-sm flex items-center space-x-3;
+    @apply sticker-panel p-4 rounded-2xl flex items-center space-x-4 hover:rotate-1;
   }
 
   .task-card {
-    @apply bg-white p-4 rounded-lg shadow-sm border-l-4 border-[var(--theme-400)];
+    @apply sticker-panel p-5 rounded-3xl hover:rotate-1;
   }
 
   .page {
-    @apply min-h-screen;
+    @apply min-h-screen pb-28 animate-in zoom-in-95 duration-500;
+  }
+
+  /* Pop Animations */
+  @keyframes bounce-in {
+    0% {
+      transform: scale(0.3);
+      opacity: 0;
+    }
+
+    50% {
+      transform: scale(1.05);
+      opacity: 1;
+    }
+
+    70% {
+      transform: scale(0.9);
+    }
+
+    100% {
+      transform: scale(1);
+    }
+  }
+
+  .animate-bounce-in {
+    animation: bounce-in 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
 }

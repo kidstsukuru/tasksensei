@@ -70,7 +70,9 @@ export default {
         },
       },
       fontFamily: {
-        sans: ["var(--font-sans)"],
+        sans: ["var(--font-body)", "var(--font-sans)"],
+        heading: ["var(--font-heading)"],
+        body: ["var(--font-body)"],
         serif: ["var(--font-serif)"],
         mono: ["var(--font-mono)"],
       },
@@ -91,10 +93,20 @@ export default {
             height: "0",
           },
         },
+        float: {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-5px)" },
+        },
+        "bounce-slight": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-10%)" },
+        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        float: "float 3s ease-in-out infinite",
+        "bounce-slight": "bounce-slight 0.3s ease-in-out",
       },
     },
   },
