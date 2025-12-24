@@ -42,7 +42,6 @@ import type {
   UserSettings
 } from '../types/local';
 import {
-  Bell,
   Clock,
   Home,
   Timer,
@@ -84,6 +83,12 @@ const TaskManager: React.FC = () => {
     return saved ? JSON.parse(saved) : false;
   });
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+
+  // Vibration functionality state
+  const [vibrationEnabled, setVibrationEnabled] = useState(() => {
+    const saved = localStorage.getItem('vibrationEnabled');
+    return saved ? JSON.parse(saved) : true; // デフォルトはオン
+  });
 
   // Calendar functionality state
   const [calendarModalVisible, setCalendarModalVisible] = useState(false);
@@ -609,6 +614,26 @@ const TaskManager: React.FC = () => {
     localStorage.setItem('notificationsEnabled', JSON.stringify(notificationsEnabled));
   }, [notificationsEnabled]);
 
+  // Save vibrationEnabled to localStorage
+  useEffect(() => {
+    localStorage.setItem('vibrationEnabled', JSON.stringify(vibrationEnabled));
+  }, [vibrationEnabled]);
+
+  // Vibration helper function
+  const triggerVibration = (pattern: number | number[] = 50) => {
+    if (vibrationEnabled && 'vibrate' in navigator) {
+      navigator.vibrate(pattern);
+    }
+  };
+
+  const toggleVibration = () => {
+    const newValue = !vibrationEnabled;
+    setVibrationEnabled(newValue);
+    if (newValue && 'vibrate' in navigator) {
+      navigator.vibrate(100); // テスト振動
+    }
+  };
+
   // Apply theme color to CSS custom properties
   useEffect(() => {
     const themeColorMap: Record<string, { h: number; s: number; l: number }> = {
@@ -639,9 +664,10 @@ const TaskManager: React.FC = () => {
   const [scheduleModalVisible, setScheduleModalVisible] = useState(false);
   const [scheduleInput, setScheduleInput] = useState('');
   const [diaryText, setDiaryText] = useState('');
+  const [diaryPhotos, setDiaryPhotos] = useState<string[]>([]);
   const [weightInput, setWeightInput] = useState('');
   const [heightInput, setHeightInput] = useState('');
-  const [bodyFatInput, setBodyFatInput] = useState('');
+
 
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -753,6 +779,16 @@ const TaskManager: React.FC = () => {
       localStorage.setItem('lastCheckedGoalMonth', currentMonth);
     }
   }, [monthlyGoals]);
+
+  // 最後に記録された身長を初期表示時に自動入力
+  useEffect(() => {
+    if (weightRecords.length > 0) {
+      const latestRecord = weightRecords[weightRecords.length - 1];
+      if (latestRecord.height && !heightInput) {
+        setHeightInput(latestRecord.height.toString());
+      }
+    }
+  }, [weightRecords]);
 
   const getCurrentDate = () => {
     return new Date().toLocaleDateString('ja-JP', {
@@ -928,11 +964,10 @@ const TaskManager: React.FC = () => {
           date: new Date().toISOString().split('T')[0],
           weight: weight,
           height: heightInput ? parseFloat(heightInput) : undefined,
-          bodyFat: bodyFatInput ? parseFloat(bodyFatInput) : undefined
+          bodyFat: undefined
         });
         setWeightInput('');
-        setHeightInput('');
-        setBodyFatInput('');
+        // 身長は保持する（クリアしない）
       }
     }
   };
@@ -943,10 +978,31 @@ const TaskManager: React.FC = () => {
         date: new Date().toISOString().split('T')[0],
         content: diaryText.trim(),
         mood: undefined,
-        photos: undefined
+        photos: diaryPhotos.length > 0 ? diaryPhotos : undefined
       });
       setDiaryText('');
+      setDiaryPhotos([]);
     }
+  };
+
+  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const files = event.target.files;
+    if (files) {
+      Array.from(files).forEach(file => {
+        if (file.type.startsWith('image/')) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const result = e.target?.result as string;
+            setDiaryPhotos(prev => [...prev, result]);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setDiaryPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
   const getTodaysSchedules = () => {
@@ -992,45 +1048,6 @@ const TaskManager: React.FC = () => {
         </div>
       </header>
 
-      {/* Scheduled Today Section */}
-      <section className="space-y-2 mb-6">
-        <div className="flex items-center">
-          <h2 className="text-xl font-bold">今日の予定</h2>
-          <button
-            className="ml-2 bg-theme-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-theme-600 transition-colors focus:outline-none focus:ring-2 focus:ring-theme-500 focus:ring-opacity-75"
-            onClick={() => {
-              setScheduleInputDate(new Date());
-              setScheduleInputModalVisible(true);
-            }}
-            data-testid="button-add-schedule-home"
-          >
-            <Plus size={20} strokeWidth={2.5} />
-          </button>
-        </div>
-        {schedulesLoading ? (
-          <div className="text-center py-4 text-gray-500">Loading schedules...</div>
-        ) : getTodaysSchedules().length > 0 && (
-          <>
-            {getTodaysSchedules().map(schedule => (
-              <div key={schedule.id} className="task-card">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium flex-grow">{schedule.text}</span>
-                  <span className="text-sm text-gray-500 mr-2">
-                    {schedule.time ? formatTime(schedule.time) : ''}
-                  </span>
-                  <button
-                    onClick={() => deleteScheduleMutation.mutate(schedule.id)}
-                    className="text-red-500 hover:text-red-700 flex-shrink-0"
-                    data-testid={`button-delete-schedule-home-${schedule.id}`}
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </>
-        )}
-      </section>
 
       {/* TODO List Section */}
       <section>
@@ -1101,6 +1118,47 @@ const TaskManager: React.FC = () => {
           )}
         </div>
       </section>
+
+      {/* Scheduled Today Section */}
+      <section className="space-y-2 mb-6">
+        <div className="flex items-center">
+          <h2 className="text-xl font-bold">今日の予定</h2>
+          <button
+            className="ml-2 bg-theme-500 text-white rounded-full w-7 h-7 flex items-center justify-center hover:bg-theme-600 transition-colors focus:outline-none focus:ring-2 focus:ring-theme-500 focus:ring-opacity-75"
+            onClick={() => {
+              setScheduleInputDate(new Date());
+              setScheduleInputModalVisible(true);
+            }}
+            data-testid="button-add-schedule-home"
+          >
+            <Plus size={20} strokeWidth={2.5} />
+          </button>
+        </div>
+        {schedulesLoading ? (
+          <div className="text-center py-4 text-gray-500">Loading schedules...</div>
+        ) : getTodaysSchedules().length > 0 && (
+          <>
+            {getTodaysSchedules().map(schedule => (
+              <div key={schedule.id} className="task-card">
+                <div className="flex items-center justify-between">
+                  <span className="font-medium flex-grow">{schedule.text}</span>
+                  <span className="text-sm text-gray-500 mr-2">
+                    {schedule.time ? formatTime(schedule.time) : ''}
+                  </span>
+                  <button
+                    onClick={() => deleteScheduleMutation.mutate(schedule.id)}
+                    className="text-red-500 hover:text-red-700 flex-shrink-0"
+                    data-testid={`button-delete-schedule-home-${schedule.id}`}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </>
+        )}
+      </section>
+
 
       {/* My Page Section */}
       <section>
@@ -1363,6 +1421,18 @@ const TaskManager: React.FC = () => {
                 {calculateBMI() || '--'}
               </div>
               <div className="text-xs text-gray-500">BMI</div>
+              {calculateBMI() && (
+                <div className={`text-xs font-semibold mt-1 ${parseFloat(calculateBMI()!) < 18.5 ? 'text-blue-600' :
+                  parseFloat(calculateBMI()!) < 25 ? 'text-green-600' :
+                    parseFloat(calculateBMI()!) < 30 ? 'text-orange-600' :
+                      'text-red-600'
+                  }`}>
+                  {parseFloat(calculateBMI()!) < 18.5 ? '低体重' :
+                    parseFloat(calculateBMI()!) < 25 ? '標準' :
+                      parseFloat(calculateBMI()!) < 30 ? '肥満(1度)' :
+                        '肥満(2度以上)'}
+                </div>
+              )}
             </div>
           </div>
 
@@ -1411,27 +1481,7 @@ const TaskManager: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex items-center justify-between">
-              <label className="font-medium">体脂肪率 (%)</label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="number"
-                  step="0.1"
-                  placeholder="15.0"
-                  value={bodyFatInput}
-                  onChange={(e) => setBodyFatInput(e.target.value)}
-                  className="w-20 px-2 py-1 border rounded text-center"
-                  data-testid="input-body-fat"
-                />
-                <button
-                  className="px-3 py-1 bg-theme-500 text-white text-sm rounded hover:bg-theme-600"
-                  onClick={saveWeight}
-                  data-testid="button-save-body-fat"
-                >
-                  保存
-                </button>
-              </div>
-            </div>
+
           </div>
         </div>
 
@@ -1468,12 +1518,36 @@ const TaskManager: React.FC = () => {
             className="w-full p-3 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-theme-500 focus:border-theme-500"
             data-testid="textarea-diary"
           />
+          {diaryPhotos.length > 0 && (
+            <div className="mt-4 grid grid-cols-3 gap-2">
+              {diaryPhotos.map((photo, index) => (
+                <div key={index} className="relative">
+                  <img src={photo} alt={`写真 ${index + 1}`} className="w-full h-24 object-cover rounded-lg" />
+                  <button
+                    onClick={() => removePhoto(index)}
+                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                    data-testid={`button-remove-photo-${index}`}
+                  >
+                    <X size={12} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex justify-between items-center mt-4">
             <div className="flex items-center space-x-4">
-              <button className="flex items-center space-x-1 text-gray-500 hover:text-theme-500" data-testid="button-add-photo">
+              <label className="flex items-center space-x-1 text-gray-500 hover:text-theme-500 cursor-pointer" data-testid="button-add-photo">
                 <Camera size={20} />
                 <span className="text-sm">写真</span>
-              </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                  data-testid="input-photo"
+                />
+              </label>
               <button className="flex items-center space-x-1 text-gray-500 hover:text-theme-500" data-testid="button-add-mood">
                 <Smile size={20} />
                 <span className="text-sm">気分</span>
@@ -1504,6 +1578,20 @@ const TaskManager: React.FC = () => {
                 </button>
                 <div className="text-sm text-gray-500 mb-1">{entry.date}</div>
                 <div className="text-sm pr-6">{entry.content}</div>
+                {entry.photos && entry.photos.length > 0 && (
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    {entry.photos.map((photo, photoIndex) => (
+                      <img
+                        key={photoIndex}
+                        src={photo}
+                        alt={`写真 ${photoIndex + 1}`}
+                        className="w-full h-20 object-cover rounded-lg cursor-pointer hover:opacity-80"
+                        onClick={() => window.open(photo, '_blank')}
+                        data-testid={`diary-photo-${entry.id}-${photoIndex}`}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -3308,6 +3396,47 @@ const TaskManager: React.FC = () => {
         </header>
 
         <div className="px-4 space-y-6">
+          {/* Push Notifications Section - Now First */}
+          <div className="bg-white rounded-lg shadow">
+            <div className="p-4 border-b">
+              <h3 className="text-sm font-semibold text-gray-500 uppercase">通知設定</h3>
+            </div>
+            <div className="p-4 flex items-center justify-between" style={{ minHeight: '56px' }}>
+              <div>
+                <div className="font-medium">プッシュ通知</div>
+                <div className="text-sm text-gray-500">
+                  {notificationPermission === 'granted'
+                    ? 'タスクのリマインダーを受け取る'
+                    : notificationPermission === 'denied'
+                      ? '通知が拒否されています。ブラウザ設定から許可してください。'
+                      : '通知の許可が必要です'}
+                </div>
+              </div>
+              <Switch
+                checked={notificationsEnabled}
+                onCheckedChange={toggleNotifications}
+                disabled={notificationPermission === 'denied'}
+                data-testid="switch-push-notifications"
+              />
+            </div>
+            <div className="p-4 flex items-center justify-between border-t" style={{ minHeight: '56px' }}>
+              <div>
+                <div className="font-medium">バイブレーション</div>
+                <div className="text-sm text-gray-500">
+                  {('vibrate' in navigator)
+                    ? 'ボタンタップ時に振動する'
+                    : 'お使いのデバイスは振動に対応していません'}
+                </div>
+              </div>
+              <Switch
+                checked={vibrationEnabled}
+                onCheckedChange={toggleVibration}
+                disabled={!('vibrate' in navigator)}
+                data-testid="switch-vibration"
+              />
+            </div>
+          </div>
+
           {/* Dark Mode Section */}
           <div className="bg-white rounded-lg shadow">
             <div className="p-4 border-b">
@@ -3351,24 +3480,6 @@ const TaskManager: React.FC = () => {
                   </div>
                 </button>
               ))}
-            </div>
-          </div>
-
-          {/* Push Notifications Section */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-4 border-b">
-              <h3 className="text-sm font-semibold text-gray-500 uppercase">通知設定</h3>
-            </div>
-            <div className="p-4 flex items-center justify-between" style={{ minHeight: '56px' }}>
-              <div>
-                <div className="font-medium">プッシュ通知</div>
-                <div className="text-sm text-gray-500">タスクのリマインダーを受け取る</div>
-              </div>
-              <Switch
-                checked={userSettings?.pushNotifications || false}
-                onCheckedChange={(checked) => handleSettingChange('pushNotifications', checked)}
-                data-testid="switch-push-notifications"
-              />
             </div>
           </div>
 
@@ -4028,14 +4139,7 @@ const TaskManager: React.FC = () => {
             {getCurrentDate()}
           </div>
           <div className="flex items-center space-x-3">
-            <button
-              className={`transition-colors ${notificationsEnabled ? 'text-theme-500 hover:text-theme-600' : 'text-gray-500 hover:text-theme-500'}`}
-              onClick={() => setNotificationModalVisible(true)}
-              data-testid="button-notification"
-              title="通知設定"
-            >
-              <Bell size={24} />
-            </button>
+
             <button
               className="text-gray-500 hover:text-theme-500 transition-colors"
               onClick={() => setExportModalVisible(true)}
